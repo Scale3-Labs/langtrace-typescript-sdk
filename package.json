@@ -1,0 +1,31 @@
+{
+  "name": "nodejs-sdk",
+  "version": "1.0.0",
+  "description": "NodeJS SDK for Langtrace",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "author": "Scale3 Labs",
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "@opentelemetry/api": "^1.7.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.41.1",
+    "@opentelemetry/instrumentation": "^0.48.0",
+    "@opentelemetry/instrumentation-http": "^0.48.0",
+    "@opentelemetry/resources": "^1.21.0",
+    "@opentelemetry/sdk-node": "^0.48.0",
+    "@opentelemetry/sdk-trace-base": "^1.21.0",
+    "@opentelemetry/sdk-trace-node": "^1.21.0",
+    "@opentelemetry/semantic-conventions": "^1.21.0",
+    "@opentelemetry/tracing": "^0.24.0",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.1",
+    "openai": "^4.26.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.16",
+    "typescript": "^5.3.3"
+  }
+}
