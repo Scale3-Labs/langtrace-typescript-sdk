@@ -1,5 +1,6 @@
 // Import necessary OpenTelemetry components
 import { registerInstrumentations } from "@opentelemetry/instrumentation";
+import { MeterProvider } from "@opentelemetry/sdk-metrics-base";
 import {
   ConsoleSpanExporter,
   SimpleSpanProcessor,
@@ -11,21 +12,21 @@ import { openAIInstrumentation } from "./instrumentation"; // Adjust the path as
 
 export const setupInstrumentation = () => {
   // Set up OpenTelemetry tracing
-  const provider = new NodeTracerProvider();
+  const tracerProvider = new NodeTracerProvider();
+
+  // Set up OpenTelemetry metrics
+  const meterProvider = new MeterProvider();
 
   // Use the ConsoleSpanExporter to print traces to the console
   const consoleExporter = new ConsoleSpanExporter();
-  provider.addSpanProcessor(new SimpleSpanProcessor(consoleExporter));
+  tracerProvider.addSpanProcessor(new SimpleSpanProcessor(consoleExporter));
 
   // Register any automatic instrumentation and your custom OpenAI instrumentation
   registerInstrumentations({
-    instrumentations: [
-      // getNodeAutoInstrumentations(), // This will automatically instrument supported libraries
-      openAIInstrumentation,
-    ],
-    tracerProvider: provider,
+    instrumentations: [openAIInstrumentation],
+    tracerProvider: tracerProvider,
   });
 
   // Make sure to register the provider
-  provider.register();
+  tracerProvider.register();
 };
