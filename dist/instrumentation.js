@@ -33,8 +33,8 @@ class OpenAIInstrumentation extends instrumentation_1.InstrumentationBase {
     _getCreateChatCompletionPatch(originalMethod) {
         return function (...args) {
             const span = api_1.trace
-                .getTracer("openai-sdk")
-                .startSpan("OpenAI Create Chat Completion");
+                .getTracer("Langtrace OpenAI SDK")
+                .startSpan("OpenAI: chat.completion.create");
             // Preserving `this` from the calling context
             const originalContext = this;
             span.setAttribute("args", JSON.stringify(args));
