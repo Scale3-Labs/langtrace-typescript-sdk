@@ -65,3 +65,31 @@ export function chatCompletionCreate(
     }
   };
 }
+
+export function imagesGenerate(
+  originalMethod: (...args: any[]) => any
+): (...args: any[]) => any {
+  return async function (this: any, ...args: any[]) {
+    const span = trace
+      .getTracer("Langtrace OpenAI SDK")
+      .startSpan("OpenAI: images.generate");
+    // Preserving `this` from the calling context
+    const originalContext = this;
+
+    span.setAttribute("args", JSON.stringify(args));
+    try {
+      // Call the original create method
+      const image = await originalMethod.apply(originalContext, args);
+
+      span.setAttribute("result", JSON.stringify(image));
+      span.setStatus({ code: SpanStatusCode.OK });
+      span.end();
+      return image;
+    } catch (error: any) {
+      span.recordException(error);
+      span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+      span.end();
+      throw error; // Rethrow the error to be handled by the caller
+    }
+  };
+}

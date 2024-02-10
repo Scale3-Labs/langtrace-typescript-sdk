@@ -5,7 +5,7 @@ import {
   isWrapped,
 } from "@opentelemetry/instrumentation";
 import type { OpenAI } from "openai";
-import { chatCompletionCreate } from "./patch";
+import { chatCompletionCreate, imagesGenerate } from "./patch";
 
 class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
   constructor() {
@@ -35,19 +35,21 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
   private _patch(openai: typeof OpenAI) {
     if (isWrapped(openai.Chat.Completions.prototype)) {
       this._unwrap(openai.Chat.Completions.prototype, "create");
+    } else if (isWrapped(openai.Images.prototype)) {
+      this._unwrap(openai.Images.prototype, "generate");
     }
 
-    this._wrap(openai.Chat.Completions.prototype, "create", this._patchMethod);
+    this._wrap(
+      openai.Chat.Completions.prototype,
+      "create",
+      chatCompletionCreate
+    );
+    this._wrap(openai.Images.prototype, "generate", imagesGenerate);
   }
 
   private _unpatch(openai: typeof OpenAI) {
     this._unwrap(openai.Chat.Completions.prototype, "create");
-  }
-
-  private _patchMethod(
-    originalMethod: (...args: any[]) => any
-  ): (...args: any[]) => any {
-    return chatCompletionCreate(originalMethod);
+    this._unwrap(openai.Images.prototype, "generate");
   }
 }
 
