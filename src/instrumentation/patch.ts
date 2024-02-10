@@ -10,8 +10,14 @@ export function chatCompletionCreate(
       .startSpan("OpenAI: chat.completion.create");
     // Preserving `this` from the calling context
     const originalContext = this;
-
-    span.setAttribute("args", JSON.stringify(args));
+    span.setAttributes({
+      request: JSON.stringify({
+        baseURL: originalContext._client?.baseURL,
+        maxRetries: originalContext._client?.maxRetries,
+        timeout: originalContext._client?.timeout,
+        body: args,
+      }),
+    });
     try {
       // Call the original create method
       const stream = await originalMethod.apply(originalContext, args);
@@ -19,7 +25,7 @@ export function chatCompletionCreate(
       // If the stream option is not set, return the stream as-is
       if (!args[0].stream || args[0].stream === false) {
         // If the stream option is not set, return the stream as-is
-        span.setAttribute("result", JSON.stringify(stream));
+        span.setAttribute("response", JSON.stringify(stream));
         span.setStatus({ code: SpanStatusCode.OK });
         span.end();
         return stream;
@@ -31,6 +37,7 @@ export function chatCompletionCreate(
       return (async function* () {
         try {
           let totalTokens = 0;
+          let result = [];
           for await (const chunk of stream) {
             // add token count to span
             const tokenCount = estimateTokensInChunk(
@@ -40,11 +47,13 @@ export function chatCompletionCreate(
             span.addEvent(chunk.choices[0]?.delta?.content || "", {
               tokenCount,
             });
+            result.push(chunk.choices[0]?.delta?.content || "");
             yield chunk; // Pass through the chunk
           }
           span.setStatus({ code: SpanStatusCode.OK });
           span.setAttribute("tokens", totalTokens);
-          span.setAttribute("result", JSON.stringify(stream));
+          span.setAttribute("response", result.join(""));
+          span.addEvent("Stream Ended");
         } catch (error: any) {
           span.recordException(error);
           span.setStatus({
@@ -76,12 +85,19 @@ export function imagesGenerate(
     // Preserving `this` from the calling context
     const originalContext = this;
 
-    span.setAttribute("args", JSON.stringify(args));
+    span.setAttributes({
+      request: JSON.stringify({
+        baseURL: originalContext._client?.baseURL,
+        maxRetries: originalContext._client?.maxRetries,
+        timeout: originalContext._client?.timeout,
+        body: args,
+      }),
+    });
     try {
       // Call the original create method
       const image = await originalMethod.apply(originalContext, args);
 
-      span.setAttribute("result", JSON.stringify(image));
+      span.setAttribute("response", JSON.stringify(image));
       span.setStatus({ code: SpanStatusCode.OK });
       span.end();
       return image;

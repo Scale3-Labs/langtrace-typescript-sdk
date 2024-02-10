@@ -1,3 +1,4 @@
-import { imagesGeneration } from "./examples/images-generation";
+// import { chatCompletion } from "./examples/chat-completion";
+import { chatCompletionStreaming } from "./examples/chat-completion-streaming";
 
-imagesGeneration();
+chatCompletionStreaming();

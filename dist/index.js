@@ -1,4 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const images_generation_1 = require("./examples/images-generation");
-(0, images_generation_1.imagesGeneration)();
+// import { chatCompletion } from "./examples/chat-completion";
+const chat_completion_streaming_1 = require("./examples/chat-completion-streaming");
+(0, chat_completion_streaming_1.chatCompletionStreaming)();
