@@ -12,8 +12,8 @@ const openai = new OpenAI();
 
 export async function chatCompletion() {
   const completion = await openai.chat.completions.create({
-    messages: [{ role: "system", content: "You are a helpful assistant." }],
-    model: "gpt-3.5-turbo",
+    model: "gpt-4",
+    messages: [{ role: "user", content: "Say this is a test 3 times" }],
   });
 
   console.log(completion.choices[0]);

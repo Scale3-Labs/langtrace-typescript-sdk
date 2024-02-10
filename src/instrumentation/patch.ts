@@ -1,5 +1,6 @@
 import { SpanStatusCode, trace } from "@opentelemetry/api";
-import { estimateTokensInChunk } from "../lib";
+import { TIKTOKEN_MODEL_MAPPING } from "../constants";
+import { estimateTokens, estimateTokensUsingTikToken } from "../lib";
 
 export function chatCompletionCreate(
   originalMethod: (...args: any[]) => any
@@ -10,6 +11,17 @@ export function chatCompletionCreate(
       .startSpan("OpenAI: chat.completion.create");
     // Preserving `this` from the calling context
     const originalContext = this;
+    let promptTokens = 0;
+    try {
+      let tiktokenModel = TIKTOKEN_MODEL_MAPPING[args[0].model];
+      promptTokens = estimateTokensUsingTikToken(
+        JSON.stringify(args[0].messages[0]),
+        tiktokenModel
+      );
+    } catch (error) {
+      // fallback to simple token estimation if tiktoken model is not found
+      promptTokens = estimateTokens(JSON.stringify(args[0].messages[0]));
+    }
     span.setAttributes({
       request: JSON.stringify({
         baseURL: originalContext._client?.baseURL,
@@ -26,6 +38,7 @@ export function chatCompletionCreate(
       if (!args[0].stream || args[0].stream === false) {
         // If the stream option is not set, return the stream as-is
         span.setAttribute("response", JSON.stringify(stream));
+        span.setAttribute("usage", JSON.stringify(stream.usage));
         span.setStatus({ code: SpanStatusCode.OK });
         span.end();
         return stream;
@@ -36,14 +49,14 @@ export function chatCompletionCreate(
       span.addEvent("Stream Started");
       return (async function* () {
         try {
-          let totalTokens = 0;
+          let completionTokens = 0;
           let result = [];
           for await (const chunk of stream) {
             // add token count to span
-            const tokenCount = estimateTokensInChunk(
+            const tokenCount = estimateTokens(
               chunk.choices[0]?.delta?.content || ""
             );
-            totalTokens += tokenCount;
+            completionTokens += tokenCount;
             span.addEvent(chunk.choices[0]?.delta?.content || "", {
               tokenCount,
             });
@@ -51,7 +64,14 @@ export function chatCompletionCreate(
             yield chunk; // Pass through the chunk
           }
           span.setStatus({ code: SpanStatusCode.OK });
-          span.setAttribute("tokens", totalTokens);
+          span.setAttribute(
+            "usage",
+            JSON.stringify({
+              prompt_tokens: promptTokens,
+              completion_tokens: completionTokens,
+              total_tokens: completionTokens + promptTokens,
+            })
+          );
           span.setAttribute("response", result.join(""));
           span.addEvent("Stream Ended");
         } catch (error: any) {

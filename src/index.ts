@@ -2,3 +2,4 @@
 import { chatCompletionStreaming } from "./examples/chat-completion-streaming";
 
 chatCompletionStreaming();
+// chatCompletion();
