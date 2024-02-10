@@ -17,7 +17,7 @@ export function chatCompletionCreate(
       const stream = await originalMethod.apply(originalContext, args);
 
       // If the stream option is not set, return the stream as-is
-      if (!args[0].stream || !args[0].stream === false) {
+      if (!args[0].stream || args[0].stream === false) {
         // If the stream option is not set, return the stream as-is
         span.setAttribute("result", JSON.stringify(stream));
         span.setStatus({ code: SpanStatusCode.OK });
