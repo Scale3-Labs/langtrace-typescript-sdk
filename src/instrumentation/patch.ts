@@ -48,7 +48,7 @@ export function chatCompletionCreate(
     const span = tracer.startSpan("OpenAI: chat.completion.create", {
       attributes: {
         model: args[0]?.model,
-        prompt: args[0]?.messages?.[0] || "",
+        prompt: JSON.stringify(args[0]?.messages?.[0] || ""),
         baseURL: originalContext._client?.baseURL,
         maxRetries: originalContext._client?.maxRetries,
         timeout: originalContext._client?.timeout,
@@ -61,7 +61,7 @@ export function chatCompletionCreate(
 
       // Handle non-stream responses immediately
       if (!args[0].stream || args[0].stream === false) {
-        span.setAttribute("response", JSON.stringify(resp));
+        span.setAttribute("response", resp.choices?.[0].message?.content || "");
         span.setAttribute("usage", JSON.stringify(resp.usage));
         span.setStatus({ code: SpanStatusCode.OK });
         span.end();
@@ -103,6 +103,7 @@ async function* handleStreamResponse(
       const tokenCount = estimateTokens(content);
       completionTokens += tokenCount;
       result.push(content);
+      span.addEvent(content, { tokenCount, chunk });
       yield chunk;
     }
 
