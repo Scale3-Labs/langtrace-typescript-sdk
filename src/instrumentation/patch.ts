@@ -1,105 +1,6 @@
-import { SpanStatusCode, trace } from "@opentelemetry/api";
+import { Span, SpanStatusCode, trace } from "@opentelemetry/api";
 import { TIKTOKEN_MODEL_MAPPING } from "../constants";
-import {
-  calculatePriceFromUsage,
-  estimateTokens,
-  estimateTokensUsingTikToken,
-} from "../lib";
-
-export function chatCompletionCreate(
-  originalMethod: (...args: any[]) => any
-): (...args: any[]) => any {
-  return async function (this: any, ...args: any[]) {
-    const span = trace
-      .getTracer("Langtrace OpenAI SDK")
-      .startSpan("OpenAI: chat.completion.create");
-    // Preserving `this` from the calling context
-    const originalContext = this;
-    let promptTokens = 0;
-    try {
-      let tiktokenModel = TIKTOKEN_MODEL_MAPPING[args[0].model];
-      promptTokens = estimateTokensUsingTikToken(
-        JSON.stringify(args[0].messages[0]),
-        tiktokenModel
-      );
-    } catch (error) {
-      // fallback to simple token estimation if tiktoken model is not found
-      promptTokens = estimateTokens(JSON.stringify(args[0].messages[0]));
-    }
-    span.setAttributes({
-      request: JSON.stringify({
-        baseURL: originalContext._client?.baseURL,
-        maxRetries: originalContext._client?.maxRetries,
-        timeout: originalContext._client?.timeout,
-        body: args,
-      }),
-    });
-    try {
-      // Call the original create method
-      const stream = await originalMethod.apply(originalContext, args);
-
-      // If the stream option is not set, return the stream as-is
-      if (!args[0].stream || args[0].stream === false) {
-        // If the stream option is not set, return the stream as-is
-        span.setAttribute("response", JSON.stringify(stream));
-        span.setAttribute("usage", JSON.stringify(stream.usage));
-        const cost = calculatePriceFromUsage(args[0].model, stream.usage);
-        span.setAttribute("cost", cost);
-        span.setStatus({ code: SpanStatusCode.OK });
-        span.end();
-        return stream;
-      }
-
-      // If the stream option is set, wrap the stream to manage the span
-      // Return a wrapped async iterable to manage the span during iteration
-      span.addEvent("Stream Started");
-      return (async function* () {
-        try {
-          let completionTokens = 0;
-          let result = [];
-          for await (const chunk of stream) {
-            // add token count to span
-            const tokenCount = estimateTokens(
-              chunk.choices[0]?.delta?.content || ""
-            );
-            completionTokens += tokenCount;
-            span.addEvent(chunk.choices[0]?.delta?.content || "", {
-              tokenCount,
-            });
-            result.push(chunk.choices[0]?.delta?.content || "");
-            yield chunk; // Pass through the chunk
-          }
-          span.setStatus({ code: SpanStatusCode.OK });
-          const usage = {
-            prompt_tokens: promptTokens,
-            completion_tokens: completionTokens,
-            total_tokens: completionTokens + promptTokens,
-          };
-          span.setAttribute("usage", JSON.stringify(usage));
-          const cost = calculatePriceFromUsage(args[0].model, usage);
-          span.setAttribute("cost", cost);
-          span.setAttribute("response", result.join(""));
-          span.addEvent("Stream Ended");
-        } catch (error: any) {
-          span.recordException(error);
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error.message,
-          });
-          throw error; // Rethrow the error to be handled by the caller
-        } finally {
-          span.end(); // End the span when the stream ends or an error occurs
-        }
-      })();
-    } catch (error: any) {
-      // Handle errors that occur before the stream is successfully initiated
-      span.recordException(error);
-      span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
-      span.end();
-      throw error; // Rethrow the error to be handled by the caller
-    }
-  };
-}
+import { estimateTokens, estimateTokensUsingTikToken } from "../lib";
 
 export function imagesGenerate(
   originalMethod: (...args: any[]) => any
@@ -112,12 +13,10 @@ export function imagesGenerate(
     const originalContext = this;
 
     span.setAttributes({
-      request: JSON.stringify({
-        baseURL: originalContext._client?.baseURL,
-        maxRetries: originalContext._client?.maxRetries,
-        timeout: originalContext._client?.timeout,
-        body: args,
-      }),
+      baseURL: originalContext._client?.baseURL,
+      maxRetries: originalContext._client?.maxRetries,
+      timeout: originalContext._client?.timeout,
+      body: args,
     });
     try {
       // Call the original create method
@@ -134,4 +33,95 @@ export function imagesGenerate(
       throw error; // Rethrow the error to be handled by the caller
     }
   };
+}
+
+export function chatCompletionCreate(
+  originalMethod: (...args: any[]) => any
+): (...args: any[]) => any {
+  return async function (this: any, ...args: any[]) {
+    const originalContext = this;
+    const tracer = trace.getTracer("Langtrace OpenAI SDK");
+    const promptContent = JSON.stringify(args[0].messages[0]);
+    const model = args[0].model;
+    const promptTokens = calculatePromptTokens(promptContent, model);
+
+    const span = tracer.startSpan("OpenAI: chat.completion.create", {
+      attributes: {
+        model: args[0]?.model,
+        prompt: args[0]?.messages?.[0] || "",
+        baseURL: originalContext._client?.baseURL,
+        maxRetries: originalContext._client?.maxRetries,
+        timeout: originalContext._client?.timeout,
+        body: args,
+      },
+    });
+
+    try {
+      const resp = await originalMethod.apply(this, args);
+
+      // Handle non-stream responses immediately
+      if (!args[0].stream || args[0].stream === false) {
+        span.setAttribute("response", JSON.stringify(resp));
+        span.setAttribute("usage", JSON.stringify(resp.usage));
+        span.setStatus({ code: SpanStatusCode.OK });
+        span.end();
+        return resp;
+      }
+
+      // Handle streaming responses
+      return handleStreamResponse(span, resp, promptTokens);
+    } catch (error: any) {
+      span.recordException(error);
+      span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+      span.end();
+      throw error;
+    }
+  };
+}
+
+function calculatePromptTokens(promptContent: string, model: string): number {
+  try {
+    const tiktokenModel = TIKTOKEN_MODEL_MAPPING[model];
+    return estimateTokensUsingTikToken(promptContent, tiktokenModel);
+  } catch (error) {
+    return estimateTokens(promptContent); // Fallback method
+  }
+}
+
+async function* handleStreamResponse(
+  span: Span,
+  stream: any,
+  promptTokens: number
+) {
+  let completionTokens = 0;
+  let result: string[] = [];
+
+  span.addEvent("Stream Started");
+  try {
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || "";
+      const tokenCount = estimateTokens(content);
+      completionTokens += tokenCount;
+      result.push(content);
+      yield chunk;
+    }
+
+    span.setStatus({ code: SpanStatusCode.OK });
+    const usage = {
+      prompt_tokens: promptTokens,
+      completion_tokens: completionTokens,
+      total_tokens: completionTokens + promptTokens,
+    };
+    span.setAttributes({
+      usage: JSON.stringify(usage),
+      response: result.join(""),
+    });
+    span.addEvent("Stream Ended");
+  } catch (error: any) {
+    span.recordException(error);
+    span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+    throw error;
+  } finally {
+    span.end();
+  }
 }
