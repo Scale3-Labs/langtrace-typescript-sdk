@@ -1,6 +1,10 @@
 import { SpanStatusCode, trace } from "@opentelemetry/api";
 import { TIKTOKEN_MODEL_MAPPING } from "../constants";
-import { estimateTokens, estimateTokensUsingTikToken } from "../lib";
+import {
+  calculatePriceFromUsage,
+  estimateTokens,
+  estimateTokensUsingTikToken,
+} from "../lib";
 
 export function chatCompletionCreate(
   originalMethod: (...args: any[]) => any
@@ -39,6 +43,8 @@ export function chatCompletionCreate(
         // If the stream option is not set, return the stream as-is
         span.setAttribute("response", JSON.stringify(stream));
         span.setAttribute("usage", JSON.stringify(stream.usage));
+        const cost = calculatePriceFromUsage(args[0].model, stream.usage);
+        span.setAttribute("cost", cost);
         span.setStatus({ code: SpanStatusCode.OK });
         span.end();
         return stream;
@@ -64,14 +70,14 @@ export function chatCompletionCreate(
             yield chunk; // Pass through the chunk
           }
           span.setStatus({ code: SpanStatusCode.OK });
-          span.setAttribute(
-            "usage",
-            JSON.stringify({
-              prompt_tokens: promptTokens,
-              completion_tokens: completionTokens,
-              total_tokens: completionTokens + promptTokens,
-            })
-          );
+          const usage = {
+            prompt_tokens: promptTokens,
+            completion_tokens: completionTokens,
+            total_tokens: completionTokens + promptTokens,
+          };
+          span.setAttribute("usage", JSON.stringify(usage));
+          const cost = calculatePriceFromUsage(args[0].model, usage);
+          span.setAttribute("cost", cost);
           span.setAttribute("response", result.join(""));
           span.addEvent("Stream Ended");
         } catch (error: any) {
