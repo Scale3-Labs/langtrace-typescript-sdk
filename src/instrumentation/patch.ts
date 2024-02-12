@@ -12,21 +12,22 @@ export function imagesGenerate(
       .getTracer("Langtrace OpenAI SDK")
       .startSpan("openai.images.generate", {
         attributes: {
+          model: args[0]?.model,
+          prompt: args[0]?.prompt,
           baseURL: originalContext._client?.baseURL,
           maxRetries: originalContext._client?.maxRetries,
           timeout: originalContext._client?.timeout,
-          body: args,
         },
         kind: SpanKind.CLIENT,
       });
     try {
       // Call the original create method
-      const image = await originalMethod.apply(originalContext, args);
+      const response = await originalMethod.apply(originalContext, args);
 
-      span.setAttribute("response", JSON.stringify(image));
+      span.setAttribute("response", JSON.stringify(response.data));
       span.setStatus({ code: SpanStatusCode.OK });
       span.end();
-      return image;
+      return response;
     } catch (error: any) {
       span.recordException(error);
       span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
