@@ -8,6 +8,8 @@ export function imagesGenerate(
   return async function (this: any, ...args: any[]) {
     // Preserving `this` from the calling context
     const originalContext = this;
+
+    // Start a new span
     const span = trace
       .getTracer(TRACE_NAMESPACE)
       .startSpan("openai.images.generate", {
@@ -20,19 +22,23 @@ export function imagesGenerate(
         },
         kind: SpanKind.CLIENT,
       });
+
+    // Wrap the original method in a try/catch block
     try {
       // Call the original create method
       const response = await originalMethod.apply(originalContext, args);
 
+      // Set the span status and end the span
       span.setAttribute("response", JSON.stringify(response.data));
       span.setStatus({ code: SpanStatusCode.OK });
       span.end();
       return response;
     } catch (error: any) {
+      // If an error occurs, record the exception and end the span
       span.recordException(error);
       span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
       span.end();
-      throw error; // Rethrow the error to be handled by the caller
+      throw error;
     }
   };
 }
@@ -41,27 +47,32 @@ export function chatCompletionCreate(
   originalMethod: (...args: any[]) => any
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
+    // Preserving `this` from the calling context
     const originalContext = this;
-    const tracer = trace.getTracer(TRACE_NAMESPACE);
-    const promptContent = JSON.stringify(args[0].messages[0]);
-    const model = args[0].model;
-    const promptTokens = calculatePromptTokens(promptContent, model);
 
-    const span = tracer.startSpan("openai.chat.completion.create", {
-      attributes: {
-        vendor: "OpenAI",
-        api: "chat.completion.create",
-        streaming: args[0].stream,
-        model: args[0]?.model,
-        prompt: JSON.stringify(args[0]?.messages?.[0] || ""),
-        baseURL: originalContext._client?.baseURL,
-        maxRetries: originalContext._client?.maxRetries,
-        timeout: originalContext._client?.timeout,
-      },
-      kind: SpanKind.SERVER,
-    });
+    // Start a new span
+    const span = trace
+      .getTracer(TRACE_NAMESPACE)
+      .startSpan("openai.chat.completion.create", {
+        attributes: {
+          vendor: "OpenAI",
+          api: "chat.completion.create",
+          streaming: args[0].stream,
+          model: args[0]?.model,
+          prompt: JSON.stringify(args[0]?.messages?.[0] || ""),
+          baseURL: originalContext._client?.baseURL,
+          maxRetries: originalContext._client?.maxRetries,
+          timeout: originalContext._client?.timeout,
+        },
+        kind: SpanKind.SERVER,
+      });
 
     try {
+      const model = args[0].model;
+      const promptContent = JSON.stringify(args[0].messages[0]);
+      const promptTokens = calculatePromptTokens(promptContent, model);
+
+      // Call the original create method
       const resp = await originalMethod.apply(this, args);
 
       // Handle non-stream responses immediately
