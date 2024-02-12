@@ -1,5 +1,5 @@
 import { Span, SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
-import { TRACE_NAMESPACE } from "../../constants";
+import { OPENAI_TRACE_NAMESPACE } from "../../constants";
 import { calculatePromptTokens, estimateTokens } from "../../lib";
 
 export function imagesGenerate(
@@ -11,7 +11,7 @@ export function imagesGenerate(
 
     // Start a new span
     const span = trace
-      .getTracer(TRACE_NAMESPACE)
+      .getTracer(OPENAI_TRACE_NAMESPACE)
       .startSpan("openai.images.generate", {
         attributes: {
           model: args[0]?.model,
@@ -52,7 +52,7 @@ export function chatCompletionCreate(
 
     // Start a new span
     const span = trace
-      .getTracer(TRACE_NAMESPACE)
+      .getTracer(OPENAI_TRACE_NAMESPACE)
       .startSpan("openai.chat.completion.create", {
         attributes: {
           vendor: "OpenAI",
