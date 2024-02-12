@@ -14,6 +14,8 @@ export function imagesGenerate(
       .getTracer(OPENAI_TRACE_NAMESPACE)
       .startSpan("openai.images.generate", {
         attributes: {
+          service_provider: "OpenAI",
+          api: "openai.images.generate",
           model: args[0]?.model,
           prompt: args[0]?.prompt,
           baseURL: originalContext._client?.baseURL,
@@ -55,14 +57,14 @@ export function chatCompletionCreate(
       .getTracer(OPENAI_TRACE_NAMESPACE)
       .startSpan("openai.chat.completion.create", {
         attributes: {
-          vendor: "OpenAI",
+          service_provider: "OpenAI",
           api: "chat.completion.create",
-          streaming: args[0].stream,
           model: args[0]?.model,
           prompt: JSON.stringify(args[0]?.messages?.[0] || ""),
           baseURL: originalContext._client?.baseURL,
           maxRetries: originalContext._client?.maxRetries,
           timeout: originalContext._client?.timeout,
+          request_type: args[0]?.stream ? "stream" : "non-stream",
         },
         kind: SpanKind.SERVER,
       });
@@ -81,12 +83,14 @@ export function chatCompletionCreate(
           "response",
           JSON.stringify(resp?.choices?.[0]?.message) || ""
         );
-        span.setAttribute("prompt_tokens", resp?.usage?.prompt_tokens || 0);
         span.setAttribute(
-          "completion_tokens",
-          resp?.usage?.completion_tokens || 0
+          "token_counts",
+          JSON.stringify({
+            prompt_tokens: promptTokens,
+            completion_tokens: resp?.usage?.completion_tokens || 0,
+            total_tokens: resp?.usage?.total_tokens || 0,
+          })
         );
-        span.setAttribute("total_tokens", resp?.usage?.total_tokens || 0);
         span.setStatus({ code: SpanStatusCode.OK });
         span.end();
         return resp;
@@ -111,25 +115,27 @@ async function* handleStreamResponse(
   let completionTokens = 0;
   let result: string[] = [];
 
-  span.addEvent("Stream Started");
+  span.addEvent("stream_start");
   try {
     for await (const chunk of stream) {
       const content = chunk.choices[0]?.delta?.content || "";
       const tokenCount = estimateTokens(content);
       completionTokens += tokenCount;
       result.push(content);
-      span.addEvent(content, { tokenCount, chunk });
+      span.addEvent("stream_output", { tokenCount, chunk });
       yield chunk;
     }
 
     span.setStatus({ code: SpanStatusCode.OK });
     span.setAttributes({
-      prompt_tokens: promptTokens,
-      completion_tokens: completionTokens,
-      total_tokens: completionTokens + promptTokens,
+      token_counts: JSON.stringify({
+        prompt_tokens: promptTokens,
+        completion_tokens: completionTokens,
+        total_tokens: completionTokens + promptTokens,
+      }),
       response: JSON.stringify({ role: "assistant", content: result.join("") }),
     });
-    span.addEvent("Stream Ended");
+    span.addEvent("stream_end");
   } catch (error: any) {
     span.recordException(error);
     span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
