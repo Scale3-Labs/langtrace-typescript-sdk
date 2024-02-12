@@ -1,6 +1,5 @@
 import { Span, SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
-import { TIKTOKEN_MODEL_MAPPING } from "../constants";
-import { estimateTokens, estimateTokensUsingTikToken } from "../lib";
+import { calculatePromptTokens, estimateTokens } from "../lib";
 
 export function imagesGenerate(
   originalMethod: (...args: any[]) => any
@@ -90,15 +89,6 @@ export function chatCompletionCreate(
       throw error;
     }
   };
-}
-
-function calculatePromptTokens(promptContent: string, model: string): number {
-  try {
-    const tiktokenModel = TIKTOKEN_MODEL_MAPPING[model];
-    return estimateTokensUsingTikToken(promptContent, tiktokenModel);
-  } catch (error) {
-    return estimateTokens(promptContent); // Fallback method
-  }
 }
 
 async function* handleStreamResponse(

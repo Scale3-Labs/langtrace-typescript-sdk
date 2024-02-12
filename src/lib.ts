@@ -1,5 +1,5 @@
 import { TiktokenEncoding, get_encoding } from "tiktoken";
-import { COST_TABLE } from "./constants";
+import { COST_TABLE, TIKTOKEN_MODEL_MAPPING } from "./constants";
 
 export function estimateTokens(prompt: string): number {
   if (prompt && prompt.length > 0) {
@@ -16,6 +16,18 @@ export function estimateTokensUsingTikToken(
   const encoding = get_encoding(model);
   const tokens = encoding.encode(prompt);
   return tokens.length;
+}
+
+export function calculatePromptTokens(
+  promptContent: string,
+  model: string
+): number {
+  try {
+    const tiktokenModel = TIKTOKEN_MODEL_MAPPING[model];
+    return estimateTokensUsingTikToken(promptContent, tiktokenModel);
+  } catch (error) {
+    return estimateTokens(promptContent); // Fallback method
+  }
 }
 
 export function calculatePriceFromUsage(
