@@ -1,4 +1,5 @@
 import { Span, SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
+import { TRACE_NAMESPACE } from "../constants";
 import { calculatePromptTokens, estimateTokens } from "../lib";
 
 export function imagesGenerate(
@@ -8,7 +9,7 @@ export function imagesGenerate(
     // Preserving `this` from the calling context
     const originalContext = this;
     const span = trace
-      .getTracer("Langtrace OpenAI SDK")
+      .getTracer(TRACE_NAMESPACE)
       .startSpan("openai.images.generate", {
         attributes: {
           model: args[0]?.model,
@@ -41,7 +42,7 @@ export function chatCompletionCreate(
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
-    const tracer = trace.getTracer("Langtrace OpenAI SDK");
+    const tracer = trace.getTracer(TRACE_NAMESPACE);
     const promptContent = JSON.stringify(args[0].messages[0]);
     const model = args[0].model;
     const promptTokens = calculatePromptTokens(promptContent, model);
