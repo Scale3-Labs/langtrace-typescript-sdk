@@ -1,5 +1,5 @@
 import { TiktokenEncoding, get_encoding } from "tiktoken";
-import { COST_TABLE, TIKTOKEN_MODEL_MAPPING } from "./constants";
+import { OPENAI_COST_TABLE, TIKTOKEN_MODEL_MAPPING } from "./constants";
 
 export function estimateTokens(prompt: string): number {
   if (prompt && prompt.length > 0) {
@@ -34,7 +34,7 @@ export function calculatePriceFromUsage(
   model: string,
   usage: { prompt_tokens: number; completion_tokens: number }
 ): number {
-  const costTable = COST_TABLE[model];
+  const costTable = OPENAI_COST_TABLE[model];
   if (costTable) {
     return (
       (costTable.input * usage.prompt_tokens +

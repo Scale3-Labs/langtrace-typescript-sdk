@@ -1,6 +1,6 @@
 import { Span, SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
 import { OPENAI_TRACE_NAMESPACE } from "../../constants";
-import { calculatePromptTokens, estimateTokens } from "../../lib";
+import { calculatePromptTokens, estimateTokens } from "../../utils";
 
 export function imagesGenerate(
   originalMethod: (...args: any[]) => any
