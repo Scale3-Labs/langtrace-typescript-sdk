@@ -17,7 +17,7 @@ export function imagesGenerate(
           timeout: originalContext._client?.timeout,
           body: args,
         },
-        kind: SpanKind.SERVER,
+        kind: SpanKind.CLIENT,
       });
     try {
       // Call the original create method
@@ -48,12 +48,14 @@ export function chatCompletionCreate(
 
     const span = tracer.startSpan("openai.chat.completion.create", {
       attributes: {
+        vendor: "OpenAI",
+        api: "chat.completion.create",
+        streaming: args[0].stream,
         model: args[0]?.model,
         prompt: JSON.stringify(args[0]?.messages?.[0] || ""),
         baseURL: originalContext._client?.baseURL,
         maxRetries: originalContext._client?.maxRetries,
         timeout: originalContext._client?.timeout,
-        body: args,
       },
       kind: SpanKind.SERVER,
     });
@@ -63,8 +65,16 @@ export function chatCompletionCreate(
 
       // Handle non-stream responses immediately
       if (!args[0].stream || args[0].stream === false) {
-        span.setAttribute("response", resp.choices?.[0].message?.content || "");
-        span.setAttribute("usage", JSON.stringify(resp.usage));
+        span.setAttribute(
+          "response",
+          JSON.stringify(resp?.choices?.[0]?.message) || ""
+        );
+        span.setAttribute("prompt_tokens", resp?.usage?.prompt_tokens || 0);
+        span.setAttribute(
+          "completion_tokens",
+          resp?.usage?.completion_tokens || 0
+        );
+        span.setAttribute("total_tokens", resp?.usage?.total_tokens || 0);
         span.setStatus({ code: SpanStatusCode.OK });
         span.end();
         return resp;
@@ -110,14 +120,11 @@ async function* handleStreamResponse(
     }
 
     span.setStatus({ code: SpanStatusCode.OK });
-    const usage = {
+    span.setAttributes({
       prompt_tokens: promptTokens,
       completion_tokens: completionTokens,
       total_tokens: completionTokens + promptTokens,
-    };
-    span.setAttributes({
-      usage: JSON.stringify(usage),
-      response: result.join(""),
+      response: JSON.stringify({ role: "assistant", content: result.join("") }),
     });
     span.addEvent("Stream Ended");
   } catch (error: any) {
