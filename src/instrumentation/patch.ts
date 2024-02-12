@@ -8,7 +8,7 @@ export function imagesGenerate(
   return async function (this: any, ...args: any[]) {
     const span = trace
       .getTracer("Langtrace OpenAI SDK")
-      .startSpan("OpenAI: images.generate");
+      .startSpan("openai.images.generate");
     // Preserving `this` from the calling context
     const originalContext = this;
 
@@ -45,7 +45,7 @@ export function chatCompletionCreate(
     const model = args[0].model;
     const promptTokens = calculatePromptTokens(promptContent, model);
 
-    const span = tracer.startSpan("OpenAI: chat.completion.create", {
+    const span = tracer.startSpan("openai.chat.completion.create", {
       attributes: {
         model: args[0]?.model,
         prompt: JSON.stringify(args[0]?.messages?.[0] || ""),
