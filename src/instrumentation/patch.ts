@@ -1,4 +1,4 @@
-import { Span, SpanStatusCode, trace } from "@opentelemetry/api";
+import { Span, SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
 import { TIKTOKEN_MODEL_MAPPING } from "../constants";
 import { estimateTokens, estimateTokensUsingTikToken } from "../lib";
 
@@ -6,18 +6,19 @@ export function imagesGenerate(
   originalMethod: (...args: any[]) => any
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
-    const span = trace
-      .getTracer("Langtrace OpenAI SDK")
-      .startSpan("openai.images.generate");
     // Preserving `this` from the calling context
     const originalContext = this;
-
-    span.setAttributes({
-      baseURL: originalContext._client?.baseURL,
-      maxRetries: originalContext._client?.maxRetries,
-      timeout: originalContext._client?.timeout,
-      body: args,
-    });
+    const span = trace
+      .getTracer("Langtrace OpenAI SDK")
+      .startSpan("openai.images.generate", {
+        attributes: {
+          baseURL: originalContext._client?.baseURL,
+          maxRetries: originalContext._client?.maxRetries,
+          timeout: originalContext._client?.timeout,
+          body: args,
+        },
+        kind: SpanKind.SERVER,
+      });
     try {
       // Call the original create method
       const image = await originalMethod.apply(originalContext, args);
@@ -54,6 +55,7 @@ export function chatCompletionCreate(
         timeout: originalContext._client?.timeout,
         body: args,
       },
+      kind: SpanKind.SERVER,
     });
 
     try {
