@@ -3,7 +3,11 @@ import { chatCompletion } from "./examples/openai/chat-completion";
 // import { chatCompletionStreaming } from "./examples/openai/chat-completion-streaming";
 // import { langchainBasic } from "./examples/langchain/basic";
 
+// import { langchainChain } from "./examples/langchain/basic";
+
 chatCompletion();
 // chatCompletionStreaming();
 // imagesGeneration();
 // langchainBasic();
+
+// langchainChain();

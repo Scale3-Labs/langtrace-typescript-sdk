@@ -8,6 +8,7 @@ import {
 } from "@langchain/core/prompts";
 import { ChatOpenAI } from "@langchain/openai";
 import { ConversationChain } from "langchain/chains";
+import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { BufferMemory } from "langchain/memory";
 
 import dotenv from "dotenv";
@@ -46,4 +47,27 @@ export async function langchainBasic() {
   });
 
   console.log(response2);
+}
+
+export async function langchainChain() {
+  const llm = new ChatOpenAI({ temperature: 0 });
+
+  const prompt = ChatPromptTemplate.fromMessages([
+    [
+      "system",
+      "Answer the user's questions based on the below context:\n\n{context}",
+    ],
+  ]);
+
+  const chain = createStuffDocumentsChain({
+    llm: llm,
+    prompt: prompt,
+  });
+  const response1 = await (
+    await chain
+  ).invoke({
+    input: "hi! whats up?",
+  });
+
+  console.log(response1);
 }

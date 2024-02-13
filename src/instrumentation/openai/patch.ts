@@ -66,9 +66,9 @@ export function chatCompletionCreate(
       .getTracer(OPENAI_TRACE_NAMESPACE)
       .startSpan(APIS.CHAT_COMPLETION.METHOD, {
         attributes: {
-          [OpenAISpanAttributes.SERVICE_PROVIDER]: [SERVICE_PROVIDERS.OPENAI],
+          [OpenAISpanAttributes.SERVICE_PROVIDER]: SERVICE_PROVIDERS.OPENAI,
           [OpenAISpanAttributes.BASE_URL]: originalContext._client?.baseURL,
-          [OpenAISpanAttributes.API]: [APIS.CHAT_COMPLETION.ENDPOINT],
+          [OpenAISpanAttributes.API]: APIS.CHAT_COMPLETION.ENDPOINT,
           [OpenAISpanAttributes.MODEL]: args[0]?.model,
           [OpenAISpanAttributes.REQUEST_MAXRETRIES]:
             originalContext._client?.maxRetries,
