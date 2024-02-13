@@ -11,3 +11,8 @@ export const TIKTOKEN_MODEL_MAPPING: Record<string, TiktokenEncoding> = {
   "gpt-4-1106-preview": "cl100k_base",
   "gpt-4-1106-vision-preview": "cl100k_base",
 };
+
+export const SERVICE_PROVIDERS = {
+  OPENAI: "OpenAI",
+  LANGCHAIN: "Langchain",
+};

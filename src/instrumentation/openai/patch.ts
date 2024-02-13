@@ -1,5 +1,5 @@
 import { Span, SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
-import { OPENAI_TRACE_NAMESPACE } from "../../constants";
+import { OPENAI_TRACE_NAMESPACE, SERVICE_PROVIDERS } from "../../constants";
 import { calculatePromptTokens, estimateTokens } from "../../utils";
 import { APIS } from "./lib/apis";
 import { OpenAISpanAttributes, OpenAISpanEvents } from "./lib/span_attributes";
@@ -14,11 +14,11 @@ export function imagesGenerate(
     // Start a new span
     const span = trace
       .getTracer(OPENAI_TRACE_NAMESPACE)
-      .startSpan(APIS.IMAGES_GENERATION, {
+      .startSpan(APIS.IMAGES_GENERATION.METHOD, {
         attributes: {
-          [OpenAISpanAttributes.SERVICE_PROVIDER]: "OpenAI",
+          [OpenAISpanAttributes.SERVICE_PROVIDER]: [SERVICE_PROVIDERS.OPENAI],
           [OpenAISpanAttributes.BASE_URL]: originalContext._client?.baseURL,
-          [OpenAISpanAttributes.API]: "openai.images.generate",
+          [OpenAISpanAttributes.API]: [APIS.IMAGES_GENERATION.ENDPOINT],
           [OpenAISpanAttributes.MODEL]: args[0]?.model,
           [OpenAISpanAttributes.REQUEST_PROMPTS]: JSON.stringify([
             args[0]?.prompt,
@@ -64,11 +64,11 @@ export function chatCompletionCreate(
     // Start a new span
     const span = trace
       .getTracer(OPENAI_TRACE_NAMESPACE)
-      .startSpan(APIS.CHAT_COMPLETION, {
+      .startSpan(APIS.CHAT_COMPLETION.METHOD, {
         attributes: {
-          [OpenAISpanAttributes.SERVICE_PROVIDER]: "OpenAI",
+          [OpenAISpanAttributes.SERVICE_PROVIDER]: [SERVICE_PROVIDERS.OPENAI],
           [OpenAISpanAttributes.BASE_URL]: originalContext._client?.baseURL,
-          [OpenAISpanAttributes.API]: "/chat/completions",
+          [OpenAISpanAttributes.API]: [APIS.CHAT_COMPLETION.ENDPOINT],
           [OpenAISpanAttributes.MODEL]: args[0]?.model,
           [OpenAISpanAttributes.REQUEST_MAXRETRIES]:
             originalContext._client?.maxRetries,

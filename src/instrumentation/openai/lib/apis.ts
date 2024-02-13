@@ -1,4 +1,10 @@
 export const APIS = {
-  CHAT_COMPLETION: "openai.chat.completion.create",
-  IMAGES_GENERATION: "openai.images.generation.create",
+  CHAT_COMPLETION: {
+    METHOD: "openai.chat.completion.create",
+    ENDPOINT: "/chat/completions",
+  },
+  IMAGES_GENERATION: {
+    METHOD: "openai.images.generation.create",
+    ENDPOINT: "/images/generations",
+  },
 };
