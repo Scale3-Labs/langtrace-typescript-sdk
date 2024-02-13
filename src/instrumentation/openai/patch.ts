@@ -15,12 +15,12 @@ export function imagesGenerate(
       .startSpan("openai.images.generate", {
         attributes: {
           service_provider: "OpenAI",
+          baseURL: originalContext._client?.baseURL,
           api: "openai.images.generate",
           model: args[0]?.model,
-          prompt: args[0]?.prompt,
-          baseURL: originalContext._client?.baseURL,
-          maxRetries: originalContext._client?.maxRetries,
-          timeout: originalContext._client?.timeout,
+          "request.prompt": args[0]?.prompt,
+          "request.maxRetries": originalContext._client?.maxRetries,
+          "request.timeout": originalContext._client?.timeout,
         },
         kind: SpanKind.CLIENT,
       });
@@ -31,7 +31,7 @@ export function imagesGenerate(
       const response = await originalMethod.apply(originalContext, args);
 
       // Set the span status and end the span
-      span.setAttribute("response", JSON.stringify(response.data));
+      span.setAttribute("response.responses", JSON.stringify(response?.data));
       span.setStatus({ code: SpanStatusCode.OK });
       span.end();
       return response;
@@ -139,7 +139,7 @@ async function* handleStreamResponse(
       const tokenCount = estimateTokens(content);
       completionTokens += tokenCount;
       result.push(content);
-      span.addEvent("stream_output", { tokenCount, chunk });
+      span.addEvent("stream_output", { tokenCount, chunk, response: content });
       yield chunk;
     }
 
@@ -150,7 +150,9 @@ async function* handleStreamResponse(
         completion_tokens: completionTokens,
         total_tokens: completionTokens + promptTokens,
       }),
-      response: JSON.stringify({ role: "assistant", content: result.join("") }),
+      "response.response": JSON.stringify([
+        { role: "assistant", content: result.join("") },
+      ]),
     });
     span.addEvent("stream_end");
   } catch (error: any) {

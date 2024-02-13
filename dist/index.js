@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const chat_completion_1 = require("./examples/openai/chat-completion");
-// import { imagesGeneration } from "./examples/openai/images-generation";
+// import { chatCompletion } from "./examples/openai/chat-completion";
+const images_generation_1 = require("./examples/openai/images-generation");
 // import { chatCompletionStreaming } from "./examples/openai/chat-completion-streaming";
 // import { langchainBasic } from "./examples/langchain/basic";
-(0, chat_completion_1.chatCompletion)();
+// chatCompletion();
 // chatCompletionStreaming();
-// imagesGeneration();
+(0, images_generation_1.imagesGeneration)();
 // langchainBasic();
