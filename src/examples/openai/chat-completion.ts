@@ -2,6 +2,10 @@ import { setupInstrumentation } from "./setup";
 
 setupInstrumentation();
 
+// import * as traceloop from "@traceloop/node-server-sdk";
+
+// traceloop.initialize({ disableBatch: true });
+
 // Initialize dotenv
 import dotenv from "dotenv";
 import OpenAI from "openai";

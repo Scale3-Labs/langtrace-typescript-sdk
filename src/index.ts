@@ -1,10 +1,10 @@
-// import { chatCompletion } from "./examples/openai/chat-completion";
+import { chatCompletion } from "./examples/openai/chat-completion";
 // import { imagesGeneration } from "./examples/openai/images-generation";
 // import { chatCompletionStreaming } from "./examples/openai/chat-completion-streaming";
 
-import { langchainBasic } from "./examples/langchain/basic";
+// import { langchainBasic } from "./examples/langchain/basic";
 
-// chatCompletion();
+chatCompletion();
 // chatCompletionStreaming();
 // imagesGeneration();
-langchainBasic();
+// langchainBasic();

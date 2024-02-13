@@ -5,7 +5,6 @@ import {
   SimpleSpanProcessor,
 } from "@opentelemetry/sdk-trace-base";
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
-// import { OpenAIInstrumentation } from "@traceloop/instrumentation-openai";
 
 // Import your custom OpenAI instrumentation
 import { openAIInstrumentation } from "../../instrumentation/openai/instrumentation";
@@ -21,7 +20,6 @@ export const setupInstrumentation = () => {
   // Register any automatic instrumentation and your custom OpenAI instrumentation
   registerInstrumentations({
     instrumentations: [openAIInstrumentation],
-    // instrumentations: [new OpenAIInstrumentation()],
     tracerProvider: tracerProvider,
   });
 

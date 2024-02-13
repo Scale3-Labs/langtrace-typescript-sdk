@@ -24,8 +24,13 @@ export async function langchainBasic() {
     ["human", "{input}"],
   ]);
 
+  const memory = new BufferMemory({
+    returnMessages: true,
+    memoryKey: "history",
+  });
+
   const chain = new ConversationChain({
-    memory: new BufferMemory({ returnMessages: true, memoryKey: "history" }),
+    memory: memory,
     prompt: chatPrompt,
     llm: chat,
   });
@@ -35,6 +40,7 @@ export async function langchainBasic() {
   });
 
   console.log(response1);
+  // console.log("Memory:", memory.chatHistory);
 
   const response2 = await chain.call({
     input: "what did i ask?",
