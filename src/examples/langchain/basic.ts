@@ -40,7 +40,6 @@ export async function langchainBasic() {
   });
 
   console.log(response1);
-  // console.log("Memory:", memory.chatHistory);
 
   const response2 = await chain.call({
     input: "what did i ask?",
