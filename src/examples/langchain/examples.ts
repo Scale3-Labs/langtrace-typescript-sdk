@@ -1,4 +1,4 @@
-import { setupInstrumentation } from "../openai/setup";
+import { setupInstrumentation } from "../setup";
 
 setupInstrumentation();
 
@@ -10,11 +10,12 @@ import { ChatOpenAI } from "@langchain/openai";
 import { ConversationChain } from "langchain/chains";
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { BufferMemory } from "langchain/memory";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 
 import dotenv from "dotenv";
 dotenv.config();
 
-export async function langchainBasic() {
+export async function memory() {
   const chat = new ChatOpenAI({ temperature: 0 });
   const chatPrompt = ChatPromptTemplate.fromMessages([
     [
@@ -49,25 +50,30 @@ export async function langchainBasic() {
   console.log(response2);
 }
 
-export async function langchainChain() {
+export async function chain() {
   const llm = new ChatOpenAI({ temperature: 0 });
 
   const prompt = ChatPromptTemplate.fromMessages([
     [
       "system",
-      "Answer the user's questions based on the below context:\n\n{context}",
+      "Answer the user's questions based on the below context:\n\n{context}\n\n Question: {input}",
     ],
   ]);
+
+  const text = "Sky is red. Sea is blue. Butterflies are multi-colored.";
+  const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 2000 });
+  const docs = await textSplitter.createDocuments([text]);
 
   const chain = createStuffDocumentsChain({
     llm: llm,
     prompt: prompt,
   });
-  const response1 = await (
+  const response = await (
     await chain
   ).invoke({
-    input: "hi! whats up?",
+    input: "What is the color of sky?",
+    context: docs,
   });
 
-  console.log(response1);
+  console.log(response);
 }

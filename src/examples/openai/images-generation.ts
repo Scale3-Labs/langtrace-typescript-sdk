@@ -1,4 +1,4 @@
-import { setupInstrumentation } from "./setup";
+import { setupInstrumentation } from "../setup";
 
 setupInstrumentation();
 

@@ -7,7 +7,7 @@ import {
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 
 // Import your custom OpenAI instrumentation
-import { openAIInstrumentation } from "../../instrumentation/openai/instrumentation";
+import { openAIInstrumentation } from "../instrumentation/openai/instrumentation";
 
 export const setupInstrumentation = () => {
   // Set up OpenTelemetry tracing

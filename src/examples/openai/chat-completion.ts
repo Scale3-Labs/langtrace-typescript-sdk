@@ -1,4 +1,4 @@
-import { setupInstrumentation } from "./setup";
+import { setupInstrumentation } from "../setup";
 
 setupInstrumentation();
 
@@ -7,10 +7,8 @@ import dotenv from "dotenv";
 import OpenAI from "openai";
 dotenv.config();
 
-// Now you can use OpenAI SDK with OpenTelemetry instrumentation
-const openai = new OpenAI();
-
 export async function chatCompletion() {
+  const openai = new OpenAI();
   const completion = await openai.chat.completions.create({
     model: "gpt-4",
     messages: [
