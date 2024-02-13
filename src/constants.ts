@@ -1,6 +1,9 @@
 import { TiktokenEncoding } from "tiktoken";
 
-export const OPENAI_TRACE_NAMESPACE = "Langtrace OpenAI SDK";
+export const TRACE_NAMESPACES = {
+  OPENAI: "Langtrace OpenAI SDK",
+  PINECONE: "Langtrace Pinecone SDK",
+};
 
 // TODO: Add more models
 // https://github.com/dqbd/tiktoken/blob/74c147e19584a3a1acea0c8e0da4d39415cd33e0/wasm/src/lib.rs#L328
@@ -15,4 +18,5 @@ export const TIKTOKEN_MODEL_MAPPING: Record<string, TiktokenEncoding> = {
 export const SERVICE_PROVIDERS = {
   OPENAI: "OpenAI",
   LANGCHAIN: "Langchain",
+  PINECONE: "Pinecone",
 };

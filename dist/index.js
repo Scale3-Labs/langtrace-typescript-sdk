@@ -1,10 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const examples_1 = require("./examples/langchain/examples");
+const basic_1 = require("./examples/pinecone/basic");
 // import { imagesGeneration } from "./examples/openai/images-generation";
 // import { chatCompletionStreaming } from "./examples/openai/chat-completion-streaming";
 // chatCompletion();
 // chatCompletionStreaming();
 // imagesGeneration();
-(0, examples_1.memory)();
+// memory();
 // chain();
+(0, basic_1.upsert)();

@@ -1,4 +1,4 @@
-import { memory } from "./examples/langchain/examples";
+import { upsert } from "./examples/pinecone/basic";
 // import { imagesGeneration } from "./examples/openai/images-generation";
 // import { chatCompletionStreaming } from "./examples/openai/chat-completion-streaming";
 
@@ -6,5 +6,6 @@ import { memory } from "./examples/langchain/examples";
 // chatCompletionStreaming();
 // imagesGeneration();
 
-memory();
+// memory();
 // chain();
+upsert();

@@ -1,5 +1,5 @@
 import { Span, SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
-import { OPENAI_TRACE_NAMESPACE, SERVICE_PROVIDERS } from "../../constants";
+import { SERVICE_PROVIDERS, TRACE_NAMESPACES } from "../../constants";
 import { calculatePromptTokens, estimateTokens } from "../../utils";
 import { APIS } from "./lib/apis";
 import { OpenAISpanAttributes, OpenAISpanEvents } from "./lib/span_attributes";
@@ -13,10 +13,10 @@ export function imagesGenerate(
 
     // Start a new span
     const span = trace
-      .getTracer(OPENAI_TRACE_NAMESPACE)
+      .getTracer(TRACE_NAMESPACES.OPENAI)
       .startSpan(APIS.IMAGES_GENERATION.METHOD, {
         attributes: {
-          [OpenAISpanAttributes.SERVICE_PROVIDER]: [SERVICE_PROVIDERS.OPENAI],
+          [OpenAISpanAttributes.SERVICE_PROVIDER]: SERVICE_PROVIDERS.OPENAI,
           [OpenAISpanAttributes.BASE_URL]: originalContext._client?.baseURL,
           [OpenAISpanAttributes.API]: [APIS.IMAGES_GENERATION.ENDPOINT],
           [OpenAISpanAttributes.MODEL]: args[0]?.model,
@@ -63,7 +63,7 @@ export function chatCompletionCreate(
 
     // Start a new span
     const span = trace
-      .getTracer(OPENAI_TRACE_NAMESPACE)
+      .getTracer(TRACE_NAMESPACES.OPENAI)
       .startSpan(APIS.CHAT_COMPLETION.METHOD, {
         attributes: {
           [OpenAISpanAttributes.SERVICE_PROVIDER]: SERVICE_PROVIDERS.OPENAI,
