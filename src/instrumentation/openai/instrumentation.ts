@@ -15,7 +15,7 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
   init() {
     const module = new InstrumentationNodeModuleDefinition<typeof OpenAI>(
       "openai",
-      ["^4.26.1"], // Specify the versions of the OpenAI SDK you want to instrument
+      [">=4.26.1 <6.0.0"],
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching OpenAI SDK version ${moduleVersion}`);
         this._patch(moduleExports);
