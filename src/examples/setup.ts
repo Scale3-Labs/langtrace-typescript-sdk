@@ -17,12 +17,12 @@ export const setupInstrumentation = () => {
   const consoleExporter = new ConsoleSpanExporter();
   tracerProvider.addSpanProcessor(new SimpleSpanProcessor(consoleExporter));
 
+  // Make sure to register the provider
+  tracerProvider.register();
+
   // Register any automatic instrumentation and your custom OpenAI instrumentation
   registerInstrumentations({
     instrumentations: [openAIInstrumentation],
     tracerProvider: tracerProvider,
   });
-
-  // Make sure to register the provider
-  tracerProvider.register();
 };
