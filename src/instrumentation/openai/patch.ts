@@ -61,7 +61,6 @@ export function chatCompletionCreate(
           baseURL: originalContext._client?.baseURL,
           api: "/chat/completions",
           model: args[0]?.model,
-          prompt: JSON.stringify(args[0]?.messages?.[0] || ""),
           "request.maxRetries": originalContext._client?.maxRetries,
           "request.timeout": originalContext._client?.timeout,
           "request.stream": args[0]?.stream,
@@ -69,9 +68,7 @@ export function chatCompletionCreate(
         kind: SpanKind.SERVER,
       });
 
-    args[0].messages.forEach((message: any, index: number) => {
-      span.setAttribute(`request.prompt.${index}`, JSON.stringify(message));
-    });
+    span.setAttribute("request.prompts", JSON.stringify(args[0].messages));
 
     if (args[0]?.temperature) {
       span.setAttribute("request.temperature", args[0]?.temperature);
@@ -95,27 +92,22 @@ export function chatCompletionCreate(
 
       // Handle non-stream responses immediately
       if (!args[0].stream || args[0].stream === false) {
-        resp?.choices?.forEach((choice: any, index: number) => {
-          span.setAttribute(
-            `response.response.${index}.message`,
-            JSON.stringify(choice?.message)
-          );
-          span.setAttribute(
-            `response.response.${index}.finish_reason`,
-            choice?.finish_reason
-          );
-        });
+        const responses = resp?.choices?.map((choice: any) => choice?.message);
+        span.setAttribute("response.responses", JSON.stringify(responses));
         if (resp?.system_fingerprint) {
           span.setAttribute(
             "response.system_fingerprint",
             resp?.system_fingerprint
           );
         }
-        span.setAttributes({
-          "token_counts.prompt_tokens": promptTokens,
-          "token_counts.completion_tokens": resp?.usage?.completion_tokens || 0,
-          "token_counts.total_tokens": resp?.usage?.total_tokens || 0,
-        });
+        span.setAttribute(
+          "token_counts",
+          JSON.stringify({
+            prompt_tokens: promptTokens,
+            completion_tokens: resp?.usage?.completion_tokens || 0,
+            total_tokens: resp?.usage?.total_tokens || 0,
+          })
+        );
         span.setStatus({ code: SpanStatusCode.OK });
         span.end();
         return resp;

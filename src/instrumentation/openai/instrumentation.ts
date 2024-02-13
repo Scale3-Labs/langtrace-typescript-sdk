@@ -44,6 +44,7 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
       "create",
       chatCompletionCreate
     );
+    // this._wrap(openai.Completions.prototype, "create", chatCompletionCreate);
     this._wrap(openai.Images.prototype, "generate", imagesGenerate);
   }
 
