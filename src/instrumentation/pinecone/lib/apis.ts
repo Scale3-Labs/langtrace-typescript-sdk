@@ -15,4 +15,8 @@ export const APIS = {
     METHOD: "pinecone.index.deleteMany",
     ENDPOINT: "/vectors/delete",
   },
+  DELETE_ALL: {
+    METHOD: "pinecone.index.deleteAll",
+    ENDPOINT: "/vectors/delete",
+  },
 };

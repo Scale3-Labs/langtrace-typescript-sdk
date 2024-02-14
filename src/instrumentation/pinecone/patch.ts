@@ -19,6 +19,8 @@ export function genericPatch(
       api = APIS.DELETE_ONE;
     } else if (method === "deleteMany") {
       api = APIS.DELETE_MANY;
+    } else if (method === "deleteAll") {
+      api = APIS.DELETE_ALL;
     } else {
       api = { METHOD: method, ENDPOINT: "unknown" };
     }
