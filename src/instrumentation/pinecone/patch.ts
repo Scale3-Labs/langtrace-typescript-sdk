@@ -54,6 +54,9 @@ export function genericPatch(
           this.target?.indexHostUrl
         );
       }
+      if (args[0]?.topK) {
+        span.setAttribute(PineconeSpanAttributes.REQUEST_TOPK, args[0]?.topK);
+      }
 
       // Call the original create method
       const response = await originalMethod.apply(originalContext, args);
