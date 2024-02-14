@@ -187,3 +187,62 @@ async function* handleStreamResponse(
     span.end();
   }
 }
+
+export function embeddingsCreate(
+  originalMethod: (...args: any[]) => any
+): (...args: any[]) => any {
+  return async function (this: any, ...args: any[]) {
+    // Preserving `this` from the calling context
+    const originalContext = this;
+
+    // Start a new span
+    const span = trace
+      .getTracer(TRACE_NAMESPACES.OPENAI)
+      .startSpan(APIS.EMBEDDINGS_CREATE.METHOD, {
+        attributes: {
+          [OpenAISpanAttributes.SERVICE_PROVIDER]: SERVICE_PROVIDERS.OPENAI,
+          [OpenAISpanAttributes.BASE_URL]: originalContext._client?.baseURL,
+          [OpenAISpanAttributes.API]: APIS.EMBEDDINGS_CREATE.ENDPOINT,
+          [OpenAISpanAttributes.MODEL]: args[0]?.model,
+          [OpenAISpanAttributes.REQUEST_MAXRETRIES]:
+            originalContext._client?.maxRetries,
+          [OpenAISpanAttributes.REQUEST_TIMEOUT]:
+            originalContext._client?.timeout,
+          [OpenAISpanAttributes.REQUEST_STREAM]: args[0]?.stream,
+        },
+        kind: SpanKind.SERVER,
+      });
+
+    if (args[0]?.encoding_format) {
+      span.setAttribute(
+        OpenAISpanAttributes.REQUEST_ENCODING_FORMAT,
+        args[0]?.encoding_format
+      );
+    }
+
+    if (args[0]?.dimensions) {
+      span.setAttribute(
+        OpenAISpanAttributes.REQUEST_DIMENSIONS,
+        args[0]?.dimensions
+      );
+    }
+
+    if (args[0]?.user) {
+      span.setAttribute(OpenAISpanAttributes.REQUEST_USER, args[0]?.user);
+    }
+
+    try {
+      // Call the original create method
+      const resp = await originalMethod.apply(this, args);
+
+      span.setStatus({ code: SpanStatusCode.OK });
+      span.end();
+      return resp;
+    } catch (error: any) {
+      span.recordException(error);
+      span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+      span.end();
+      throw error;
+    }
+  };
+}

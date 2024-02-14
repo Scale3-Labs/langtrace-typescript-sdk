@@ -5,7 +5,11 @@ import {
   isWrapped,
 } from "@opentelemetry/instrumentation";
 import type { OpenAI } from "openai";
-import { chatCompletionCreate, imagesGenerate } from "./patch";
+import {
+  chatCompletionCreate,
+  embeddingsCreate,
+  imagesGenerate,
+} from "./patch";
 
 class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
   constructor() {
@@ -37,6 +41,8 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
       this._unwrap(openai.Chat.Completions.prototype, "create");
     } else if (isWrapped(openai.Images.prototype)) {
       this._unwrap(openai.Images.prototype, "generate");
+    } else if (isWrapped(openai.Embeddings.prototype)) {
+      this._unwrap(openai.Embeddings.prototype, "create");
     }
 
     this._wrap(
@@ -45,11 +51,13 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
       chatCompletionCreate
     );
     this._wrap(openai.Images.prototype, "generate", imagesGenerate);
+    this._wrap(openai.Embeddings.prototype, "create", embeddingsCreate);
   }
 
   private _unpatch(openai: typeof OpenAI) {
     this._unwrap(openai.Chat.Completions.prototype, "create");
     this._unwrap(openai.Images.prototype, "generate");
+    this._unwrap(openai.Embeddings.prototype, "create");
   }
 }
 

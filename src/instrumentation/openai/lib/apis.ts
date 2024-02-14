@@ -7,4 +7,8 @@ export const APIS = {
     METHOD: "openai.images.generation.create",
     ENDPOINT: "/images/generations",
   },
+  EMBEDDINGS_CREATE: {
+    METHOD: "openai.embeddings.create",
+    ENDPOINT: "/embeddings",
+  },
 };

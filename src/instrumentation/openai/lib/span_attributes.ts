@@ -8,6 +8,8 @@ export const OpenAISpanAttributes: Record<string, string> = {
   REQUEST_TEMPERATURE: "request.temperature",
   REQUEST_TOP_P: "request.top_p",
   REQUEST_USER: "request.user",
+  REQUEST_ENCODING_FORMAT: "request.encoding_format",
+  REQUEST_DIMENSIONS: "request.dimensions",
   RESPONSE_SYSTEM_FINGERPRINT: "response.system_fingerprint",
   TOKEN_COUNTS: "token_counts",
 };
