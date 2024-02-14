@@ -3,45 +3,56 @@ import { SERVICE_PROVIDERS, TRACE_NAMESPACES } from "../../constants";
 import { APIS } from "./lib/apis";
 import { PineconeSpanAttributes } from "./lib/span_attributes";
 
-export function patchUpsert(
-  originalMethod: (...args: any[]) => any
+export function genericPatch(
+  originalMethod: (...args: any[]) => any,
+  method: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     // Preserving `this` from the calling context
     const originalContext = this;
+    let api: any = {};
+    if (method === "upsert") {
+      api = APIS.UPSERT;
+    } else if (method === "query") {
+      api = APIS.QUERY;
+    } else if (method === "deleteOne") {
+      api = APIS.DELETE_ONE;
+    } else if (method === "deleteMany") {
+      api = APIS.DELETE_MANY;
+    } else {
+      api = { METHOD: method, ENDPOINT: "unknown" };
+    }
 
-    // Start a new span
     const span = trace
       .getTracer(TRACE_NAMESPACES.PINECONE)
-      .startSpan(APIS.UPSERT.METHOD, {
+      .startSpan(api.METHOD, {
         attributes: {
           [PineconeSpanAttributes.SERVICE_PROVIDER]: SERVICE_PROVIDERS.PINECONE,
-          [PineconeSpanAttributes.API]: APIS.UPSERT.ENDPOINT,
+          [PineconeSpanAttributes.API]: api.ENDPOINT,
         },
         kind: SpanKind.CLIENT,
       });
 
-    if (this.target?.index) {
-      span.setAttribute(
-        PineconeSpanAttributes.REQUEST_INDEX,
-        this.target?.index
-      );
-    }
-    if (this.target?.namespace) {
-      span.setAttribute(
-        PineconeSpanAttributes.REQUEST_NAMESPACE,
-        this.target?.namespace
-      );
-    }
-    if (this.target?.indexHostUrl) {
-      span.setAttribute(
-        PineconeSpanAttributes.REQUEST_INDEX_HOST_URL,
-        this.target?.indexHostUrl
-      );
-    }
-
-    // Wrap the original method in a try/catch block
     try {
+      if (this.target?.index) {
+        span.setAttribute(
+          PineconeSpanAttributes.REQUEST_INDEX,
+          this.target?.index
+        );
+      }
+      if (this.target?.namespace) {
+        span.setAttribute(
+          PineconeSpanAttributes.REQUEST_NAMESPACE,
+          this.target?.namespace
+        );
+      }
+      if (this.target?.indexHostUrl) {
+        span.setAttribute(
+          PineconeSpanAttributes.REQUEST_INDEX_HOST_URL,
+          this.target?.indexHostUrl
+        );
+      }
+
       // Call the original create method
       const response = await originalMethod.apply(originalContext, args);
 

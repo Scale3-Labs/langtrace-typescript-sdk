@@ -14,7 +14,7 @@ const openai = new OpenAI();
 export async function upsert() {
   const response = await openai.embeddings.create({
     model: "text-embedding-3-small",
-    input: "Your text string goes here",
+    input: "Some random text string goes here",
     encoding_format: "float",
   });
 
@@ -31,4 +31,9 @@ export async function upsert() {
 
   // Upsert the data into your index
   await index.upsert([dataToUpsert]);
+
+  const resp = await pc
+    .index("test-index")
+    .query({ topK: 3, vector: embedding });
+  console.log(resp);
 }

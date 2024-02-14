@@ -6,7 +6,7 @@ import {
   isWrapped,
 } from "@opentelemetry/instrumentation";
 import type { Pinecone } from "@pinecone-database/pinecone";
-import { patchUpsert } from "./patch";
+import { genericPatch } from "./patch";
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 class PineconeInstrumentation extends InstrumentationBase<any> {
@@ -37,13 +37,38 @@ class PineconeInstrumentation extends InstrumentationBase<any> {
   private _patch(pinecone: any) {
     if (isWrapped(pinecone.Index.prototype)) {
       this._unwrap(pinecone.Index.prototype, "upsert");
+      this._unwrap(pinecone.Index.prototype, "query");
     }
 
-    this._wrap(pinecone.Index.prototype, "upsert", patchUpsert);
+    this._wrap(
+      pinecone.Index.prototype,
+      "upsert",
+      (originalMethod: (...args: any[]) => any) =>
+        genericPatch(originalMethod, "upsert")
+    );
+    this._wrap(
+      pinecone.Index.prototype,
+      "query",
+      (originalMethod: (...args: any[]) => any) =>
+        genericPatch(originalMethod, "query")
+    );
+    this._wrap(
+      pinecone.Index.prototype,
+      "deleteOne",
+      (originalMethod: (...args: any[]) => any) =>
+        genericPatch(originalMethod, "deleteOne")
+    );
+    this._wrap(
+      pinecone.Index.prototype,
+      "deleteMany",
+      (originalMethod: (...args: any[]) => any) =>
+        genericPatch(originalMethod, "deleteMany")
+    );
   }
 
   private _unpatch(pinecone: any) {
     this._unwrap(pinecone.Index.prototype, "upsert");
+    this._unwrap(pinecone.Index.prototype, "query");
   }
 }
 
