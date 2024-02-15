@@ -1,11 +1,13 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const basic_1 = require("./examples/pinecone/basic");
 // import { imagesGeneration } from "./examples/openai/images-generation";
 // import { chatCompletionStreaming } from "./examples/openai/chat-completion-streaming";
-// chatCompletion();
+Object.defineProperty(exports, "__esModule", { value: true });
+const chat_completion_1 = require("./examples/openai/chat-completion");
+(0, chat_completion_1.chatCompletion)();
 // chatCompletionStreaming();
 // imagesGeneration();
 // memory();
 // chain();
-(0, basic_1.upsert)();
+// extractor();
+// basic();
+// extractor();

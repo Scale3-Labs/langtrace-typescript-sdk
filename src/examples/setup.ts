@@ -7,6 +7,7 @@ import {
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 
 // Import your custom OpenAI instrumentation
+import { llamaIndexInstrumentation } from "../instrumentation/llamaindex/instrumentation";
 import { openAIInstrumentation } from "../instrumentation/openai/instrumentation";
 import { pineconeInstrumentation } from "../instrumentation/pinecone/instrumentation";
 
@@ -23,7 +24,11 @@ export const setupInstrumentation = () => {
 
   // Register any automatic instrumentation and your custom OpenAI instrumentation
   registerInstrumentations({
-    instrumentations: [openAIInstrumentation, pineconeInstrumentation],
+    instrumentations: [
+      llamaIndexInstrumentation,
+      pineconeInstrumentation,
+      openAIInstrumentation,
+    ],
     tracerProvider: tracerProvider,
   });
 };

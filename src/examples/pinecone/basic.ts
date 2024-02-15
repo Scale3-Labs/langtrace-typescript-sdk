@@ -11,7 +11,7 @@ dotenv.config();
 const pc = new Pinecone();
 const openai = new OpenAI();
 
-export async function upsert() {
+export async function basic() {
   const response = await openai.embeddings.create({
     model: "text-embedding-3-small",
     input: "Some random text string goes here",

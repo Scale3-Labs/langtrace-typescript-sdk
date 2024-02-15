@@ -2,7 +2,9 @@ import { TiktokenEncoding } from "tiktoken";
 
 export const TRACE_NAMESPACES = {
   OPENAI: "Langtrace OpenAI SDK",
+  LANGCHAIN: "Langtrace Langchain SDK",
   PINECONE: "Langtrace Pinecone SDK",
+  LLAMAINDEX: "Langtrace LlamaIndex SDK",
 };
 
 // TODO: Add more models
@@ -19,4 +21,5 @@ export const SERVICE_PROVIDERS = {
   OPENAI: "OpenAI",
   LANGCHAIN: "Langchain",
   PINECONE: "Pinecone",
+  LLAMAINDEX: "LlamaIndex",
 };
