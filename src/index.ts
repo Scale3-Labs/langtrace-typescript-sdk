@@ -1,10 +1,8 @@
 // import { imagesGeneration } from "./examples/openai/images-generation";
-// import { chatCompletionStreaming } from "./examples/openai/chat-completion-streaming";
+import { chatCompletionStreaming } from "./examples/openai/chat-completion-streaming";
 
-import { chatCompletion } from "./examples/openai/chat-completion";
-
-chatCompletion();
-// chatCompletionStreaming();
+// chatCompletion();
+chatCompletionStreaming();
 // imagesGeneration();
 
 // memory();

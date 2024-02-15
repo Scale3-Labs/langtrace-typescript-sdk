@@ -1,6 +1,7 @@
 import {
   LangTraceSpanAttributes,
   OpenAISpanAttributes,
+  OpenAISpanEvents,
 } from "@langtrase/trace-attributes";
 import { Span, Tracer } from "@opentelemetry/api";
 
@@ -38,7 +39,7 @@ export class LangTraceSpan {
     this.span.recordException(error);
   }
 
-  addEvent(name: string, attributes?: any): void {
+  addEvent(name: OpenAISpanEvents, attributes?: any): void {
     this.span.addEvent(name, attributes);
   }
 

@@ -1,13 +1,13 @@
 import {
   LangTraceSpanAttributes,
   OpenAISpanAttributes,
+  OpenAISpanEvents,
 } from "@langtrase/trace-attributes";
 import { SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
 import { SERVICE_PROVIDERS, TRACE_NAMESPACES } from "../../constants";
 import { LangTraceSpan } from "../../span";
 import { calculatePromptTokens, estimateTokens } from "../../utils";
 import { APIS } from "./lib/apis";
-import { OpenAISpanEvents } from "./lib/span_attributes";
 
 export function imagesGenerate(
   originalMethod: (...args: any[]) => any
@@ -129,14 +129,14 @@ async function* handleStreamResponse(
   let completionTokens = 0;
   let result: string[] = [];
 
-  span.addEvent(OpenAISpanEvents.STREAM_START);
+  span.addEvent("stream.start" as OpenAISpanEvents);
   try {
     for await (const chunk of stream) {
       const content = chunk.choices[0]?.delta?.content || "";
       const tokenCount = estimateTokens(content);
       completionTokens += tokenCount;
       result.push(content);
-      span.addEvent(OpenAISpanEvents.STREAM_OUTPUT, {
+      span.addEvent("stream.output" as OpenAISpanEvents, {
         tokenCount,
         chunk,
         response: content,
@@ -155,7 +155,7 @@ async function* handleStreamResponse(
         { role: "assistant", content: result.join("") },
       ]),
     });
-    span.addEvent(OpenAISpanEvents.STREAM_END);
+    span.addEvent("stream.end" as OpenAISpanEvents);
   } catch (error: any) {
     span.recordException(error);
     span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
