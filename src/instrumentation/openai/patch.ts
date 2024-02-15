@@ -1,7 +1,7 @@
 import {
+  Event,
   LangTraceSpanAttributes,
   OpenAISpanAttributes,
-  OpenAISpanEvents,
 } from "@langtrase/trace-attributes";
 import { SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
 import { SERVICE_PROVIDERS, TRACE_NAMESPACES } from "../../constants";
@@ -129,14 +129,14 @@ async function* handleStreamResponse(
   let completionTokens = 0;
   let result: string[] = [];
 
-  span.addEvent("stream.start" as OpenAISpanEvents);
+  span.addEvent(Event.STREAM_START);
   try {
     for await (const chunk of stream) {
       const content = chunk.choices[0]?.delta?.content || "";
       const tokenCount = estimateTokens(content);
       completionTokens += tokenCount;
       result.push(content);
-      span.addEvent("stream.output" as OpenAISpanEvents, {
+      span.addEvent(Event.STREAM_OUTPUT, {
         tokenCount,
         chunk,
         response: content,
@@ -155,7 +155,7 @@ async function* handleStreamResponse(
         { role: "assistant", content: result.join("") },
       ]),
     });
-    span.addEvent("stream.end" as OpenAISpanEvents);
+    span.addEvent(Event.STREAM_END);
   } catch (error: any) {
     span.recordException(error);
     span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
@@ -198,6 +198,8 @@ export function embeddingsCreate(
     if (args[0]?.user) {
       attributes["llm.user"] = args[0]?.user;
     }
+
+    span.addAttribute(attributes);
 
     try {
       const resp = await originalMethod.apply(this, args);
