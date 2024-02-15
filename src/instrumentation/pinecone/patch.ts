@@ -1,14 +1,13 @@
 import { SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
 import { SERVICE_PROVIDERS, TRACE_NAMESPACES } from "../../constants";
+import { LangTraceAttributes, LangTraceSpan } from "../../span";
 import { APIS } from "./lib/apis";
-import { PineconeSpanAttributes } from "./lib/span_attributes";
 
 export function genericPatch(
   originalMethod: (...args: any[]) => any,
   method: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
-    // Preserving `this` from the calling context
     const originalContext = this;
     let api: any = {};
     if (method === "upsert") {
@@ -25,46 +24,42 @@ export function genericPatch(
       api = { METHOD: method, ENDPOINT: "unknown" };
     }
 
-    const span = trace
-      .getTracer(TRACE_NAMESPACES.PINECONE)
-      .startSpan(api.METHOD, {
-        attributes: {
-          [PineconeSpanAttributes.SERVICE_PROVIDER]: SERVICE_PROVIDERS.PINECONE,
-          [PineconeSpanAttributes.API]: api.ENDPOINT,
-        },
-        kind: SpanKind.CLIENT,
-      });
+    const tracer = trace.getTracer(TRACE_NAMESPACES.PINECONE);
+    const span = new LangTraceSpan(tracer, api.METHOD, {
+      kind: SpanKind.CLIENT,
+    });
+
+    const attributes: Partial<LangTraceAttributes> = {
+      "service.provider": SERVICE_PROVIDERS.PINECONE,
+      "db.operation": api.ENDPOINT,
+    };
+
+    span.addAttribute(attributes);
 
     try {
       if (this.target?.index) {
-        span.setAttribute(
-          PineconeSpanAttributes.REQUEST_INDEX,
-          this.target?.index
-        );
+        span.addAttribute({
+          "db.index": this.target?.index,
+        });
       }
       if (this.target?.namespace) {
-        span.setAttribute(
-          PineconeSpanAttributes.REQUEST_NAMESPACE,
-          this.target?.namespace
-        );
+        span.addAttribute({
+          "db.namespace": this.target?.namespace,
+        });
       }
       if (this.target?.indexHostUrl) {
-        span.setAttribute(
-          PineconeSpanAttributes.REQUEST_INDEX_HOST_URL,
-          this.target?.indexHostUrl
-        );
+        span.addAttribute({
+          "server.address": this.target?.indexHostUrl,
+        });
       }
       if (args[0]?.topK) {
-        span.setAttribute(PineconeSpanAttributes.REQUEST_TOPK, args[0]?.topK);
+        span.addAttribute({ "db.top_k": args[0]?.topK });
       }
 
       // Call the original create method
+      // NOTE: Not tracing the response data as it can contain sensitive information
       const response = await originalMethod.apply(originalContext, args);
 
-      // Set the span status and end the span
-      if (response) {
-        span.setAttribute("response", JSON.stringify(response?.data));
-      }
       span.setStatus({ code: SpanStatusCode.OK });
       span.end();
       return response;

@@ -1,12 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-// import { imagesGeneration } from "./examples/openai/images-generation";
-const chat_completion_streaming_1 = require("./examples/openai/chat-completion-streaming");
-// chatCompletion();
-(0, chat_completion_streaming_1.chatCompletionStreaming)();
-// imagesGeneration();
-// memory();
-// chain();
-// extractor();
-// basic();
-// extractor();
+const basic_1 = require("./examples/pinecone/basic");
+// chatCompletionStreaming();
+(0, basic_1.basic)();
