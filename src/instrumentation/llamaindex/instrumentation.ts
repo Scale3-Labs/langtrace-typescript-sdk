@@ -119,6 +119,20 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
               )
           );
         }
+        if ((cls.prototype as llamaindex.BaseReader).loadData !== undefined) {
+          if (isWrapped(cls.prototype)) {
+            this._unwrap(cls.prototype, "loadData");
+          }
+          this._wrap(
+            cls.prototype,
+            "loadData",
+            (originalMethod: (...args: any[]) => any) =>
+              genericPatch(
+                originalMethod,
+                LlamaIndexMethods.TASK_LLAMAINDEX_BASEREADER_LOADDATA
+              )
+          );
+        }
       }
     }
   }

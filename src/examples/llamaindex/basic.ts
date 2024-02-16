@@ -4,6 +4,7 @@ setupInstrumentation();
 
 import dotenv from "dotenv";
 import fs from "fs/promises";
+import type { BaseReader, Metadata } from "llamaindex";
 import {
   Document,
   IngestionPipeline,
@@ -11,6 +12,11 @@ import {
   TitleExtractor,
   VectorStoreIndex,
 } from "llamaindex";
+import {
+  FILE_EXT_TO_READER,
+  SimpleDirectoryReader,
+  TextFileReader,
+} from "llamaindex/readers/SimpleDirectoryReader";
 dotenv.config();
 
 export async function basic() {
@@ -54,4 +60,26 @@ export async function extractor() {
   for (const node of nodes) {
     console.log(node.metadata);
   }
+}
+
+export async function loader() {
+  class ZipReader implements BaseReader {
+    loadData(...args: any[]): Promise<Document<Metadata>[]> {
+      throw new Error("Implement me");
+    }
+  }
+
+  const reader = new SimpleDirectoryReader();
+  const documents = await reader.loadData({
+    directoryPath: "src/examples/llamaindex/data",
+    defaultReader: new TextFileReader(),
+    fileExtToReader: {
+      ...FILE_EXT_TO_READER,
+      zip: new ZipReader(),
+    },
+  });
+
+  documents.forEach((doc) => {
+    console.log(`document (${doc.id_}):`, doc.getText());
+  });
 }

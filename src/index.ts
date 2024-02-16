@@ -1,3 +1,3 @@
-import { basic } from "./examples/llamaindex/basic";
+import { loader } from "./examples/llamaindex/basic";
 
-basic();
+loader();

@@ -6,7 +6,6 @@ export function genericPatch(
   task: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
-    // Start a new span
     const span = trace.getTracer(TRACE_NAMESPACES.LLAMAINDEX).startSpan(task, {
       kind: SpanKind.CLIENT,
     });
