@@ -13,7 +13,7 @@ import {
 
 class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
   constructor() {
-    super("@scale3/langtrace", "1.0.0");
+    super("@langtrase/node-sdk", "1.0.0");
   }
 
   init() {

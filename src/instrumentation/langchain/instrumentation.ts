@@ -11,7 +11,7 @@ import { recursiveCharacterTextSplitterHandler } from "./patch_text_splitter";
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 class LangchainInstrumentation extends InstrumentationBase<any> {
   constructor() {
-    super("@scale3/langtrace", "1.0.0");
+    super("@langtrase/node-sdk", "1.0.0");
   }
 
   init(): InstrumentationModuleDefinition<typeof ConversationChain>[] {
