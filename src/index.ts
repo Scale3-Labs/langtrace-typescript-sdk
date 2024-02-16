@@ -1,4 +1,3 @@
-import { basic } from "./examples/pinecone/basic";
+import { basic } from "./examples/llamaindex/basic";
 
-// chatCompletionStreaming();
 basic();

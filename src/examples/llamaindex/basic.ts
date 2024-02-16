@@ -15,13 +15,12 @@ dotenv.config();
 
 export async function basic() {
   // Load essay from abramov.txt in Node
-  const essay = await fs.readFile(
-    "node_modules/llamaindex/examples/abramov.txt",
-    "utf-8"
-  );
+  const path = "node_modules/llamaindex/examples/abramov.txt";
+
+  const essay = await fs.readFile(path, "utf-8");
 
   // Create Document object with essay
-  const document = new Document({ text: essay });
+  const document = new Document({ text: essay, id_: path });
 
   // Split text and create embeddings. Store them in a VectorStoreIndex
   const index = await VectorStoreIndex.fromDocuments([document]);
