@@ -6,6 +6,7 @@ import {
   isWrapped,
 } from "@opentelemetry/instrumentation";
 import type { Pinecone } from "@pinecone-database/pinecone";
+import { APIS } from "./lib/apis";
 import { genericPatch } from "./patch";
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
@@ -36,39 +37,24 @@ class PineconeInstrumentation extends InstrumentationBase<any> {
 
   private _patch(pinecone: any) {
     if (isWrapped(pinecone.Index.prototype)) {
-      this._unwrap(pinecone.Index.prototype, "upsert");
-      this._unwrap(pinecone.Index.prototype, "query");
+      Object.keys(APIS).forEach((api) => {
+        this._unwrap(pinecone.Index.prototype, APIS[api].OPERATION);
+      });
     }
-
-    this._wrap(
-      pinecone.Index.prototype,
-      "upsert",
-      (originalMethod: (...args: any[]) => any) =>
-        genericPatch(originalMethod, "upsert")
-    );
-    this._wrap(
-      pinecone.Index.prototype,
-      "query",
-      (originalMethod: (...args: any[]) => any) =>
-        genericPatch(originalMethod, "query")
-    );
-    this._wrap(
-      pinecone.Index.prototype,
-      "deleteOne",
-      (originalMethod: (...args: any[]) => any) =>
-        genericPatch(originalMethod, "deleteOne")
-    );
-    this._wrap(
-      pinecone.Index.prototype,
-      "deleteMany",
-      (originalMethod: (...args: any[]) => any) =>
-        genericPatch(originalMethod, "deleteMany")
-    );
+    Object.keys(APIS).forEach((api) => {
+      this._wrap(
+        pinecone.Index.prototype,
+        APIS[api].OPERATION,
+        (originalMethod: (...args: any[]) => any) =>
+          genericPatch(originalMethod, api)
+      );
+    });
   }
 
   private _unpatch(pinecone: any) {
-    this._unwrap(pinecone.Index.prototype, "upsert");
-    this._unwrap(pinecone.Index.prototype, "query");
+    Object.keys(APIS).forEach((api) => {
+      this._unwrap(pinecone.Index.prototype, APIS[api].OPERATION);
+    });
   }
 }
 

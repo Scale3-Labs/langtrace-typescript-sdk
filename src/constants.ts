@@ -5,6 +5,7 @@ export const TRACE_NAMESPACES = {
   LANGCHAIN: "Langtrace Langchain SDK",
   PINECONE: "Langtrace Pinecone SDK",
   LLAMAINDEX: "Langtrace LlamaIndex SDK",
+  CHROMA: "Langtrace Chroma SDK",
 };
 
 // TODO: Add more models
@@ -22,4 +23,5 @@ export const SERVICE_PROVIDERS = {
   LANGCHAIN: "Langchain",
   PINECONE: "Pinecone",
   LLAMAINDEX: "LlamaIndex",
+  CHROMA: "Chroma",
 };

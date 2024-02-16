@@ -9,29 +9,15 @@ export function genericPatch(
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
-    let api: any = {};
-    if (method === "upsert") {
-      api = APIS.UPSERT;
-    } else if (method === "query") {
-      api = APIS.QUERY;
-    } else if (method === "deleteOne") {
-      api = APIS.DELETE_ONE;
-    } else if (method === "deleteMany") {
-      api = APIS.DELETE_MANY;
-    } else if (method === "deleteAll") {
-      api = APIS.DELETE_ALL;
-    } else {
-      api = { METHOD: method, ENDPOINT: "unknown" };
-    }
-
+    let api = APIS[method];
     const tracer = trace.getTracer(TRACE_NAMESPACES.PINECONE);
     const span = new LangTraceSpan(tracer, api.METHOD, {
       kind: SpanKind.CLIENT,
     });
-
     const attributes: Partial<LangTraceAttributes> = {
       "service.provider": SERVICE_PROVIDERS.PINECONE,
-      "db.operation": api.ENDPOINT,
+      "db.system": "pinecone",
+      "db.operation": api.OPERATION,
     };
 
     span.addAttribute(attributes);
@@ -49,7 +35,7 @@ export function genericPatch(
       }
       if (this.target?.indexHostUrl) {
         span.addAttribute({
-          "server.address": this.target?.indexHostUrl,
+          "server.address": this.target?.indexHostUrl + api.ENDPOINT,
         });
       }
       if (args[0]?.topK) {

@@ -10,7 +10,7 @@
   "author": "Scale3 Labs",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@langtrase/trace-attributes": "^1.0.26",
+    "@langtrase/trace-attributes": "^1.0.27",
     "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/auto-instrumentations-node": "^0.41.1",
     "@opentelemetry/instrumentation": "^0.48.0",
@@ -26,6 +26,7 @@
     "@traceloop/instrumentation-langchain": "^0.3.5",
     "@traceloop/node-server-sdk": "^0.3.6",
     "axios": "^1.6.7",
+    "chromadb": "^1.8.1",
     "dotenv": "^16.4.1",
     "langchain": "^0.1.17",
     "llamaindex": "^0.1.10",

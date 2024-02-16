@@ -1,13 +1,13 @@
 import {
+  DatabaseSpanAttributes,
   Event,
   LangTraceSpanAttributes,
   OpenAISpanAttributes,
-  PineconeSpanAttributes,
 } from "@langtrase/trace-attributes";
 import { Span, Tracer } from "@opentelemetry/api";
 
 export type LangTraceAttributes = OpenAISpanAttributes &
-  PineconeSpanAttributes &
+  DatabaseSpanAttributes &
   LangTraceSpanAttributes;
 export class LangTraceSpan {
   private span: Span;
