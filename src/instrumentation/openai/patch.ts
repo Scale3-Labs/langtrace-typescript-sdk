@@ -137,9 +137,8 @@ async function* handleStreamResponse(
       completionTokens += tokenCount;
       result.push(content);
       span.addEvent(Event.STREAM_OUTPUT, {
-        tokenCount,
-        chunk,
-        response: content,
+        tokens: tokenCount,
+        response: JSON.stringify(content),
       });
       yield chunk;
     }

@@ -1,3 +1,3 @@
-import { basic } from "./examples/chroma/basic";
+import { chatCompletionStreaming } from "./examples/openai/chat-completion-streaming";
 
-basic();
+chatCompletionStreaming();

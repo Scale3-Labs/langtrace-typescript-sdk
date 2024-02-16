@@ -1,4 +1,4 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const basic_1 = require("./examples/chroma/basic");
-(0, basic_1.basic)();
+const chat_completion_streaming_1 = require("./examples/openai/chat-completion-streaming");
+(0, chat_completion_streaming_1.chatCompletionStreaming)();
