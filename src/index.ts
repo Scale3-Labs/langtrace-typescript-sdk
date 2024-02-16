@@ -1,3 +1,3 @@
-import { chatCompletionStreaming } from "./examples/openai/chat-completion-streaming";
+import { azureChatCompletion } from "./examples/azure/chat-completion";
 
-chatCompletionStreaming();
+azureChatCompletion();

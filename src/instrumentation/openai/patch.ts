@@ -20,8 +20,14 @@ export function imagesGenerate(
       kind: SpanKind.SERVER,
     });
 
+    // Determine the service provider
+    let serviceProvider = SERVICE_PROVIDERS.OPENAI;
+    if (originalContext._client?.baseURL?.includes("azure")) {
+      serviceProvider = SERVICE_PROVIDERS.AZURE;
+    }
+
     const attributes = {
-      "service.provider": SERVICE_PROVIDERS.OPENAI,
+      "service.provider": serviceProvider,
       "url.full": originalContext._client?.baseURL,
       "llm.api": APIS.IMAGES_GENERATION.ENDPOINT,
       "llm.model": args[0]?.model,
@@ -59,9 +65,15 @@ export function chatCompletionCreate(
       kind: SpanKind.CLIENT,
     });
 
+    // Determine the service provider
+    let serviceProvider = SERVICE_PROVIDERS.OPENAI;
+    if (originalContext._client?.baseURL?.includes("azure")) {
+      serviceProvider = SERVICE_PROVIDERS.AZURE;
+    }
+
     const attributes: Partial<OpenAISpanAttributes & LangTraceSpanAttributes> =
       {
-        "service.provider": SERVICE_PROVIDERS.OPENAI,
+        "service.provider": serviceProvider,
         "url.full": originalContext._client?.baseURL,
         "llm.api": APIS.CHAT_COMPLETION.ENDPOINT,
         "llm.model": args[0]?.model,
@@ -90,7 +102,14 @@ export function chatCompletionCreate(
       const promptTokens = calculatePromptTokens(promptContent, model);
       const resp = await originalMethod.apply(this, args);
       if (!args[0].stream || args[0].stream === false) {
-        const responses = resp?.choices?.map((choice: any) => choice?.message);
+        const responses = resp?.choices?.map((choice: any) => {
+          const result: Record<string, any> = {};
+          result["message"] = choice?.message;
+          if (choice?.content_filter_results) {
+            result["content_filter_results"] = choice?.content_filter_results;
+          }
+          return result;
+        });
         span.addAttribute({
           "llm.responses": JSON.stringify(responses),
         });
@@ -151,7 +170,7 @@ async function* handleStreamResponse(
         total_tokens: completionTokens + promptTokens,
       }),
       "llm.responses": JSON.stringify([
-        { role: "assistant", content: result.join("") },
+        { message: { role: "assistant", content: result.join("") } },
       ]),
     });
     span.addEvent(Event.STREAM_END);
@@ -175,9 +194,15 @@ export function embeddingsCreate(
       kind: SpanKind.SERVER,
     });
 
+    // Determine the service provider
+    let serviceProvider = SERVICE_PROVIDERS.OPENAI;
+    if (originalContext._client?.baseURL?.includes("azure")) {
+      serviceProvider = SERVICE_PROVIDERS.AZURE;
+    }
+
     const attributes: Partial<OpenAISpanAttributes & LangTraceSpanAttributes> =
       {
-        "service.provider": SERVICE_PROVIDERS.OPENAI,
+        "service.provider": serviceProvider,
         "url.full": originalContext._client?.baseURL,
         "llm.api": APIS.EMBEDDINGS_CREATE.ENDPOINT,
         "llm.model": args[0]?.model,

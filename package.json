@@ -10,6 +10,7 @@
   "author": "Scale3 Labs",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
+    "@azure/openai": "^1.0.0-beta.11",
     "@langtrase/trace-attributes": "^1.0.27",
     "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/auto-instrumentations-node": "^0.41.1",

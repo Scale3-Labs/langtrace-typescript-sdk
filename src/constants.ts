@@ -20,6 +20,7 @@ export const TIKTOKEN_MODEL_MAPPING: Record<string, TiktokenEncoding> = {
 
 export const SERVICE_PROVIDERS = {
   OPENAI: "OpenAI",
+  AZURE: "Azure",
   LANGCHAIN: "Langchain",
   PINECONE: "Pinecone",
   LLAMAINDEX: "LlamaIndex",
