@@ -1,29 +1,31 @@
+import { PineconeMethods } from "@langtrase/trace-attributes";
+
 export const APIS: Record<
   string,
   { METHOD: string; ENDPOINT: string; OPERATION: string }
 > = {
   UPSERT: {
-    METHOD: "pinecone.index.upsert",
+    METHOD: PineconeMethods.UPSERT,
     ENDPOINT: "/vectors/upsert",
     OPERATION: "upsert",
   },
   QUERY: {
-    METHOD: "pinecone.index.query",
+    METHOD: PineconeMethods.QUERY,
     ENDPOINT: "/query",
     OPERATION: "query",
   },
   DELETE_ONE: {
-    METHOD: "pinecone.index.deleteOne",
+    METHOD: PineconeMethods.DELETE_ONE,
     ENDPOINT: "/vectors/delete",
     OPERATION: "deleteOne",
   },
   DELETE_MANY: {
-    METHOD: "pinecone.index.deleteMany",
+    METHOD: PineconeMethods.DELETE_MANY,
     ENDPOINT: "/vectors/delete",
     OPERATION: "deleteMany",
   },
   DELETE_ALL: {
-    METHOD: "pinecone.index.deleteAll",
+    METHOD: PineconeMethods.DELETE_ALL,
     ENDPOINT: "/vectors/delete",
     OPERATION: "deleteAll",
   },

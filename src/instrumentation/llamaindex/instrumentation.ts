@@ -55,10 +55,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             cls.prototype,
             "query",
             (originalMethod: (...args: any[]) => any) =>
-              genericPatch(
-                originalMethod,
-                LlamaIndexMethods.TASK_LLAMAINDEX_QUERYENGINE_QUERY
-              )
+              genericPatch(originalMethod, LlamaIndexMethods.QUERYENGINE_QUERY)
           );
         }
         if (
@@ -71,10 +68,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             cls.prototype,
             "retrieve",
             (originalMethod: (...args: any[]) => any) =>
-              genericPatch(
-                originalMethod,
-                LlamaIndexMethods.TASK_LLAMAINDEX_RETRIEVER_RETRIEVE
-              )
+              genericPatch(originalMethod, LlamaIndexMethods.RETRIEVER_RETRIEVE)
           );
         }
         if ((cls.prototype as llamaindex.ChatEngine).chat !== undefined) {
@@ -85,10 +79,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             cls.prototype,
             "chat",
             (originalMethod: (...args: any[]) => any) =>
-              genericPatch(
-                originalMethod,
-                LlamaIndexMethods.TASK_LLAMAINDEX_CHATENGINE_EXTRACT
-              )
+              genericPatch(originalMethod, LlamaIndexMethods.CHATENGINE_EXTRACT)
           );
         }
         if ((cls.prototype as llamaindex.SimplePrompt).call !== undefined) {
@@ -99,10 +90,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             cls.prototype,
             "call",
             (originalMethod: (...args: any[]) => any) =>
-              genericPatch(
-                originalMethod,
-                LlamaIndexMethods.TASK_LLAMAINDEX_SIMPLEPROMPT_CALL
-              )
+              genericPatch(originalMethod, LlamaIndexMethods.SIMPLEPROMPT_CALL)
           );
         }
         if ((cls.prototype as llamaindex.BaseExtractor).extract !== undefined) {
@@ -115,7 +103,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             (originalMethod: (...args: any[]) => any) =>
               genericPatch(
                 originalMethod,
-                LlamaIndexMethods.TASK_LLAMAINDEX_BASEEXTRACTOR_EXTRACT
+                LlamaIndexMethods.BASEEXTRACTOR_EXTRACT
               )
           );
         }
@@ -129,7 +117,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             (originalMethod: (...args: any[]) => any) =>
               genericPatch(
                 originalMethod,
-                LlamaIndexMethods.TASK_LLAMAINDEX_BASEREADER_LOADDATA
+                LlamaIndexMethods.BASEREADER_LOADDATA
               )
           );
         }
