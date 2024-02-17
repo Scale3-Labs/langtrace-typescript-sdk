@@ -1,3 +1,3 @@
-import { azureChatCompletion } from "./examples/azure/chat-completion";
+import { memory } from "./examples/langchain/examples";
 
-azureChatCompletion();
+memory();

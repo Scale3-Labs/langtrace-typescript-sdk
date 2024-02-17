@@ -1,6 +1,10 @@
 import { setupInstrumentation } from "../setup";
 
+console.log("Hello, world1");
+
 setupInstrumentation();
+
+console.log("Hello, world2");
 
 import {
   ChatPromptTemplate,
@@ -8,14 +12,19 @@ import {
 } from "@langchain/core/prompts";
 import { ChatOpenAI } from "@langchain/openai";
 import { ConversationChain } from "langchain/chains";
+// import * as langchainModule from "langchain/chains";
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { BufferMemory } from "langchain/memory";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+// const langchainModule: typeof ChainsModule = require("langchain/chains");
 
 import dotenv from "dotenv";
 dotenv.config();
 
+console.log("Hello, world3");
+
 export async function memory() {
+  console.log("memory");
   const chat = new ChatOpenAI({ temperature: 0 });
   const chatPrompt = ChatPromptTemplate.fromMessages([
     [

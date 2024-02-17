@@ -5,12 +5,13 @@ import {
   SimpleSpanProcessor,
 } from "@opentelemetry/sdk-trace-base";
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
+import { langchainInstrumentation } from "../instrumentation/langchain/instrumentation";
 
-// Import your custom OpenAI instrumentation
-import { chromaInstrumentation } from "../instrumentation/chroma/instrumentation";
-import { llamaIndexInstrumentation } from "../instrumentation/llamaindex/instrumentation";
-import { openAIInstrumentation } from "../instrumentation/openai/instrumentation";
-import { pineconeInstrumentation } from "../instrumentation/pinecone/instrumentation";
+// Import your custom instrumentation
+// import { chromaInstrumentation } from "../instrumentation/chroma/instrumentation";
+// import { llamaIndexInstrumentation } from "../instrumentation/llamaindex/instrumentation";
+// import { openAIInstrumentation } from "../instrumentation/openai/instrumentation";
+// import { pineconeInstrumentation } from "../instrumentation/pinecone/instrumentation";
 
 export const setupInstrumentation = () => {
   // Set up OpenTelemetry tracing
@@ -26,10 +27,11 @@ export const setupInstrumentation = () => {
   // Register any automatic instrumentation and your custom OpenAI instrumentation
   registerInstrumentations({
     instrumentations: [
-      llamaIndexInstrumentation,
-      pineconeInstrumentation,
-      openAIInstrumentation,
-      chromaInstrumentation,
+      // llamaIndexInstrumentation,
+      // pineconeInstrumentation,
+      // openAIInstrumentation,
+      // chromaInstrumentation,
+      langchainInstrumentation,
     ],
     tracerProvider: tracerProvider,
   });

@@ -7,9 +7,6 @@ export function recursiveCharacterTextSplitterHandler(
     // Preserving `this` from the calling context
     const originalContext = this;
 
-    console.log(this);
-    console.log(args);
-
     // Start a new span
     const span = trace
       .getTracer("Langchain Instrumentation")

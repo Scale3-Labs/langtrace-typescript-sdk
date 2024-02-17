@@ -5,7 +5,7 @@ import {
   InstrumentationNodeModuleDefinition,
   isWrapped,
 } from "@opentelemetry/instrumentation";
-import type { ConversationChain } from "langchain/chains";
+import type * as ChainsModule from "langchain/chains";
 import { recursiveCharacterTextSplitterHandler } from "./patch_text_splitter";
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
@@ -14,12 +14,10 @@ class LangchainInstrumentation extends InstrumentationBase<any> {
     super("@langtrase/node-sdk", "1.0.0");
   }
 
-  init(): InstrumentationModuleDefinition<typeof ConversationChain>[] {
-    const module = new InstrumentationNodeModuleDefinition<
-      typeof ConversationChain
-    >(
+  init(): InstrumentationModuleDefinition<any>[] {
+    const module = new InstrumentationNodeModuleDefinition<any>(
       "langchain/chains",
-      [">=0.1.6"],
+      [">=0.1.16"],
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching Langchain SDK version ${moduleVersion}`);
         this._patch(moduleExports);
@@ -36,24 +34,20 @@ class LangchainInstrumentation extends InstrumentationBase<any> {
     return [module];
   }
 
-  private _patch(moduleExports: typeof ConversationChain) {
-    console.log("patching");
-    console.log(moduleExports);
-    if (isWrapped(moduleExports.prototype)) {
-      this._unwrap(moduleExports.prototype, "call");
+  private _patch(moduleExports: typeof ChainsModule) {
+    if (isWrapped(moduleExports.ConversationChain.prototype)) {
+      this._unwrap(moduleExports.ConversationChain.prototype, "call");
     }
 
     this._wrap(
-      moduleExports.prototype,
+      moduleExports.ConversationChain.prototype,
       "call",
       recursiveCharacterTextSplitterHandler
     );
   }
 
-  private _unpatch(moduleExports: typeof ConversationChain) {
-    console.log("unpatching");
-    console.log(moduleExports);
-    this._unwrap(moduleExports.prototype, "call");
+  private _unpatch(moduleExports: typeof ChainsModule) {
+    this._unwrap(moduleExports.ConversationChain.prototype, "call");
   }
 }
 
