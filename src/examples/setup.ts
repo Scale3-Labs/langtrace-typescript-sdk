@@ -5,7 +5,7 @@ import {
   SimpleSpanProcessor,
 } from "@opentelemetry/sdk-trace-base";
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
-import { langchainInstrumentation } from "../instrumentation/langchain/instrumentation";
+import { openAIInstrumentation } from "../instrumentation/openai/instrumentation";
 
 // Import your custom instrumentation
 // import { chromaInstrumentation } from "../instrumentation/chroma/instrumentation";
@@ -31,7 +31,8 @@ export const setupInstrumentation = () => {
       // pineconeInstrumentation,
       // openAIInstrumentation,
       // chromaInstrumentation,
-      langchainInstrumentation,
+      // langchainInstrumentation,
+      openAIInstrumentation,
     ],
     tracerProvider: tracerProvider,
   });

@@ -1,3 +1,3 @@
-import { memory } from "./examples/langchain/examples";
+import { chatCompletion } from "./examples/openai/chat-completion";
 
-memory();
+chatCompletion();
