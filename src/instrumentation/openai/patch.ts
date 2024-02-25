@@ -18,8 +18,7 @@ import { APIS } from "./lib/apis";
 
 export function imagesGenerate(
   originalMethod: (...args: any[]) => any,
-  tracer: Tracer,
-  rootSpan?: Span
+  tracer: Tracer
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
@@ -41,7 +40,7 @@ export function imagesGenerate(
     };
 
     return context.with(
-      trace.setSpan(context.active(), rootSpan as Span),
+      trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
         const span = new LangTraceSpan(tracer, APIS.IMAGES_GENERATION.METHOD, {
           kind: SpanKind.SERVER,
@@ -71,8 +70,7 @@ export function imagesGenerate(
 
 export function chatCompletionCreate(
   originalMethod: (...args: any[]) => any,
-  tracer: Tracer,
-  rootSpan?: Span
+  tracer: Tracer
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
@@ -107,7 +105,7 @@ export function chatCompletionCreate(
     }
 
     return context.with(
-      trace.setSpan(context.active(), rootSpan as Span),
+      trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
         const span = new LangTraceSpan(tracer, APIS.CHAT_COMPLETION.METHOD, {
           kind: SpanKind.CLIENT,
@@ -208,8 +206,7 @@ async function* handleStreamResponse(
 
 export function embeddingsCreate(
   originalMethod: (...args: any[]) => any,
-  tracer: Tracer,
-  rootSpan?: Span
+  tracer: Tracer
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
@@ -244,7 +241,7 @@ export function embeddingsCreate(
     }
 
     return context.with(
-      trace.setSpan(context.active(), rootSpan as Span),
+      trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
         const span = new LangTraceSpan(tracer, APIS.EMBEDDINGS_CREATE.METHOD, {
           kind: SpanKind.SERVER,

@@ -1,3 +1,3 @@
-import { chatCompletion } from "./examples/openai/chat-completion";
+import { basic } from "./examples/llamaindex/basic";
 
-chatCompletion();
+basic();

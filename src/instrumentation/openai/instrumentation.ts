@@ -1,4 +1,4 @@
-import { Span, SpanKind, diag, trace } from "@opentelemetry/api";
+import { diag, trace } from "@opentelemetry/api";
 import {
   InstrumentationBase,
   InstrumentationNodeModuleDefinition,
@@ -47,35 +47,26 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
     }
 
     const tracer = trace.getTracer(TRACE_NAMESPACES.OPENAI);
-    const rootSpan = tracer.startSpan("langtrace.reference", {
-      kind: SpanKind.INTERNAL,
-      attributes: {
-        "span.type": "reference",
-        "span.kind": "internal",
-        "span.purpose": "parent span to trace all OpenAI operations",
-      },
-    });
-    rootSpan.end();
 
     this._wrap(
       openai.Chat.Completions.prototype,
       "create",
       (originalMethod: (...args: any[]) => any) =>
-        chatCompletionCreate(originalMethod, tracer, rootSpan as Span)
+        chatCompletionCreate(originalMethod, tracer)
     );
 
     this._wrap(
       openai.Images.prototype,
       "generate",
       (originalMethod: (...args: any[]) => any) =>
-        imagesGenerate(originalMethod, tracer, rootSpan as Span)
+        imagesGenerate(originalMethod, tracer)
     );
 
     this._wrap(
       openai.Embeddings.prototype,
       "create",
       (originalMethod: (...args: any[]) => any) =>
-        embeddingsCreate(originalMethod, tracer, rootSpan as Span)
+        embeddingsCreate(originalMethod, tracer)
     );
   }
 

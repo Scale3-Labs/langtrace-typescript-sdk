@@ -13,8 +13,7 @@ import { APIS } from "./lib/apis";
 export function collectionPatch(
   originalMethod: (...args: any[]) => any,
   method: string,
-  tracer: Tracer,
-  rootSpan?: Span
+  tracer: Tracer
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
@@ -39,7 +38,7 @@ export function collectionPatch(
     }
 
     return context.with(
-      trace.setSpan(context.active(), rootSpan as Span),
+      trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
         const span = new LangTraceSpan(tracer, api.METHOD, {
           kind: SpanKind.CLIENT,

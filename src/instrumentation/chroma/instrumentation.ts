@@ -1,7 +1,6 @@
 import {
   DiagConsoleLogger,
   DiagLogLevel,
-  SpanKind,
   diag,
   trace,
 } from "@opentelemetry/api";
@@ -50,21 +49,12 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
     }
 
     const tracer = trace.getTracer(TRACE_NAMESPACES.CHROMA);
-    const rootSpan = tracer.startSpan("langtrace.reference", {
-      kind: SpanKind.INTERNAL,
-      attributes: {
-        "span.type": "reference",
-        "span.kind": "internal",
-        "span.purpose": "parent span to trace all Chroma operations",
-      },
-    });
-    rootSpan.end();
     Object.keys(APIS).forEach((api) => {
       this._wrap(
         chromadb.Collection.prototype,
         APIS[api].OPERATION,
         (originalMethod: (...args: any[]) => any) =>
-          collectionPatch(originalMethod, api, tracer, rootSpan)
+          collectionPatch(originalMethod, api, tracer)
       );
     });
   }
