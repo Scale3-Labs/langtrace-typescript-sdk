@@ -2,6 +2,14 @@ import { setupInstrumentation } from "../setup";
 
 setupInstrumentation();
 
+// import * as traceloop from "@traceloop/node-server-sdk";
+
+// traceloop.initialize({
+//   disableBatch: true,
+//   apiKey:
+//     "6388e4ca99cb28c69034aacde1cd85f588657c195298200cf2e34e25c5ec537ffd0f94cfeff57446414ebe6c9c60efa5",
+// });
+
 import dotenv from "dotenv";
 import fs from "fs/promises";
 import type { BaseReader, Metadata } from "llamaindex";

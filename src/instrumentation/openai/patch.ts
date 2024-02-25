@@ -3,82 +3,94 @@ import {
   LangTraceSpanAttributes,
   OpenAISpanAttributes,
 } from "@langtrase/trace-attributes";
-import { SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
-import { SERVICE_PROVIDERS, TRACE_NAMESPACES } from "../../constants";
+import {
+  Span,
+  SpanKind,
+  SpanStatusCode,
+  Tracer,
+  context,
+  trace,
+} from "@opentelemetry/api";
+import { SERVICE_PROVIDERS } from "../../constants";
 import { LangTraceSpan } from "../../span";
 import { calculatePromptTokens, estimateTokens } from "../../utils";
 import { APIS } from "./lib/apis";
 
 export function imagesGenerate(
-  originalMethod: (...args: any[]) => any
+  originalMethod: (...args: any[]) => any,
+  tracer: Tracer,
+  rootSpan?: Span
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
 
-    const tracer = trace.getTracer(TRACE_NAMESPACES.OPENAI);
-    const span = new LangTraceSpan(tracer, APIS.IMAGES_GENERATION.METHOD, {
-      kind: SpanKind.SERVER,
-    });
-
     // Determine the service provider
     let serviceProvider = SERVICE_PROVIDERS.OPENAI;
-    if (originalContext._client?.baseURL?.includes("azure")) {
+    if (originalContext?._client?.baseURL?.includes("azure")) {
       serviceProvider = SERVICE_PROVIDERS.AZURE;
     }
 
     const attributes = {
       "service.provider": serviceProvider,
-      "url.full": originalContext._client?.baseURL,
+      "url.full": originalContext?._client?.baseURL,
       "llm.api": APIS.IMAGES_GENERATION.ENDPOINT,
       "llm.model": args[0]?.model,
-      "http.max.retries": originalContext._client?.maxRetries,
-      "http.timeout": originalContext._client?.timeout,
+      "http.max.retries": originalContext?._client?.maxRetries,
+      "http.timeout": originalContext?._client?.timeout,
       "llm.prompts": JSON.stringify([args[0]?.prompt]),
     };
 
-    span.addAttribute(attributes);
-
-    try {
-      const response = await originalMethod.apply(originalContext, args);
-      span.addAttribute({
-        "llm.responses": JSON.stringify(response?.data),
-      });
-      span.setStatus({ code: SpanStatusCode.OK });
-      span.end();
-      return response;
-    } catch (error: any) {
-      span.recordException(error);
-      span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
-      span.end();
-      throw error;
-    }
+    return context.with(
+      trace.setSpan(context.active(), rootSpan as Span),
+      async () => {
+        const span = new LangTraceSpan(tracer, APIS.IMAGES_GENERATION.METHOD, {
+          kind: SpanKind.SERVER,
+        });
+        span.addAttribute(attributes);
+        try {
+          const response = await originalMethod.apply(originalContext, args);
+          span.addAttribute({
+            "llm.responses": JSON.stringify(response?.data),
+          });
+          span.setStatus({ code: SpanStatusCode.OK });
+          span.end();
+          return response;
+        } catch (error: any) {
+          span.recordException(error);
+          span.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: error.message,
+          });
+          span.end();
+          throw error;
+        }
+      }
+    );
   };
 }
 
 export function chatCompletionCreate(
-  originalMethod: (...args: any[]) => any
+  originalMethod: (...args: any[]) => any,
+  tracer: Tracer,
+  rootSpan?: Span
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
-    const tracer = trace.getTracer(TRACE_NAMESPACES.OPENAI);
-    const span = new LangTraceSpan(tracer, APIS.CHAT_COMPLETION.METHOD, {
-      kind: SpanKind.CLIENT,
-    });
 
     // Determine the service provider
     let serviceProvider = SERVICE_PROVIDERS.OPENAI;
-    if (originalContext._client?.baseURL?.includes("azure")) {
+    if (originalContext?._client?.baseURL?.includes("azure")) {
       serviceProvider = SERVICE_PROVIDERS.AZURE;
     }
 
     const attributes: Partial<OpenAISpanAttributes & LangTraceSpanAttributes> =
       {
         "service.provider": serviceProvider,
-        "url.full": originalContext._client?.baseURL,
+        "url.full": originalContext?._client?.baseURL,
         "llm.api": APIS.CHAT_COMPLETION.ENDPOINT,
         "llm.model": args[0]?.model,
-        "http.max.retries": originalContext._client?.maxRetries,
-        "http.timeout": originalContext._client?.timeout,
+        "http.max.retries": originalContext?._client?.maxRetries,
+        "http.timeout": originalContext?._client?.timeout,
         "llm.prompts": JSON.stringify(args[0]?.messages),
       };
 
@@ -94,49 +106,60 @@ export function chatCompletionCreate(
       attributes["llm.user"] = args[0]?.user;
     }
 
-    span.addAttribute(attributes);
+    return context.with(
+      trace.setSpan(context.active(), rootSpan as Span),
+      async () => {
+        const span = new LangTraceSpan(tracer, APIS.CHAT_COMPLETION.METHOD, {
+          kind: SpanKind.CLIENT,
+        });
+        span.addAttribute(attributes);
+        try {
+          const model = args[0].model;
+          const promptContent = JSON.stringify(args[0].messages[0]);
+          const promptTokens = calculatePromptTokens(promptContent, model);
+          const resp = await originalMethod.apply(this, args);
+          if (!args[0].stream || args[0].stream === false) {
+            const responses = resp?.choices?.map((choice: any) => {
+              const result: Record<string, any> = {};
+              result["message"] = choice?.message;
+              if (choice?.content_filter_results) {
+                result["content_filter_results"] =
+                  choice?.content_filter_results;
+              }
+              return result;
+            });
+            span.addAttribute({
+              "llm.responses": JSON.stringify(responses),
+            });
 
-    try {
-      const model = args[0].model;
-      const promptContent = JSON.stringify(args[0].messages[0]);
-      const promptTokens = calculatePromptTokens(promptContent, model);
-      const resp = await originalMethod.apply(this, args);
-      if (!args[0].stream || args[0].stream === false) {
-        const responses = resp?.choices?.map((choice: any) => {
-          const result: Record<string, any> = {};
-          result["message"] = choice?.message;
-          if (choice?.content_filter_results) {
-            result["content_filter_results"] = choice?.content_filter_results;
+            if (resp?.system_fingerprint) {
+              span.addAttribute({
+                "llm.system.fingerprint": resp?.system_fingerprint,
+              });
+            }
+            span.addAttribute({
+              "llm.token.counts": JSON.stringify({
+                prompt_tokens: promptTokens,
+                completion_tokens: resp?.usage?.completion_tokens || 0,
+                total_tokens: resp?.usage?.total_tokens || 0,
+              }),
+            });
+            span.setStatus({ code: SpanStatusCode.OK });
+            return resp;
           }
-          return result;
-        });
-        span.addAttribute({
-          "llm.responses": JSON.stringify(responses),
-        });
-
-        if (resp?.system_fingerprint) {
-          span.addAttribute({
-            "llm.system.fingerprint": resp?.system_fingerprint,
+          return handleStreamResponse(span, resp, promptTokens);
+        } catch (error: any) {
+          span.recordException(error);
+          span.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: error.message,
           });
+          throw error;
+        } finally {
+          span.end();
         }
-        span.addAttribute({
-          "llm.token.counts": JSON.stringify({
-            prompt_tokens: promptTokens,
-            completion_tokens: resp?.usage?.completion_tokens || 0,
-            total_tokens: resp?.usage?.total_tokens || 0,
-          }),
-        });
-        span.setStatus({ code: SpanStatusCode.OK });
-        span.end();
-        return resp;
       }
-      return handleStreamResponse(span, resp, promptTokens);
-    } catch (error: any) {
-      span.recordException(error);
-      span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
-      span.end();
-      throw error;
-    }
+    );
   };
 }
 
@@ -184,30 +207,27 @@ async function* handleStreamResponse(
 }
 
 export function embeddingsCreate(
-  originalMethod: (...args: any[]) => any
+  originalMethod: (...args: any[]) => any,
+  tracer: Tracer,
+  rootSpan?: Span
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
 
-    const tracer = trace.getTracer(TRACE_NAMESPACES.OPENAI);
-    const span = new LangTraceSpan(tracer, APIS.EMBEDDINGS_CREATE.METHOD, {
-      kind: SpanKind.SERVER,
-    });
-
     // Determine the service provider
     let serviceProvider = SERVICE_PROVIDERS.OPENAI;
-    if (originalContext._client?.baseURL?.includes("azure")) {
+    if (originalContext?._client?.baseURL?.includes("azure")) {
       serviceProvider = SERVICE_PROVIDERS.AZURE;
     }
 
     const attributes: Partial<OpenAISpanAttributes & LangTraceSpanAttributes> =
       {
         "service.provider": serviceProvider,
-        "url.full": originalContext._client?.baseURL,
+        "url.full": originalContext?._client?.baseURL,
         "llm.api": APIS.EMBEDDINGS_CREATE.ENDPOINT,
         "llm.model": args[0]?.model,
-        "http.max.retries": originalContext._client?.maxRetries,
-        "http.timeout": originalContext._client?.timeout,
+        "http.max.retries": originalContext?._client?.maxRetries,
+        "http.timeout": originalContext?._client?.timeout,
         "llm.stream": args[0]?.stream,
       };
 
@@ -223,19 +243,29 @@ export function embeddingsCreate(
       attributes["llm.user"] = args[0]?.user;
     }
 
-    span.addAttribute(attributes);
+    return context.with(
+      trace.setSpan(context.active(), rootSpan as Span),
+      async () => {
+        const span = new LangTraceSpan(tracer, APIS.EMBEDDINGS_CREATE.METHOD, {
+          kind: SpanKind.SERVER,
+        });
+        span.addAttribute(attributes);
+        try {
+          const resp = await originalMethod.apply(originalContext, args);
 
-    try {
-      const resp = await originalMethod.apply(this, args);
-
-      span.setStatus({ code: SpanStatusCode.OK });
-      span.end();
-      return resp;
-    } catch (error: any) {
-      span.recordException(error);
-      span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
-      span.end();
-      throw error;
-    }
+          span.setStatus({ code: SpanStatusCode.OK });
+          span.end();
+          return resp;
+        } catch (error: any) {
+          span.recordException(error);
+          span.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: error.message,
+          });
+          span.end();
+          throw error;
+        }
+      }
+    );
   };
 }

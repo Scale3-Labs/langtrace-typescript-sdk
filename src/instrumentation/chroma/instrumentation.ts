@@ -1,4 +1,10 @@
-import { DiagConsoleLogger, DiagLogLevel, diag } from "@opentelemetry/api";
+import {
+  DiagConsoleLogger,
+  DiagLogLevel,
+  SpanKind,
+  diag,
+  trace,
+} from "@opentelemetry/api";
 import {
   InstrumentationBase,
   InstrumentationModuleDefinition,
@@ -6,6 +12,7 @@ import {
   isWrapped,
 } from "@opentelemetry/instrumentation";
 import type { Collection } from "chromadb";
+import { TRACE_NAMESPACES } from "../../constants";
 import { APIS } from "./lib/apis";
 import { collectionPatch } from "./patch";
 
@@ -42,12 +49,22 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
       });
     }
 
+    const tracer = trace.getTracer(TRACE_NAMESPACES.CHROMA);
+    const rootSpan = tracer.startSpan("langtrace.reference", {
+      kind: SpanKind.INTERNAL,
+      attributes: {
+        "span.type": "reference",
+        "span.kind": "internal",
+        "span.purpose": "parent span to trace all Chroma operations",
+      },
+    });
+    rootSpan.end();
     Object.keys(APIS).forEach((api) => {
       this._wrap(
         chromadb.Collection.prototype,
         APIS[api].OPERATION,
         (originalMethod: (...args: any[]) => any) =>
-          collectionPatch(originalMethod, api)
+          collectionPatch(originalMethod, api, tracer, rootSpan)
       );
     });
   }

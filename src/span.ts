@@ -22,6 +22,10 @@ export class LangTraceSpan {
     this.span = this.tracer.startSpan(name, options);
   }
 
+  getSpan(): Span {
+    return this.span;
+  }
+
   addAttribute(attributes: Partial<LangTraceAttributes>): void {
     Object.entries(attributes).forEach(([key, value]) => {
       if (value !== undefined) {

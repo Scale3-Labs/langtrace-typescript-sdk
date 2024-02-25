@@ -1,10 +1,11 @@
-import { diag } from "@opentelemetry/api";
+import { Span, SpanKind, diag, trace } from "@opentelemetry/api";
 import {
   InstrumentationBase,
   InstrumentationNodeModuleDefinition,
   isWrapped,
 } from "@opentelemetry/instrumentation";
 import type { OpenAI } from "openai";
+import { TRACE_NAMESPACES } from "../../constants";
 import {
   chatCompletionCreate,
   embeddingsCreate,
@@ -45,13 +46,37 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
       this._unwrap(openai.Embeddings.prototype, "create");
     }
 
+    const tracer = trace.getTracer(TRACE_NAMESPACES.OPENAI);
+    const rootSpan = tracer.startSpan("langtrace.reference", {
+      kind: SpanKind.INTERNAL,
+      attributes: {
+        "span.type": "reference",
+        "span.kind": "internal",
+        "span.purpose": "parent span to trace all OpenAI operations",
+      },
+    });
+    rootSpan.end();
+
     this._wrap(
       openai.Chat.Completions.prototype,
       "create",
-      chatCompletionCreate
+      (originalMethod: (...args: any[]) => any) =>
+        chatCompletionCreate(originalMethod, tracer, rootSpan as Span)
     );
-    this._wrap(openai.Images.prototype, "generate", imagesGenerate);
-    this._wrap(openai.Embeddings.prototype, "create", embeddingsCreate);
+
+    this._wrap(
+      openai.Images.prototype,
+      "generate",
+      (originalMethod: (...args: any[]) => any) =>
+        imagesGenerate(originalMethod, tracer, rootSpan as Span)
+    );
+
+    this._wrap(
+      openai.Embeddings.prototype,
+      "create",
+      (originalMethod: (...args: any[]) => any) =>
+        embeddingsCreate(originalMethod, tracer, rootSpan as Span)
+    );
   }
 
   private _unpatch(openai: typeof OpenAI) {

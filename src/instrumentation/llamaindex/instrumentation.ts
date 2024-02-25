@@ -1,5 +1,11 @@
 import { LlamaIndexMethods } from "@langtrase/trace-attributes";
-import { DiagConsoleLogger, DiagLogLevel, diag } from "@opentelemetry/api";
+import {
+  DiagConsoleLogger,
+  DiagLogLevel,
+  SpanKind,
+  diag,
+  trace,
+} from "@opentelemetry/api";
 import {
   InstrumentationBase,
   InstrumentationModuleDefinition,
@@ -7,6 +13,7 @@ import {
   isWrapped,
 } from "@opentelemetry/instrumentation";
 import * as llamaindex from "llamaindex";
+import { TRACE_NAMESPACES } from "../../constants";
 import { genericPatch } from "./patch";
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
@@ -36,6 +43,18 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
   }
 
   private _patch(llama: typeof llamaindex) {
+    const tracer = trace.getTracer(TRACE_NAMESPACES.LLAMAINDEX);
+
+    const rootSpan = tracer.startSpan("langtrace.reference", {
+      kind: SpanKind.INTERNAL,
+      attributes: {
+        "span.type": "reference",
+        "span.kind": "internal",
+        "span.purpose": "parent span to trace all LlamaIndex operations",
+      },
+    });
+    rootSpan.end();
+
     // Note: Instrumenting only the core concepts of LlamaIndex SDK
     // https://github.com/run-llama/LlamaIndexTS?tab=readme-ov-file
     for (let key in llama) {
@@ -55,7 +74,11 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             cls.prototype,
             "query",
             (originalMethod: (...args: any[]) => any) =>
-              genericPatch(originalMethod, LlamaIndexMethods.QUERYENGINE_QUERY)
+              genericPatch(
+                originalMethod,
+                LlamaIndexMethods.QUERYENGINE_QUERY,
+                rootSpan
+              )
           );
         }
         if (
@@ -68,7 +91,11 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             cls.prototype,
             "retrieve",
             (originalMethod: (...args: any[]) => any) =>
-              genericPatch(originalMethod, LlamaIndexMethods.RETRIEVER_RETRIEVE)
+              genericPatch(
+                originalMethod,
+                LlamaIndexMethods.RETRIEVER_RETRIEVE,
+                rootSpan
+              )
           );
         }
         if ((cls.prototype as llamaindex.ChatEngine).chat !== undefined) {
@@ -79,7 +106,11 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             cls.prototype,
             "chat",
             (originalMethod: (...args: any[]) => any) =>
-              genericPatch(originalMethod, LlamaIndexMethods.CHATENGINE_EXTRACT)
+              genericPatch(
+                originalMethod,
+                LlamaIndexMethods.CHATENGINE_EXTRACT,
+                rootSpan
+              )
           );
         }
         if ((cls.prototype as llamaindex.SimplePrompt).call !== undefined) {
@@ -90,7 +121,11 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             cls.prototype,
             "call",
             (originalMethod: (...args: any[]) => any) =>
-              genericPatch(originalMethod, LlamaIndexMethods.SIMPLEPROMPT_CALL)
+              genericPatch(
+                originalMethod,
+                LlamaIndexMethods.SIMPLEPROMPT_CALL,
+                rootSpan
+              )
           );
         }
         if ((cls.prototype as llamaindex.BaseExtractor).extract !== undefined) {
@@ -103,7 +138,8 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             (originalMethod: (...args: any[]) => any) =>
               genericPatch(
                 originalMethod,
-                LlamaIndexMethods.BASEEXTRACTOR_EXTRACT
+                LlamaIndexMethods.BASEEXTRACTOR_EXTRACT,
+                rootSpan
               )
           );
         }
@@ -117,7 +153,8 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             (originalMethod: (...args: any[]) => any) =>
               genericPatch(
                 originalMethod,
-                LlamaIndexMethods.BASEREADER_LOADDATA
+                LlamaIndexMethods.BASEREADER_LOADDATA,
+                rootSpan
               )
           );
         }

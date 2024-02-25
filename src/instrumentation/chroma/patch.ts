@@ -1,19 +1,24 @@
-import { SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
-import { SERVICE_PROVIDERS, TRACE_NAMESPACES } from "../../constants";
+import {
+  Span,
+  SpanKind,
+  SpanStatusCode,
+  Tracer,
+  context,
+  trace,
+} from "@opentelemetry/api";
+import { SERVICE_PROVIDERS } from "../../constants";
 import { LangTraceAttributes, LangTraceSpan } from "../../span";
 import { APIS } from "./lib/apis";
 
 export function collectionPatch(
   originalMethod: (...args: any[]) => any,
-  method: string
+  method: string,
+  tracer: Tracer,
+  rootSpan?: Span
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
     let api = APIS[method];
-    const tracer = trace.getTracer(TRACE_NAMESPACES.CHROMA);
-    const span = new LangTraceSpan(tracer, api.METHOD, {
-      kind: SpanKind.CLIENT,
-    });
 
     const attributes: Partial<LangTraceAttributes> = {
       "service.provider": SERVICE_PROVIDERS.CHROMA,
@@ -33,20 +38,31 @@ export function collectionPatch(
       attributes["db.chromadb.embedding_model"] = this.embeddingFunction.model;
     }
 
-    span.addAttribute(attributes);
+    return context.with(
+      trace.setSpan(context.active(), rootSpan as Span),
+      async () => {
+        const span = new LangTraceSpan(tracer, api.METHOD, {
+          kind: SpanKind.CLIENT,
+        });
+        span.addAttribute(attributes);
 
-    try {
-      // NOTE: Not tracing the response data as it can contain sensitive information
-      const response = await originalMethod.apply(originalContext, args);
+        try {
+          // NOTE: Not tracing the response data as it can contain sensitive information
+          const response = await originalMethod.apply(originalContext, args);
 
-      span.setStatus({ code: SpanStatusCode.OK });
-      span.end();
-      return response;
-    } catch (error: any) {
-      span.recordException(error);
-      span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
-      span.end();
-      throw error;
-    }
+          span.setStatus({ code: SpanStatusCode.OK });
+          span.end();
+          return response;
+        } catch (error: any) {
+          span.recordException(error);
+          span.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: error.message,
+          });
+          span.end();
+          throw error;
+        }
+      }
+    );
   };
 }

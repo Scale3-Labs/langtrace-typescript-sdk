@@ -1,4 +1,10 @@
-import { DiagConsoleLogger, DiagLogLevel, diag } from "@opentelemetry/api";
+import {
+  DiagConsoleLogger,
+  DiagLogLevel,
+  SpanKind,
+  diag,
+  trace,
+} from "@opentelemetry/api";
 import {
   InstrumentationBase,
   InstrumentationModuleDefinition,
@@ -6,6 +12,7 @@ import {
   isWrapped,
 } from "@opentelemetry/instrumentation";
 import type { Pinecone } from "@pinecone-database/pinecone";
+import { TRACE_NAMESPACES } from "../../constants";
 import { APIS } from "./lib/apis";
 import { genericPatch } from "./patch";
 
@@ -41,12 +48,23 @@ class PineconeInstrumentation extends InstrumentationBase<any> {
         this._unwrap(pinecone.Index.prototype, APIS[api].OPERATION);
       });
     }
+
+    const tracer = trace.getTracer(TRACE_NAMESPACES.PINECONE);
+    const rootSpan = tracer.startSpan("langtrace.reference", {
+      kind: SpanKind.INTERNAL,
+      attributes: {
+        "span.type": "reference",
+        "span.kind": "internal",
+        "span.purpose": "parent span to trace all Pinecone operations",
+      },
+    });
+    rootSpan.end();
     Object.keys(APIS).forEach((api) => {
       this._wrap(
         pinecone.Index.prototype,
         APIS[api].OPERATION,
         (originalMethod: (...args: any[]) => any) =>
-          genericPatch(originalMethod, api)
+          genericPatch(originalMethod, api, tracer, rootSpan)
       );
     });
   }
