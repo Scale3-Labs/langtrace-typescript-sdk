@@ -1,8 +1,4 @@
-import {
-  Event,
-  LangTraceSpanAttributes,
-  OpenAISpanAttributes,
-} from "@langtrase/trace-attributes";
+import { Event, OpenAISpanAttributes } from "@langtrase/trace-attributes";
 import {
   Span,
   SpanKind,
@@ -29,7 +25,7 @@ export function imagesGenerate(
       serviceProvider = SERVICE_PROVIDERS.AZURE;
     }
 
-    const attributes = {
+    const attributes: Partial<OpenAISpanAttributes> = {
       "service.provider": serviceProvider,
       "url.full": originalContext?._client?.baseURL,
       "llm.api": APIS.IMAGES_GENERATION.ENDPOINT,
@@ -81,16 +77,15 @@ export function chatCompletionCreate(
       serviceProvider = SERVICE_PROVIDERS.AZURE;
     }
 
-    const attributes: Partial<OpenAISpanAttributes & LangTraceSpanAttributes> =
-      {
-        "service.provider": serviceProvider,
-        "url.full": originalContext?._client?.baseURL,
-        "llm.api": APIS.CHAT_COMPLETION.ENDPOINT,
-        "llm.model": args[0]?.model,
-        "http.max.retries": originalContext?._client?.maxRetries,
-        "http.timeout": originalContext?._client?.timeout,
-        "llm.prompts": JSON.stringify(args[0]?.messages),
-      };
+    const attributes: Partial<OpenAISpanAttributes> = {
+      "service.provider": serviceProvider,
+      "url.full": originalContext?._client?.baseURL,
+      "llm.api": APIS.CHAT_COMPLETION.ENDPOINT,
+      "llm.model": args[0]?.model,
+      "http.max.retries": originalContext?._client?.maxRetries,
+      "http.timeout": originalContext?._client?.timeout,
+      "llm.prompts": JSON.stringify(args[0]?.messages),
+    };
 
     if (args[0]?.temperature) {
       attributes["llm.temperature"] = args[0]?.temperature;
@@ -217,16 +212,15 @@ export function embeddingsCreate(
       serviceProvider = SERVICE_PROVIDERS.AZURE;
     }
 
-    const attributes: Partial<OpenAISpanAttributes & LangTraceSpanAttributes> =
-      {
-        "service.provider": serviceProvider,
-        "url.full": originalContext?._client?.baseURL,
-        "llm.api": APIS.EMBEDDINGS_CREATE.ENDPOINT,
-        "llm.model": args[0]?.model,
-        "http.max.retries": originalContext?._client?.maxRetries,
-        "http.timeout": originalContext?._client?.timeout,
-        "llm.stream": args[0]?.stream,
-      };
+    const attributes: Partial<OpenAISpanAttributes> = {
+      "service.provider": serviceProvider,
+      "url.full": originalContext?._client?.baseURL,
+      "llm.api": APIS.EMBEDDINGS_CREATE.ENDPOINT,
+      "llm.model": args[0]?.model,
+      "http.max.retries": originalContext?._client?.maxRetries,
+      "http.timeout": originalContext?._client?.timeout,
+      "llm.stream": args[0]?.stream,
+    };
 
     if (args[0]?.encoding_format) {
       attributes["llm.encoding.format"] = args[0]?.encoding_format;
