@@ -1,4 +1,4 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const chat_completion_streaming_1 = require("./examples/openai/chat-completion-streaming");
-(0, chat_completion_streaming_1.chatCompletionStreaming)();
+const embeddings_create_1 = require("./examples/openai/embeddings-create");
+(0, embeddings_create_1.embeddingsCreate)();

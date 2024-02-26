@@ -1,2 +1,3 @@
-import { chatCompletionStreaming } from "./examples/openai/chat-completion-streaming";
-chatCompletionStreaming();
+import { embeddingsCreate } from "./examples/openai/embeddings-create";
+
+embeddingsCreate();

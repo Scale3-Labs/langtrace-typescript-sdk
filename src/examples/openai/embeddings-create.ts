@@ -14,12 +14,4 @@ export async function embeddingsCreate() {
     model: "text-embedding-ada-002",
     input: "Once upon a time, there was a frog.",
   });
-
-  const embeddingsResult2 = await openai.embeddings.create({
-    model: "text-embedding-ada-002",
-    input: "In a land far, far away, lived a dragon.",
-  });
-
-  console.log(embeddingsResult1);
-  console.log(embeddingsResult2);
 }
