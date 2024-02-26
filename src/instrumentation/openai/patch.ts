@@ -99,19 +99,22 @@ export function chatCompletionCreate(
       attributes["llm.user"] = args[0]?.user;
     }
 
-    return context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
-      async () => {
-        const span = new LangTraceSpan(tracer, APIS.CHAT_COMPLETION.METHOD, {
-          kind: SpanKind.CLIENT,
-        });
-        span.addAttribute(attributes);
-        try {
-          const model = args[0].model;
-          const promptContent = JSON.stringify(args[0].messages[0]);
-          const promptTokens = calculatePromptTokens(promptContent, model);
-          const resp = await originalMethod.apply(this, args);
-          if (!args[0].stream || args[0].stream === false) {
+    if (!args[0].stream || args[0].stream === false) {
+      return context.with(
+        trace.setSpan(
+          context.active(),
+          trace.getSpan(context.active()) as Span
+        ),
+        async () => {
+          const span = new LangTraceSpan(tracer, APIS.CHAT_COMPLETION.METHOD, {
+            kind: SpanKind.CLIENT,
+          });
+          span.addAttribute(attributes);
+          try {
+            const model = args[0].model;
+            const promptContent = JSON.stringify(args[0].messages[0]);
+            const promptTokens = calculatePromptTokens(promptContent, model);
+            const resp = await originalMethod.apply(this, args);
             const responses = resp?.choices?.map((choice: any) => {
               const result: Record<string, any> = {};
               result["message"] = choice?.message;
@@ -139,20 +142,37 @@ export function chatCompletionCreate(
             });
             span.setStatus({ code: SpanStatusCode.OK });
             return resp;
+          } catch (error: any) {
+            span.recordException(error);
+            span.setStatus({
+              code: SpanStatusCode.ERROR,
+              message: error.message,
+            });
+            throw error;
+          } finally {
+            span.end();
           }
-          return handleStreamResponse(span, resp, promptTokens);
-        } catch (error: any) {
-          span.recordException(error);
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error.message,
-          });
-          throw error;
-        } finally {
-          span.end();
         }
-      }
-    );
+      );
+    } else {
+      return context.with(
+        trace.setSpan(
+          context.active(),
+          trace.getSpan(context.active()) as Span
+        ),
+        async () => {
+          const span = new LangTraceSpan(tracer, APIS.CHAT_COMPLETION.METHOD, {
+            kind: SpanKind.CLIENT,
+          });
+          span.addAttribute(attributes);
+          const model = args[0].model;
+          const promptContent = JSON.stringify(args[0].messages[0]);
+          const promptTokens = calculatePromptTokens(promptContent, model);
+          const resp = await originalMethod.apply(this, args);
+          return handleStreamResponse(span, resp, promptTokens);
+        }
+      );
+    }
   };
 }
 
