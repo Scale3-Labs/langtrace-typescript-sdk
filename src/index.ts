@@ -1,3 +1,3 @@
-import { embeddingsCreate } from "./examples/openai/embeddings-create";
+import { basic } from "./examples/pinecone/basic";
 
-embeddingsCreate();
+basic();
