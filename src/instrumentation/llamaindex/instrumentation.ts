@@ -21,7 +21,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
       [">=0.1.10"],
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching LlamaIndex SDK version ${moduleVersion}`);
-        this._patch(moduleExports);
+        this._patch(moduleExports, moduleVersion as string);
         return moduleExports;
       },
       (moduleExports, moduleVersion) => {
@@ -35,7 +35,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
     return [module];
   }
 
-  private _patch(llama: typeof llamaindex) {
+  private _patch(llama: typeof llamaindex, version: string) {
     // Note: Instrumenting only the core concepts of LlamaIndex SDK
     // https://github.com/run-llama/LlamaIndexTS?tab=readme-ov-file
     for (let key in llama) {
@@ -58,7 +58,9 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
               genericPatch(
                 originalMethod,
                 LlamaIndexMethods.QUERYENGINE_QUERY,
-                this.tracer
+                "query",
+                this.tracer,
+                version
               )
           );
         }
@@ -75,7 +77,9 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
               genericPatch(
                 originalMethod,
                 LlamaIndexMethods.RETRIEVER_RETRIEVE,
-                this.tracer
+                "retrieve",
+                this.tracer,
+                version
               )
           );
         }
@@ -90,7 +94,9 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
               genericPatch(
                 originalMethod,
                 LlamaIndexMethods.CHATENGINE_EXTRACT,
-                this.tracer
+                "chat",
+                this.tracer,
+                version
               )
           );
         }
@@ -105,7 +111,9 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
               genericPatch(
                 originalMethod,
                 LlamaIndexMethods.SIMPLEPROMPT_CALL,
-                this.tracer
+                "promptcall",
+                this.tracer,
+                version
               )
           );
         }
@@ -120,7 +128,9 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
               genericPatch(
                 originalMethod,
                 LlamaIndexMethods.BASEEXTRACTOR_EXTRACT,
-                this.tracer
+                "extractdata",
+                this.tracer,
+                version
               )
           );
         }
@@ -135,7 +145,9 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
               genericPatch(
                 originalMethod,
                 LlamaIndexMethods.BASEREADER_LOADDATA,
-                this.tracer
+                "loaddata",
+                this.tracer,
+                version
               )
           );
         }
