@@ -13,20 +13,24 @@ import { APIS } from "./lib/apis";
 export function collectionPatch(
   originalMethod: (...args: any[]) => any,
   method: string,
-  tracer: Tracer
+  tracer: Tracer,
+  version: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
     let api = APIS[method];
 
     const attributes: Partial<LangTraceAttributes> = {
-      "service.provider": SERVICE_PROVIDERS.CHROMA,
+      "langtrace.service.name": SERVICE_PROVIDERS.CHROMA,
+      "langtrace.service.type": "vectordb",
+      "langtrace.service.version": version,
+      "langtrace.version": "1.0.0",
       "db.system": "chromadb",
       "db.operation": api.OPERATION,
     };
 
     if (this.name) {
-      attributes["db.chromadb.collection"] = this.name;
+      attributes["db.collection.name"] = this.name;
     }
 
     if (this.api?.basePath) {

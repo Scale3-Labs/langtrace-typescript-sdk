@@ -21,7 +21,7 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
       [">=1.8.1"],
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching ChromaDB SDK version ${moduleVersion}`);
-        this._patch(moduleExports);
+        this._patch(moduleExports, moduleVersion as string);
         return moduleExports;
       },
       (moduleExports, moduleVersion) => {
@@ -35,7 +35,7 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
     return [module];
   }
 
-  private _patch(chromadb: any) {
+  private _patch(chromadb: any, version: string) {
     if (isWrapped(chromadb.Collection.prototype)) {
       Object.keys(APIS).forEach((api) => {
         this._unwrap(chromadb.Collection.prototype, APIS[api].OPERATION);
@@ -47,7 +47,7 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
         chromadb.Collection.prototype,
         APIS[api].OPERATION,
         (originalMethod: (...args: any[]) => any) =>
-          collectionPatch(originalMethod, api, this.tracer)
+          collectionPatch(originalMethod, api, this.tracer, version)
       );
     });
   }
