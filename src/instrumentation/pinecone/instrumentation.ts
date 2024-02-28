@@ -21,7 +21,7 @@ class PineconeInstrumentation extends InstrumentationBase<any> {
       [">=2.0.0"],
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching Pinecone SDK version ${moduleVersion}`);
-        this._patch(moduleExports);
+        this._patch(moduleExports, moduleVersion as string);
         return moduleExports;
       },
       (moduleExports, moduleVersion) => {
@@ -35,7 +35,7 @@ class PineconeInstrumentation extends InstrumentationBase<any> {
     return [module];
   }
 
-  private _patch(pinecone: any) {
+  private _patch(pinecone: any, version: string) {
     if (isWrapped(pinecone.Index.prototype)) {
       Object.keys(APIS).forEach((api) => {
         this._unwrap(pinecone.Index.prototype, APIS[api].OPERATION);
@@ -47,7 +47,7 @@ class PineconeInstrumentation extends InstrumentationBase<any> {
         pinecone.Index.prototype,
         APIS[api].OPERATION,
         (originalMethod: (...args: any[]) => any) =>
-          genericPatch(originalMethod, api, this.tracer)
+          genericPatch(originalMethod, api, this.tracer, version)
       );
     });
   }

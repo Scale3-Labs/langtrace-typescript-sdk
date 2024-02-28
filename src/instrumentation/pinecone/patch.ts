@@ -13,13 +13,17 @@ import { APIS } from "./lib/apis";
 export function genericPatch(
   originalMethod: (...args: any[]) => any,
   method: string,
-  tracer: Tracer
+  tracer: Tracer,
+  version: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
     let api = APIS[method];
     const attributes: Partial<LangTraceAttributes> = {
-      "service.provider": SERVICE_PROVIDERS.PINECONE,
+      "langtrace.service.name": SERVICE_PROVIDERS.PINECONE,
+      "langtrace.service.type": "vectordb",
+      "langtrace.service.version": version,
+      "langtrace.version": "1.0.0",
       "db.system": "pinecone",
       "db.operation": api.OPERATION,
     };
