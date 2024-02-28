@@ -12,10 +12,10 @@ export async function basic() {
     openai_api_key: process.env.OPENAI_API_KEY as string,
   });
   console.log("Creating collection");
-  // const collection = await client.createCollection({
-  //   name: "my6_collection",
-  //   embeddingFunction: embedder,
-  // });
+  await client.createCollection({
+    name: "my6_collection",
+    embeddingFunction: embedder,
+  });
 
   const collection = await client.getCollection({
     name: "my6_collection",

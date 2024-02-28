@@ -1,3 +1,3 @@
-import { basic } from "./examples/pinecone/basic";
+import { chatCompletion } from "./examples/openai/chat-completion";
 
-basic();
+chatCompletion();

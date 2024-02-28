@@ -6,6 +6,7 @@ import {
   context,
   trace,
 } from "@opentelemetry/api";
+import { SERVICE_PROVIDERS } from "../../constants";
 
 export function genericPatch(
   originalMethod: (...args: any[]) => any,
@@ -18,6 +19,9 @@ export function genericPatch(
       async () => {
         const span = tracer.startSpan(task, {
           kind: SpanKind.CLIENT,
+        });
+        span.setAttributes({
+          "service.provider": SERVICE_PROVIDERS.LLAMAINDEX,
         });
 
         try {

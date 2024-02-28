@@ -1,4 +1,4 @@
-import { Event, OpenAISpanAttributes } from "@langtrase/trace-attributes";
+import { Event, LLMSpanAttributes } from "@langtrase/trace-attributes";
 import {
   Span,
   SpanKind,
@@ -14,7 +14,8 @@ import { APIS } from "./lib/apis";
 
 export function imagesGenerate(
   originalMethod: (...args: any[]) => any,
-  tracer: Tracer
+  tracer: Tracer,
+  version: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
@@ -25,8 +26,11 @@ export function imagesGenerate(
       serviceProvider = SERVICE_PROVIDERS.AZURE;
     }
 
-    const attributes: Partial<OpenAISpanAttributes> = {
-      "service.provider": serviceProvider,
+    const attributes: Partial<LLMSpanAttributes> = {
+      "langtrace.service.name": serviceProvider,
+      "langtrace.service.type": "llm",
+      "langtrace.service.version": version,
+      "langtrace.version": "1.0.0",
       "url.full": originalContext?._client?.baseURL,
       "llm.api": APIS.IMAGES_GENERATION.ENDPOINT,
       "llm.model": args[0]?.model,
@@ -66,7 +70,8 @@ export function imagesGenerate(
 
 export function chatCompletionCreate(
   originalMethod: (...args: any[]) => any,
-  tracer: Tracer
+  tracer: Tracer,
+  version: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
@@ -77,8 +82,11 @@ export function chatCompletionCreate(
       serviceProvider = SERVICE_PROVIDERS.AZURE;
     }
 
-    const attributes: Partial<OpenAISpanAttributes> = {
-      "service.provider": serviceProvider,
+    const attributes: Partial<LLMSpanAttributes> = {
+      "langtrace.service.name": serviceProvider,
+      "langtrace.service.type": "llm",
+      "langtrace.service.version": version,
+      "langtrace.version": "1.0.0",
       "url.full": originalContext?._client?.baseURL,
       "llm.api": APIS.CHAT_COMPLETION.ENDPOINT,
       "llm.model": args[0]?.model,
@@ -221,7 +229,8 @@ async function* handleStreamResponse(
 
 export function embeddingsCreate(
   originalMethod: (...args: any[]) => any,
-  tracer: Tracer
+  tracer: Tracer,
+  version: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
@@ -232,8 +241,11 @@ export function embeddingsCreate(
       serviceProvider = SERVICE_PROVIDERS.AZURE;
     }
 
-    const attributes: Partial<OpenAISpanAttributes> = {
-      "service.provider": serviceProvider,
+    const attributes: Partial<LLMSpanAttributes> = {
+      "langtrace.service.name": serviceProvider,
+      "langtrace.service.type": "llm",
+      "langtrace.service.version": version,
+      "langtrace.version": "1.0.0",
       "url.full": originalContext?._client?.baseURL,
       "llm.api": APIS.EMBEDDINGS_CREATE.ENDPOINT,
       "llm.model": args[0]?.model,

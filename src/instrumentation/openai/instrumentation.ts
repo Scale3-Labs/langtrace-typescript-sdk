@@ -1,11 +1,10 @@
-import { diag, trace } from "@opentelemetry/api";
+import { diag } from "@opentelemetry/api";
 import {
   InstrumentationBase,
   InstrumentationNodeModuleDefinition,
   isWrapped,
 } from "@opentelemetry/instrumentation";
 import type { OpenAI } from "openai";
-import { TRACE_NAMESPACES } from "../../constants";
 import {
   chatCompletionCreate,
   embeddingsCreate,
@@ -23,7 +22,7 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
       [">=4.26.1 <6.0.0"],
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching OpenAI SDK version ${moduleVersion}`);
-        this._patch(moduleExports);
+        this._patch(moduleExports, moduleVersion as string);
         return moduleExports;
       },
       (moduleExports, moduleVersion) => {
@@ -37,7 +36,7 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
     return [module];
   }
 
-  private _patch(openai: typeof OpenAI) {
+  private _patch(openai: typeof OpenAI, version: string) {
     if (isWrapped(openai.Chat.Completions.prototype)) {
       this._unwrap(openai.Chat.Completions.prototype, "create");
     } else if (isWrapped(openai.Images.prototype)) {
@@ -46,27 +45,25 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
       this._unwrap(openai.Embeddings.prototype, "create");
     }
 
-    const tracer = trace.getTracer(TRACE_NAMESPACES.OPENAI);
-
     this._wrap(
       openai.Chat.Completions.prototype,
       "create",
       (originalMethod: (...args: any[]) => any) =>
-        chatCompletionCreate(originalMethod, tracer)
+        chatCompletionCreate(originalMethod, this.tracer, version)
     );
 
     this._wrap(
       openai.Images.prototype,
       "generate",
       (originalMethod: (...args: any[]) => any) =>
-        imagesGenerate(originalMethod, tracer)
+        imagesGenerate(originalMethod, this.tracer, version)
     );
 
     this._wrap(
       openai.Embeddings.prototype,
       "create",
       (originalMethod: (...args: any[]) => any) =>
-        embeddingsCreate(originalMethod, tracer)
+        embeddingsCreate(originalMethod, this.tracer, version)
     );
   }
 

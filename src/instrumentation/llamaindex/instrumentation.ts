@@ -1,10 +1,5 @@
 import { LlamaIndexMethods } from "@langtrase/trace-attributes";
-import {
-  DiagConsoleLogger,
-  DiagLogLevel,
-  diag,
-  trace,
-} from "@opentelemetry/api";
+import { DiagConsoleLogger, DiagLogLevel, diag } from "@opentelemetry/api";
 import {
   InstrumentationBase,
   InstrumentationModuleDefinition,
@@ -12,7 +7,6 @@ import {
   isWrapped,
 } from "@opentelemetry/instrumentation";
 import * as llamaindex from "llamaindex";
-import { TRACE_NAMESPACES } from "../../constants";
 import { genericPatch } from "./patch";
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
@@ -42,8 +36,6 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
   }
 
   private _patch(llama: typeof llamaindex) {
-    const tracer = trace.getTracer(TRACE_NAMESPACES.LLAMAINDEX);
-
     // Note: Instrumenting only the core concepts of LlamaIndex SDK
     // https://github.com/run-llama/LlamaIndexTS?tab=readme-ov-file
     for (let key in llama) {
@@ -66,7 +58,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
               genericPatch(
                 originalMethod,
                 LlamaIndexMethods.QUERYENGINE_QUERY,
-                tracer
+                this.tracer
               )
           );
         }
@@ -83,7 +75,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
               genericPatch(
                 originalMethod,
                 LlamaIndexMethods.RETRIEVER_RETRIEVE,
-                tracer
+                this.tracer
               )
           );
         }
@@ -98,7 +90,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
               genericPatch(
                 originalMethod,
                 LlamaIndexMethods.CHATENGINE_EXTRACT,
-                tracer
+                this.tracer
               )
           );
         }
@@ -113,7 +105,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
               genericPatch(
                 originalMethod,
                 LlamaIndexMethods.SIMPLEPROMPT_CALL,
-                tracer
+                this.tracer
               )
           );
         }
@@ -128,7 +120,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
               genericPatch(
                 originalMethod,
                 LlamaIndexMethods.BASEEXTRACTOR_EXTRACT,
-                tracer
+                this.tracer
               )
           );
         }
@@ -143,7 +135,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
               genericPatch(
                 originalMethod,
                 LlamaIndexMethods.BASEREADER_LOADDATA,
-                tracer
+                this.tracer
               )
           );
         }
