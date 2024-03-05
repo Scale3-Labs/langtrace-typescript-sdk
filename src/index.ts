@@ -1,3 +1,3 @@
-import { functionCalling } from "./examples/openai/function-calling";
+import { basic } from "./examples/llamaindex/basic";
 
-functionCalling();
+basic();

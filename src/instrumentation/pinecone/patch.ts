@@ -8,7 +8,7 @@ import {
 } from "@opentelemetry/api";
 import { LangTraceAttributes, LangTraceSpan } from "../../span";
 import { SERVICE_PROVIDERS } from "../constants";
-import { APIS } from "./lib/apis";
+import { APIS } from "./apis";
 
 export function genericPatch(
   originalMethod: (...args: any[]) => any,

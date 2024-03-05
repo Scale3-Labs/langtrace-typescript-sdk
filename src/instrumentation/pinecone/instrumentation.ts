@@ -6,7 +6,7 @@ import {
   isWrapped,
 } from "@opentelemetry/instrumentation";
 import type { Pinecone } from "@pinecone-database/pinecone";
-import { APIS } from "./lib/apis";
+import { APIS } from "./apis";
 import { genericPatch } from "./patch";
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
