@@ -6,8 +6,8 @@ import {
   context,
   trace,
 } from "@opentelemetry/api";
-import { SERVICE_PROVIDERS } from "../../constants";
 import { LangTraceAttributes, LangTraceSpan } from "../../span";
+import { SERVICE_PROVIDERS } from "../constants";
 import { APIS } from "./lib/apis";
 
 export function genericPatch(

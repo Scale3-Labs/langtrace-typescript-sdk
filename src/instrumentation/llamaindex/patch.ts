@@ -8,7 +8,7 @@ import {
   context,
   trace,
 } from "@opentelemetry/api";
-import { SERVICE_PROVIDERS } from "../../constants";
+import { SERVICE_PROVIDERS } from "../constants";
 
 export function genericPatch(
   originalMethod: (...args: any[]) => any,

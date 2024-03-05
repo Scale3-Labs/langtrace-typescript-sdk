@@ -7,8 +7,8 @@ import {
   context,
   trace,
 } from "@opentelemetry/api";
-import { SERVICE_PROVIDERS } from "../../constants";
 import { LangTraceSpan } from "../../span";
+import { SERVICE_PROVIDERS } from "../constants";
 import { APIS } from "./apis";
 import { calculatePromptTokens, estimateTokens } from "./token_estimation";
 
