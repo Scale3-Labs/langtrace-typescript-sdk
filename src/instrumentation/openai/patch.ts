@@ -123,9 +123,6 @@ export function chatCompletionCreate(
           });
           span.addAttribute(attributes);
           try {
-            const model = args[0].model;
-            const promptContent = JSON.stringify(args[0].messages[0]);
-            const promptTokens = calculatePromptTokens(promptContent, model);
             const resp = await originalMethod.apply(this, args);
             const responses = resp?.choices?.map((choice: any) => {
               const result: Record<string, any> = {};
@@ -147,7 +144,7 @@ export function chatCompletionCreate(
             }
             span.addAttribute({
               "llm.token.counts": JSON.stringify({
-                prompt_tokens: promptTokens,
+                prompt_tokens: resp?.usage?.prompt_tokens || 0,
                 completion_tokens: resp?.usage?.completion_tokens || 0,
                 total_tokens: resp?.usage?.total_tokens || 0,
               }),
