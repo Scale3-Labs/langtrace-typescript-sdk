@@ -6,7 +6,7 @@ import {
   isWrapped,
 } from "@opentelemetry/instrumentation";
 import type { Collection } from "chromadb";
-import { APIS } from "./lib/apis";
+import { APIS } from "./apis";
 import { collectionPatch } from "./patch";
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
