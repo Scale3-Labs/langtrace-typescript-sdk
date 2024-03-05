@@ -10,7 +10,7 @@ import {
 import { SERVICE_PROVIDERS } from "../../constants";
 import { LangTraceSpan } from "../../span";
 import { calculatePromptTokens, estimateTokens } from "../../utils";
-import { APIS } from "./lib/apis";
+import { APIS } from "./apis";
 
 export function imagesGenerate(
   originalMethod: (...args: any[]) => any,
@@ -107,6 +107,10 @@ export function chatCompletionCreate(
       attributes["llm.user"] = args[0]?.user;
     }
 
+    if (args[0]?.functions) {
+      attributes["llm.function.prompts"] = JSON.stringify(args[0]?.functions);
+    }
+
     if (!args[0].stream || args[0].stream === false) {
       return context.with(
         trace.setSpan(
@@ -177,7 +181,12 @@ export function chatCompletionCreate(
           const promptContent = JSON.stringify(args[0].messages[0]);
           const promptTokens = calculatePromptTokens(promptContent, model);
           const resp = await originalMethod.apply(this, args);
-          return handleStreamResponse(span, resp, promptTokens);
+          return handleStreamResponse(
+            span,
+            resp,
+            promptTokens,
+            args[0]?.functions
+          );
         }
       );
     }
@@ -187,7 +196,8 @@ export function chatCompletionCreate(
 async function* handleStreamResponse(
   span: LangTraceSpan,
   stream: any,
-  promptTokens: number
+  promptTokens: number,
+  functionCall: boolean = false
 ) {
   let completionTokens = 0;
   let result: string[] = [];
@@ -213,9 +223,13 @@ async function* handleStreamResponse(
         completion_tokens: completionTokens,
         total_tokens: completionTokens + promptTokens,
       }),
-      "llm.responses": JSON.stringify([
-        { message: { role: "assistant", content: result.join("") } },
-      ]),
+      "llm.responses": functionCall
+        ? JSON.stringify([
+            { message: { role: "assistant", function_call: result.join("") } },
+          ])
+        : JSON.stringify([
+            { message: { role: "assistant", content: result.join("") } },
+          ]),
     });
     span.addEvent(Event.STREAM_END);
   } catch (error: any) {

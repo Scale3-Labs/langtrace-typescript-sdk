@@ -1,3 +1,3 @@
-import { basic } from "./examples/chroma/basic";
+import { functionCalling } from "./examples/openai/function-calling";
 
-basic();
+functionCalling();
