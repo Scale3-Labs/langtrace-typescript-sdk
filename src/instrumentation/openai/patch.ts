@@ -9,8 +9,8 @@ import {
 } from "@opentelemetry/api";
 import { SERVICE_PROVIDERS } from "../../constants";
 import { LangTraceSpan } from "../../span";
-import { calculatePromptTokens, estimateTokens } from "../../utils";
 import { APIS } from "./apis";
+import { calculatePromptTokens, estimateTokens } from "./token_estimation";
 
 export function imagesGenerate(
   originalMethod: (...args: any[]) => any,

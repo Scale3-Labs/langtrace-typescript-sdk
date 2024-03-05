@@ -1,6 +1,5 @@
 import { TiktokenEncoding, get_encoding } from "tiktoken";
-import { TIKTOKEN_MODEL_MAPPING } from "./constants";
-import { OPENAI_COST_TABLE } from "./instrumentation/openai/constants";
+import { OPENAI_COST_TABLE, TIKTOKEN_MODEL_MAPPING } from "./constants";
 
 export function estimateTokens(prompt: string): number {
   if (prompt && prompt.length > 0) {
