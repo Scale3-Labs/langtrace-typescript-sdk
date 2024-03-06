@@ -1,18 +1,16 @@
-name: Lint
+name: Build
 
 on:
-  # Trigger the workflow on a pull request
   pull_request:
     types: [synchronize, opened, edited, ready_for_review, reopened, unlocked]
 
-# Down scope as necessary via https://docs.github.com/en/actions/security-guides/automatic-token-authentication#modifying-the-permissions-for-the-github_token
 permissions:
   checks: write
   contents: write
 
 jobs:
-  run-linter:
-    name: Check Linting
+  Build:
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
@@ -23,9 +21,10 @@ jobs:
         uses: actions/setup-node@v3.5.1
         with:
           node-version: 20
+          cache: npm
 
       - name: Install Node.js dependencies
         run: npm ci
 
-      - name: Run linter
-        run: npm run lint
+      - name: Build
+        run: npm run lint && npm run build
