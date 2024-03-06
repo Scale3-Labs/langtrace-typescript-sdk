@@ -28,7 +28,7 @@ export async function chatCompletion() {
       stream: false,
     });
 
-    console.log(response);
+    console.info(response);
 
     // for await (const part of response) {
     //   process.stdout.write(part.choices[0]?.delta?.content || "");

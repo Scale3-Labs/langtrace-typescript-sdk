@@ -21,7 +21,7 @@ export function messagesCreate(
     const originalContext = this;
 
     // Determine the service provider
-    let serviceProvider = SERVICE_PROVIDERS.ANTHROPIC;
+    const serviceProvider = SERVICE_PROVIDERS.ANTHROPIC;
 
     const attributes: Partial<LLMSpanAttributes> = {
       "langtrace.service.name": serviceProvider,
@@ -116,7 +116,7 @@ export function messagesCreate(
 }
 
 async function* handleStreamResponse(span: LangTraceSpan, stream: any) {
-  let result: string[] = [];
+  const result: string[] = [];
 
   span.addEvent(Event.STREAM_START);
   try {

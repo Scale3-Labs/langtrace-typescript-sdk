@@ -19,7 +19,7 @@ export function collectionPatch(
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
-    let api = APIS[method];
+    const api = APIS[method];
 
     const attributes: DatabaseSpanAttributes = {
       "langtrace.service.name": SERVICE_PROVIDERS.CHROMA,

@@ -1,3 +1,13 @@
-export { init } from './init/init';
-export { LangTraceInit, LangtraceInitOptions } from './init/types';
-export { withLangTraceRootSpan } from './utils/instrumentation';
+
+// Import the necessary modules
+import { init } from '@langtrace-init/init';
+import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types';
+import { withLangTraceRootSpan } from '@langtrace-utils/instrumentation';
+
+// Create the LangTrace namespace and export the imported functions under it
+const LangTrace = {
+  init,
+  withLangTraceRootSpan,
+};
+
+export { LangTrace, LangTraceInit, LangtraceInitOptions};

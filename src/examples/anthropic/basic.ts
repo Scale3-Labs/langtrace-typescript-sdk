@@ -24,7 +24,7 @@ export async function basic() {
 
     // console.log(message.content);
     for await (const part of message) {
-      console.log(part);
+      console.info(part);
     }
   });
 }

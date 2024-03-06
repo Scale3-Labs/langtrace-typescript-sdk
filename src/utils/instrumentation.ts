@@ -3,8 +3,8 @@ import { SpanKind, trace, Attributes, context, SpanStatusCode } from "@opentelem
 // This function wraps another function with a root span context
 export async function withLangTraceRootSpan<T>(
   fn: () => Promise<T>,
-  name: string = "LangtraceRootSpan", // "LangtraceRootSpan" is the default name for the root span
-  tracerName: string = "langtrace",
+  name = "LangtraceRootSpan", // "LangtraceRootSpan" is the default name for the root span
+  tracerName = "langtrace",
   spanAttributes: Record<string, unknown> = {},
   spanKind: SpanKind = SpanKind.INTERNAL
 ): Promise<T> {

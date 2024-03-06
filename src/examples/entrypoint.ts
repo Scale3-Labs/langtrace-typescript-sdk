@@ -1,3 +1,3 @@
-import { basic } from "./anthropic/basic";
+import { basic } from "@langtrace-examples/anthropic/basic";
 
 basic();

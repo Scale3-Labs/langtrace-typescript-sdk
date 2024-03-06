@@ -21,7 +21,7 @@ const server = http.createServer(async (req, res) => {
   res.statusCode = 200;
   res.setHeader("Content-Type", "text/plain");
   withLangTraceRootSpan(async () => {
-    const completion = await openai.chat.completions.create({
+    await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         { role: "user", content: "Say this is a test 3 times" },
@@ -33,12 +33,12 @@ const server = http.createServer(async (req, res) => {
       ],
     });
   });
-  console.log("here2");
+  console.info("here2");
   // console.log(completion.choices[0]);
   res.end("Hello World\n");
 });
 export const runSimpleServer = () => {
   server.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
+    console.info(`Server running at http://${hostname}:${port}/`);
   });
 }

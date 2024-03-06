@@ -1,4 +1,5 @@
 import { init } from "@langtrace-init/init";
+import { withLangTraceRootSpan } from "@langtrace-utils/instrumentation";
 import dotenv from "dotenv";
 import fs from "fs/promises";
 import type { BaseReader, Metadata } from "llamaindex";
@@ -12,7 +13,6 @@ import {
   TitleExtractor,
   VectorStoreIndex,
 } from "llamaindex";
-import { withLangTraceRootSpan } from "../../utils/instrumentation";
 dotenv.config();
 
 init({
@@ -41,7 +41,7 @@ export async function basic() {
     });
 
     // Output response
-    console.log(response.toString());
+    console.info(response.toString());
   });
 }
 
@@ -62,13 +62,13 @@ export async function extractor() {
   });
 
   for (const node of nodes) {
-    console.log(node.metadata);
+    console.info(node.metadata);
   }
 }
 
 export async function loader() {
   class ZipReader implements BaseReader {
-    loadData(...args: any[]): Promise<Document<Metadata>[]> {
+    loadData(): Promise<Document<Metadata>[]> {
       throw new Error("Implement me");
     }
   }
@@ -84,6 +84,6 @@ export async function loader() {
   });
 
   documents.forEach((doc) => {
-    console.log(`document (${doc.id_}):`, doc.getText());
+    console.info(`document (${doc.id_}):`, doc.getText());
   });
 }

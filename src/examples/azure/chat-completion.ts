@@ -25,5 +25,5 @@ export async function azureChatCompletion() {
     ],
   });
 
-  console.log(completion.choices[0]);
+  console.info(completion.choices[0]);
 }

@@ -4,7 +4,7 @@ import {
   InstrumentationBase,
   InstrumentationNodeModuleDefinition,
 } from "@opentelemetry/instrumentation";
-import { messagesCreate } from "./patch";
+import { messagesCreate } from "@langtrace-instrumentation/anthropic/patch";
 
 class AnthropicInstrumentation extends InstrumentationBase<typeof Anthropic> {
   constructor() {

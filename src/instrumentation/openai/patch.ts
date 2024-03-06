@@ -192,10 +192,10 @@ async function* handleStreamResponse(
   span: LangTraceSpan,
   stream: any,
   promptTokens: number,
-  functionCall: boolean = false
+  functionCall = false
 ) {
   let completionTokens = 0;
-  let result: string[] = [];
+  const result: string[] = [];
 
   span.addEvent(Event.STREAM_START);
   try {
