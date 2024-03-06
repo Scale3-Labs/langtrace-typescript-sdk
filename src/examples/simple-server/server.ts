@@ -1,5 +1,5 @@
 import { init } from "@langtrace-init/init";
-import withLangTraceRootSpan from "@langtrace-utils/instrumentation";
+import {withLangTraceRootSpan} from "@langtrace-utils/instrumentation";
 import dotenv from "dotenv";
 import * as http from "http";
 import OpenAI from "openai";

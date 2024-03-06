@@ -2,7 +2,7 @@ import { init } from "@langtrace-init/init";
 import dotenv from "dotenv";
 import fs from "fs/promises";
 import type { BaseReader, Metadata } from "llamaindex";
-import withLangTraceRootSpan from "../../utils/instrumentation";
+import {withLangTraceRootSpan} from "../../utils/instrumentation";
 import {
   Document,
   FILE_EXT_TO_READER,

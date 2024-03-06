@@ -1,7 +1,7 @@
 import { SpanKind, trace, Attributes, context, SpanStatusCode } from "@opentelemetry/api";
 
 // This function wraps another function with a root span context
-export default async function withLangTraceRootSpan<T>(
+export async function withLangTraceRootSpan<T>(
   fn: () => Promise<T>,
   name: string = "LangtraceRootSpan", // "LangtraceRootSpan" is the default name for the root span
   tracerName: string = "langtrace",

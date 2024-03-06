@@ -13,32 +13,37 @@ import { LangTraceInit, LangtraceInitOptions } from "@langtrace-init/types";
  *
  * @param api_key Your API key. If not set, the value will be read from the LANGTRACE_API_KEY environment variable
  * @param remote_url The endpoint to send the spans to. If not set, the value will be read from the LANGTRACE_URL environment variable
+ * @param batch If true, spans will be batched before being sent to the remote URL
+ * @param log_spans_to_console If true, spans will be logged to the console
+ * @param write_to_remote_url If true, spans will be sent to the remote URL
  * @returns void
  */
-export const init: LangTraceInit = ({api_key, remote_url, batch, log_spans_to_console, write_to_remote_url}: LangtraceInitOptions = {} ) => {
+export const init: LangTraceInit = ({api_key, remote_url, batch, log_spans_to_console, write_to_remote_url}: LangtraceInitOptions = {batch: false, log_spans_to_console: false, write_to_remote_url: true} ) => {
+  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
   // Set up OpenTelemetry tracing
   const provider = new NodeTracerProvider();
-  //This can be replaced with a different exporter if needed for testing (e.g. ConsoleSpanExporter)
+
   const remoteWriteExporter = new LangTraceExporter(api_key, remote_url);
-  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
-  // let processor = null
-  // if(batch===true && write_to_remote_url===true){
-  //   processor = new BatchSpanProcessor(remoteWriteExporter);
-  // }
-  // if(!batch && write_to_remote_url===true){
-  //   processor = new SimpleSpanProcessor(remoteWriteExporter);
-  // }
-  // if(log_spans_to_console===true && !batch ){
-  //   provider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter()));
-  // }
-  // if(log_spans_to_console===true && batch){
-  //   provider.addSpanProcessor(new BatchSpanProcessor(new ConsoleSpanExporter()));
-  // }
-  // // let spanProcessor: BatchSpanProcessor | SimpleSpanProcessor = new SimpleSpanProcessor(exporter);
-  // if(batch===true && write_to_remote_url===true){
-  //   // spanProcessor = new BatchSpanProcessor(remoteWriteExporter);
-  // } 
-  // provider.addSpanProcessor(processor);
+  const consoleExporter = new ConsoleSpanExporter();
+  const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter);
+  const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter);
+  const batchProcessorConsole = new BatchSpanProcessor(consoleExporter);
+  const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter);
+
+  if(log_spans_to_console){
+    if(batch){
+      provider.addSpanProcessor(batchProcessorConsole);
+    } else {
+      provider.addSpanProcessor(simpleProcessorConsole);
+    }
+  }
+  if(write_to_remote_url){
+    if(batch){
+      provider.addSpanProcessor(batchProcessorRemote);
+    } else {
+      provider.addSpanProcessor(simpleProcessorRemote);
+    }
+  }
   provider.register();
 
   // Register any automatic instrumentation and your custom OpenAI instrumentation

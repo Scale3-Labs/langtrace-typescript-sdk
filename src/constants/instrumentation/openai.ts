@@ -1,9 +1,5 @@
-import instrumentation from "@langtrace-utils/instrumentation";
+
 import { OpenAIMethods } from "@langtrase/trace-attributes";
-import src from "@opentelemetry/api";
-import { constants } from "buffer";
-import openai from "openai";
-import { TiktokenEncoding } from "tiktoken";
 
 export const OPENAI_COST_TABLE: Record<string, any> = {
   "gpt-4-0125-preview": {

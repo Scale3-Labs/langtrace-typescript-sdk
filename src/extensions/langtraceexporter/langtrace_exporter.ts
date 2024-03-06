@@ -22,7 +22,6 @@ export class LangTraceExporter implements SpanExporter {
   }
 
   export(spans: ReadableSpan[], resultCallback: (result: ExportResult) => void) {
-    console.log('Exporting spans', spans.length);
 
     const data: Partial<ReadableSpan>[] = spans.map(span => ({
       traceId: span.spanContext().traceId,

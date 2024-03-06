@@ -3,7 +3,7 @@ import { init } from "@langtrace-init/init";
 import dotenv from "dotenv";
 dotenv.config();
 import OpenAI from "openai";
-import withLangTraceRootSpan from "@langtrace-utils/instrumentation";
+import {withLangTraceRootSpan} from "@langtrace-utils/instrumentation";
 
 init()
 

@@ -9,7 +9,6 @@ init();
 
 export async function basic() {
   const client = new ChromaClient();
-console.log(process.env.OPENAI_API_KEY)
   const embedder = new OpenAIEmbeddingFunction({
     openai_api_key: process.env.OPENAI_API_KEY as string,
   });
