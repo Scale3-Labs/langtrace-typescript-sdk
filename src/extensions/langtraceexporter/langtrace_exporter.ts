@@ -11,6 +11,7 @@ export class LangTraceExporter implements SpanExporter {
    *
    * @param apiKey Your API key. If not set, the value will be read from the LANGTRACE_API_KEY environment variable
    * @param url The endpoint to send the spans to. If not set, the value will be read from the LANGTRACE_URL environment variable
+   * @param write_to_remote_url If true, spans will be sent to the remote URL. The url parameter must be set if this is true.
    */
   constructor(apiKey?: string, url?: string, write_to_remote_url?: boolean) {
     this.apiKey = apiKey ?? process.env.LANGTRACE_API_KEY;
