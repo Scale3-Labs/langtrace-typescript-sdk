@@ -4,9 +4,9 @@ import dotenv from "dotenv";
 import * as http from "http";
 import OpenAI from "openai";
 
-
-init()
 dotenv.config();
+init()
+
 const hostname = "127.0.0.1";
 const port = 3000;
 const openai = new OpenAI();

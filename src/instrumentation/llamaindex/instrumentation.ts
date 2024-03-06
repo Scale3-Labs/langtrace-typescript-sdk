@@ -101,7 +101,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
         }
         if ((cls.prototype as llamaindex.SimplePrompt).call !== undefined) {
           if (isWrapped(cls.prototype)) {
-            this._unwrap(cls.prototype, "call");
+            this._unwrap(cls.prototype, "promptcall");
           }
           this._wrap(
             cls.prototype,
@@ -110,7 +110,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
               genericPatch(
                 originalMethod,
                 LlamaIndexMethods.SIMPLEPROMPT_CALL,
-                "promptcall",
+                "prompt",
                 this.tracer,
                 version
               )
@@ -127,7 +127,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
               genericPatch(
                 originalMethod,
                 LlamaIndexMethods.BASEEXTRACTOR_EXTRACT,
-                "extractdata",
+                "extract",
                 this.tracer,
                 version
               )

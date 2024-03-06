@@ -15,14 +15,30 @@ import { LangTraceInit, LangtraceInitOptions } from "@langtrace-init/types";
  * @param remote_url The endpoint to send the spans to. If not set, the value will be read from the LANGTRACE_URL environment variable
  * @returns void
  */
-export const init: LangTraceInit = ({api_key, remote_url}: LangtraceInitOptions = {} ) => {
+export const init: LangTraceInit = ({api_key, remote_url, batch, log_spans_to_console, write_to_remote_url}: LangtraceInitOptions = {} ) => {
   // Set up OpenTelemetry tracing
-  const provider = new NodeTracerProvider({});
-  const exporter = new LangTraceExporter(api_key, remote_url);
-  // const exporter  = new ZipkinExporter({serviceName: 'langtrace', url: 'http://localhost:4000/traces'});
+  const provider = new NodeTracerProvider();
+  //This can be replaced with a different exporter if needed for testing (e.g. ConsoleSpanExporter)
+  const remoteWriteExporter = new LangTraceExporter(api_key, remote_url);
   diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
-  const simpleSpanProcessor = new BatchSpanProcessor(exporter);
-  provider.addSpanProcessor(simpleSpanProcessor);
+  // let processor = null
+  // if(batch===true && write_to_remote_url===true){
+  //   processor = new BatchSpanProcessor(remoteWriteExporter);
+  // }
+  // if(!batch && write_to_remote_url===true){
+  //   processor = new SimpleSpanProcessor(remoteWriteExporter);
+  // }
+  // if(log_spans_to_console===true && !batch ){
+  //   provider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter()));
+  // }
+  // if(log_spans_to_console===true && batch){
+  //   provider.addSpanProcessor(new BatchSpanProcessor(new ConsoleSpanExporter()));
+  // }
+  // // let spanProcessor: BatchSpanProcessor | SimpleSpanProcessor = new SimpleSpanProcessor(exporter);
+  // if(batch===true && write_to_remote_url===true){
+  //   // spanProcessor = new BatchSpanProcessor(remoteWriteExporter);
+  // } 
+  // provider.addSpanProcessor(processor);
   provider.register();
 
   // Register any automatic instrumentation and your custom OpenAI instrumentation

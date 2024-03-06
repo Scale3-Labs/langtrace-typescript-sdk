@@ -47,6 +47,7 @@ export class LangTraceExporter implements SpanExporter {
     axios.post(this.url!, data, {
       headers: {
         'Content-Type': 'application/json',
+        'x-api-key': this.apiKey,
       }
     }).then(response => {
       resultCallback({ code: response.status === 200 ? 0 : 1 });

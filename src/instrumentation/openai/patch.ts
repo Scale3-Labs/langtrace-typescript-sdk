@@ -1,9 +1,9 @@
 import { APIS } from "@langtrace-constants/instrumentation/openai";
 import { SERVICE_PROVIDERS } from "@langtrace-constants/instrumentation/common";
 import { LangTraceSpan } from "@langtrace-extensions/langtracespan/langtrace_span";
-import { calculatePromptTokens, estimateTokens } from "@langtrace-utils/llm";
 import { Event, LLMSpanAttributes } from "@langtrase/trace-attributes";
 import { Tracer, context, trace, Span, SpanKind, SpanStatusCode } from "@opentelemetry/api";
+import { calculatePromptTokens, estimateTokens } from "./token_estimation";
 
 export function imagesGenerate(
   originalMethod: (...args: any[]) => any,
@@ -98,6 +98,10 @@ export function chatCompletionCreate(
       attributes["llm.user"] = args[0]?.user;
     }
 
+    if (args[0]?.functions) {
+      attributes["llm.function.prompts"] = JSON.stringify(args[0]?.functions);
+    }
+
     if (!args[0].stream || args[0].stream === false) {
       return context.with(
         trace.setSpan(
@@ -110,9 +114,6 @@ export function chatCompletionCreate(
           });
           span.addAttributes(attributes);
           try {
-            const model = args[0].model;
-            const promptContent = JSON.stringify(args[0].messages[0]);
-            const promptTokens = calculatePromptTokens(promptContent, model);
             const resp = await originalMethod.apply(this, args);
             const responses = resp?.choices?.map((choice: any) => {
               const result: Record<string, any> = {};
@@ -134,7 +135,7 @@ export function chatCompletionCreate(
             }
             span.addAttributes({
               "llm.token.counts": JSON.stringify({
-                prompt_tokens: promptTokens,
+                prompt_tokens: resp?.usage?.prompt_tokens || 0,
                 completion_tokens: resp?.usage?.completion_tokens || 0,
                 total_tokens: resp?.usage?.total_tokens || 0,
               }),
@@ -168,7 +169,12 @@ export function chatCompletionCreate(
           const promptContent = JSON.stringify(args[0].messages[0]);
           const promptTokens = calculatePromptTokens(promptContent, model);
           const resp = await originalMethod.apply(this, args);
-          return handleStreamResponse(span, resp, promptTokens);
+          return handleStreamResponse(
+            span,
+            resp,
+            promptTokens,
+            args[0]?.functions
+          );
         }
       );
     }
@@ -178,7 +184,8 @@ export function chatCompletionCreate(
 async function* handleStreamResponse(
   span: LangTraceSpan,
   stream: any,
-  promptTokens: number
+  promptTokens: number,
+  functionCall: boolean = false
 ) {
   let completionTokens = 0;
   let result: string[] = [];
@@ -204,9 +211,13 @@ async function* handleStreamResponse(
         completion_tokens: completionTokens,
         total_tokens: completionTokens + promptTokens,
       }),
-      "llm.responses": JSON.stringify([
-        { message: { role: "assistant", content: result.join("") } },
-      ]),
+      "llm.responses": functionCall
+        ? JSON.stringify([
+            { message: { role: "assistant", function_call: result.join("") } },
+          ])
+        : JSON.stringify([
+            { message: { role: "assistant", content: result.join("") } },
+          ]),
     });
     span.addEvent(Event.STREAM_END);
   } catch (error: any) {

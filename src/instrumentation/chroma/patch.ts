@@ -11,7 +11,6 @@ import {
   trace,
 } from "@opentelemetry/api";
 
-
 export function collectionPatch(
   originalMethod: (...args: any[]) => any,
   method: string,
