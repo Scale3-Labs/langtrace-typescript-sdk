@@ -13,7 +13,7 @@ originalMethod: (...args: any[]) => any,
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
-    let api = APIS[method];
+    const api = APIS[method];
     const attributes: Partial<DatabaseSpanAttributes> = {
       "langtrace.service.name": SERVICE_PROVIDERS.PINECONE,
       "langtrace.service.type": "vectordb",

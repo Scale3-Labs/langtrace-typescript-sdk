@@ -1,4 +1,4 @@
-import { SERVICE_PROVIDERS } from "@langtrace-instrumentation/constants";
+import { SERVICE_PROVIDERS } from "@langtrace-constants/instrumentation/common";
 import { FrameworkSpanAttributes } from "@langtrase/trace-attributes";
 import {
   Attributes,

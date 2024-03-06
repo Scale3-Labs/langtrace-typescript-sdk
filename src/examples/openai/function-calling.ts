@@ -63,7 +63,9 @@ export async function functionCalling(): Promise<void> {
           {
             role: "user",
             content:
-              "David Nguyen is a sophomore majoring in computer science at Stanford University. He is Asian American and has a 3.8 GPA. David is known for his programming skills and is an active member of the university's Robotics Club. He hopes to pursue a career in artificial intelligence after graduating.",
+              "David Nguyen \
+              is a sophomore majoring in computer science at Stanford University. He is Asian American and has a 3.8 GPA. David is known for his programming skills and is an active member of the university's Robotics Club. \
+              He hopes to pursue a career in artificial intelligence after graduating.",
           },
         ],
         functions: studentCustomFunctions,
@@ -71,9 +73,9 @@ export async function functionCalling(): Promise<void> {
         stream: false,
       });
 
-      console.log(response);
+      console.info(response);
     } catch (error) {
-      console.error(error);
+      console.info(error);
     }
   });
 }

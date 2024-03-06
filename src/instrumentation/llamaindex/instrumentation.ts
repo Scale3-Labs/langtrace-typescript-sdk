@@ -36,7 +36,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
   private _patch(llama: typeof llamaindex, version: string) {
     // Note: Instrumenting only the core concepts of LlamaIndex SDK
     // https://github.com/run-llama/LlamaIndexTS?tab=readme-ov-file
-    for (let key in llama) {
+    for (const key in llama) {
       const cls = (llama as any)[key];
       if (cls.prototype) {
         if (cls.prototype.query !== undefined) {
@@ -146,7 +146,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
   }
 
   private _unpatch(llama: typeof llamaindex) {
-    for (let key in llama) {
+    for (const key in llama) {
       const cls = (llama as any)[key];
       if (cls.prototype) {
         if (cls.prototype.query !== undefined) {

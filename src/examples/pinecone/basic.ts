@@ -34,5 +34,5 @@ export async function basic() {
   const resp = await pc
     .index("test-index")
     .query({ topK: 3, vector: embedding });
-  console.log(resp);
+  console.info(resp);
 }

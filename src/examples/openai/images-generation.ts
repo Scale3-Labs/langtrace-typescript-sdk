@@ -14,5 +14,5 @@ export async function imagesGeneration() {
     prompt: "A cute baby sea otter",
   });
 
-  console.log(image.data);
+  console.info(image.data);
 }
