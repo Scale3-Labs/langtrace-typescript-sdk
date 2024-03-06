@@ -1,3 +1,4 @@
+import { OpenAIMethods } from "@langtrase/trace-attributes";
 export const OPENAI_COST_TABLE: Record<string, any> = {
   "gpt-4-0125-preview": {
     input: 0.01,
@@ -26,5 +27,20 @@ export const OPENAI_COST_TABLE: Record<string, any> = {
   "gpt-3.5-turbo-instruct": {
     input: 0.0015,
     output: 0.002,
+  },
+};
+
+export const APIS = {
+  CHAT_COMPLETION: {
+    METHOD: OpenAIMethods.CHAT_COMPLETION,
+    ENDPOINT: "/chat/completions",
+  },
+  IMAGES_GENERATION: {
+    METHOD: OpenAIMethods.IMAGES_GENERATION,
+    ENDPOINT: "/images/generations",
+  },
+  EMBEDDINGS_CREATE: {
+    METHOD: OpenAIMethods.EMBEDDINGS_CREATE,
+    ENDPOINT: "/embeddings",
   },
 };

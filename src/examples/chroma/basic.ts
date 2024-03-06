@@ -1,13 +1,15 @@
-import { setupInstrumentation } from "../setup";
 
-setupInstrumentation();
 
+
+import { init } from "@langtrace-init/init";
 import { ChromaClient, OpenAIEmbeddingFunction } from "chromadb";
 import dotenv from "dotenv";
 dotenv.config();
+init();
+
 export async function basic() {
   const client = new ChromaClient();
-
+console.log(process.env.OPENAI_API_KEY)
   const embedder = new OpenAIEmbeddingFunction({
     openai_api_key: process.env.OPENAI_API_KEY as string,
   });

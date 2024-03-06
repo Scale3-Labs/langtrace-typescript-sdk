@@ -1,13 +1,12 @@
-import { setupInstrumentation } from "../setup";
-
-setupInstrumentation();
-
+import { init } from "@langtrace-init/init";
 import dotenv from "dotenv";
 import OpenAI from "openai";
 
 dotenv.config();
 
 const openai = new OpenAI();
+
+init();
 
 export async function chatCompletionStreaming() {
   const stream = await openai.chat.completions.create({

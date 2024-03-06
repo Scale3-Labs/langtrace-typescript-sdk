@@ -1,8 +1,5 @@
-import { setupInstrumentation } from "../setup";
-
-setupInstrumentation();
-
 // Initialize dotenv
+import { init } from "@langtrace-init/init";
 import { Pinecone } from "@pinecone-database/pinecone";
 import dotenv from "dotenv";
 import OpenAI from "openai";
@@ -10,6 +7,8 @@ dotenv.config();
 
 const pc = new Pinecone();
 const openai = new OpenAI();
+init();
+
 
 export async function basic() {
   const response = await openai.embeddings.create({

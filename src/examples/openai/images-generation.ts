@@ -1,11 +1,10 @@
-import { setupInstrumentation } from "../setup";
-
-setupInstrumentation();
-
 // Initialize dotenv
+import { init } from "@langtrace-init/init";
 import dotenv from "dotenv";
 import OpenAI from "openai";
 dotenv.config();
+
+init();
 
 const openai = new OpenAI();
 

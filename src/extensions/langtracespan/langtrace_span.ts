@@ -1,14 +1,9 @@
 import {
-  DatabaseSpanAttributes,
-  Event,
-  FrameworkSpanAttributes,
-  LLMSpanAttributes,
+  Event
 } from "@langtrase/trace-attributes";
 import { Span, Tracer } from "@opentelemetry/api";
+import { LangTraceSpanAttributes } from "@langtrace-extensions/langtracespan/types"
 
-export type LangTraceAttributes = LLMSpanAttributes &
-  DatabaseSpanAttributes &
-  FrameworkSpanAttributes;
 export class LangTraceSpan {
   private span: Span;
   private tracer: Tracer;
@@ -16,7 +11,7 @@ export class LangTraceSpan {
   constructor(
     tracer: Tracer,
     name: string,
-    options?: Omit<LangTraceAttributes, "[k: string]: unknown">
+    options?: Omit<LangTraceSpanAttributes, "[k: string]: unknown">
   ) {
     this.tracer = tracer;
     this.span = this.tracer.startSpan(name, options);
@@ -26,7 +21,7 @@ export class LangTraceSpan {
     return this.span;
   }
 
-  addAttribute(attributes: Partial<LangTraceAttributes>): void {
+  addAttributes(attributes: Partial<LangTraceSpanAttributes>): void {
     Object.entries(attributes).forEach(([key, value]) => {
       if (value !== undefined) {
         this.span.setAttribute(key, value as string);

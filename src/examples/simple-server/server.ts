@@ -1,16 +1,16 @@
-import { setupInstrumentation } from "../setup";
-
-setupInstrumentation();
-
+import { init } from "@langtrace-init/init";
+import withLangTraceRootSpan from "@langtrace-utils/instrumentation";
 import dotenv from "dotenv";
 import * as http from "http";
 import OpenAI from "openai";
-import withLangTraceRootSpan from "../../instrumentation/with-root-span";
 
+
+init()
 dotenv.config();
 const hostname = "127.0.0.1";
 const port = 3000;
 const openai = new OpenAI();
+
 
 const server = http.createServer(async (req, res) => {
   if (req.url === "/favicon.ico") {
@@ -37,7 +37,8 @@ const server = http.createServer(async (req, res) => {
   // console.log(completion.choices[0]);
   res.end("Hello World\n");
 });
-
-server.listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}/`);
-});
+export const runSimpleServer = () => {
+  server.listen(port, hostname, () => {
+    console.log(`Server running at http://${hostname}:${port}/`);
+  });
+}

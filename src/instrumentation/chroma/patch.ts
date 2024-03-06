@@ -1,3 +1,7 @@
+import { APIS } from "@langtrace-constants/instrumentation/chroma";
+import { SERVICE_PROVIDERS } from "@langtrace-constants/instrumentation/common";
+import { LangTraceSpan } from "@langtrace-extensions/langtracespan/langtrace_span";
+import { DatabaseSpanAttributes } from "@langtrase/trace-attributes";
 import {
   Span,
   SpanKind,
@@ -6,9 +10,7 @@ import {
   context,
   trace,
 } from "@opentelemetry/api";
-import { SERVICE_PROVIDERS } from "../../constants";
-import { LangTraceAttributes, LangTraceSpan } from "../../span";
-import { APIS } from "./lib/apis";
+
 
 export function collectionPatch(
   originalMethod: (...args: any[]) => any,
@@ -20,7 +22,7 @@ export function collectionPatch(
     const originalContext = this;
     let api = APIS[method];
 
-    const attributes: Partial<LangTraceAttributes> = {
+    const attributes: DatabaseSpanAttributes = {
       "langtrace.service.name": SERVICE_PROVIDERS.CHROMA,
       "langtrace.service.type": "vectordb",
       "langtrace.service.version": version,
@@ -47,7 +49,7 @@ export function collectionPatch(
         const span = new LangTraceSpan(tracer, api.METHOD, {
           kind: SpanKind.CLIENT,
         });
-        span.addAttribute(attributes);
+        span.addAttributes(attributes);
 
         try {
           // NOTE: Not tracing the response data as it can contain sensitive information

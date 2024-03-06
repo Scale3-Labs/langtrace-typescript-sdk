@@ -1,10 +1,4 @@
-import {
-  Attributes,
-  context,
-  SpanKind,
-  SpanStatusCode,
-  trace,
-} from "@opentelemetry/api";
+import { SpanKind, trace, Attributes, context, SpanStatusCode } from "@opentelemetry/api";
 
 // This function wraps another function with a root span context
 export default async function withLangTraceRootSpan<T>(
