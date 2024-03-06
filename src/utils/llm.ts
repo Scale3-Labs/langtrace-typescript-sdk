@@ -1,5 +1,7 @@
+import { TIKTOKEN_MODEL_MAPPING } from "@langtrace-constants/instrumentation/common";
+import { OPENAI_COST_TABLE } from "@langtrace-constants/instrumentation/openai";
 import { TiktokenEncoding, get_encoding } from "tiktoken";
-import { TIKTOKEN_MODEL_MAPPING, OPENAI_COST_TABLE } from "./constants";
+
 
 export function estimateTokens(prompt: string): number {
   if (prompt && prompt.length > 0) {

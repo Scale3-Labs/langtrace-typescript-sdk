@@ -1,17 +1,12 @@
-import {
-  Span,
-  SpanKind,
-  SpanStatusCode,
-  Tracer,
-  context,
-  trace,
-} from "@opentelemetry/api";
-import { LangTraceAttributes, LangTraceSpan } from "../../span";
-import { SERVICE_PROVIDERS } from "../constants";
-import { APIS } from "./apis";
+import { APIS } from "@langtrace-constants/instrumentation/pinecone";
+import { SERVICE_PROVIDERS } from "@langtrace-constants/instrumentation/common";
+import { LangTraceSpan } from "@langtrace-extensions/langtracespan/langtrace_span";
+import { DatabaseSpanAttributes } from "@langtrase/trace-attributes";
+import { Tracer, context, trace, Span, SpanKind, SpanStatusCode } from "@opentelemetry/api";
+
 
 export function genericPatch(
-  originalMethod: (...args: any[]) => any,
+originalMethod: (...args: any[]) => any,
   method: string,
   tracer: Tracer,
   version: string
@@ -19,7 +14,7 @@ export function genericPatch(
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
     let api = APIS[method];
-    const attributes: Partial<LangTraceAttributes> = {
+    const attributes: Partial<DatabaseSpanAttributes> = {
       "langtrace.service.name": SERVICE_PROVIDERS.PINECONE,
       "langtrace.service.type": "vectordb",
       "langtrace.service.version": version,
@@ -34,25 +29,25 @@ export function genericPatch(
         const span = new LangTraceSpan(tracer, api.METHOD, {
           kind: SpanKind.CLIENT,
         });
-        span.addAttribute(attributes);
+        span.addAttributes(attributes);
         try {
           if (this.target?.index) {
-            span.addAttribute({
+            span.addAttributes({
               "db.index": this.target?.index,
             });
           }
           if (this.target?.namespace) {
-            span.addAttribute({
+            span.addAttributes({
               "db.namespace": this.target?.namespace,
             });
           }
           if (this.target?.indexHostUrl) {
-            span.addAttribute({
+            span.addAttributes({
               "server.address": this.target?.indexHostUrl + api.ENDPOINT,
             });
           }
           if (args[0]?.topK) {
-            span.addAttribute({ "db.top_k": args[0]?.topK });
+            span.addAttributes({ "db.top_k": args[0]?.topK });
           }
 
           // Call the original create method

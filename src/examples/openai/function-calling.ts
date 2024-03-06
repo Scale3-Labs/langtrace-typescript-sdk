@@ -1,13 +1,11 @@
-import { setupInstrumentation } from "../setup";
-
-setupInstrumentation();
-
+import { init } from "@langtrace-init/init";
+import {withLangTraceRootSpan} from "@langtrace-utils/instrumentation";
 // Initialize dotenv
 import dotenv from "dotenv";
 import OpenAI from "openai";
-import withLangTraceRootSpan from "../../instrumentation/with-root-span";
 dotenv.config();
 
+init()
 interface StudentCustomFunction {
   name: string;
   description: string;

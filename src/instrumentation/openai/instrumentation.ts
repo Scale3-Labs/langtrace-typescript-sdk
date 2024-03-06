@@ -5,11 +5,7 @@ import {
   isWrapped,
 } from "@opentelemetry/instrumentation";
 import type { OpenAI } from "openai";
-import {
-  chatCompletionCreate,
-  embeddingsCreate,
-  imagesGenerate,
-} from "./patch";
+import { chatCompletionCreate, embeddingsCreate, imagesGenerate } from "@langtrace-instrumentation/openai/patch";
 
 class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
   constructor() {

@@ -1,3 +1,4 @@
+import { SERVICE_PROVIDERS } from "@langtrace-instrumentation/constants";
 import { FrameworkSpanAttributes } from "@langtrase/trace-attributes";
 import {
   Attributes,
@@ -8,7 +9,7 @@ import {
   context,
   trace,
 } from "@opentelemetry/api";
-import { SERVICE_PROVIDERS } from "../constants";
+
 
 export function genericPatch(
   originalMethod: (...args: any[]) => any,

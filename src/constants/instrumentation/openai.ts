@@ -1,6 +1,5 @@
 
 import { OpenAIMethods } from "@langtrase/trace-attributes";
-import { TiktokenEncoding } from "tiktoken";
 
 export const OPENAI_COST_TABLE: Record<string, any> = {
   "gpt-4-0125-preview": {
@@ -46,8 +45,8 @@ export const APIS = {
     METHOD: OpenAIMethods.EMBEDDINGS_CREATE,
     ENDPOINT: "/embeddings",
   },
-}
-export const TIKTOKEN_MODEL_MAPPING: Record<string, TiktokenEncoding> = {
+// TODO: Add more models
+// https://github.com/dqbd/tiktoken/blob/74c147e19584a3a1acea0c8e0da4d39415cd33e0/wasm/src/lib.rs#L328
   "gpt-4": "cl100k_base",
   "gpt-4-32k": "cl100k_base",
   "gpt-4-0125-preview": "cl100k_base",

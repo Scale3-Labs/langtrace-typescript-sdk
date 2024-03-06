@@ -1,15 +1,8 @@
+import { APIS } from "@langtrace-constants/instrumentation/openai";
+import { SERVICE_PROVIDERS } from "@langtrace-constants/instrumentation/common";
+import { LangTraceSpan } from "@langtrace-extensions/langtracespan/langtrace_span";
 import { Event, LLMSpanAttributes } from "@langtrase/trace-attributes";
-import {
-  Span,
-  SpanKind,
-  SpanStatusCode,
-  Tracer,
-  context,
-  trace,
-} from "@opentelemetry/api";
-import { LangTraceSpan } from "../../span";
-import { SERVICE_PROVIDERS } from "../constants";
-import { APIS } from "./apis";
+import { Tracer, context, trace, Span, SpanKind, SpanStatusCode } from "@opentelemetry/api";
 import { calculatePromptTokens, estimateTokens } from "./token_estimation";
 
 export function imagesGenerate(
@@ -26,7 +19,7 @@ export function imagesGenerate(
       serviceProvider = SERVICE_PROVIDERS.AZURE;
     }
 
-    const attributes: Partial<LLMSpanAttributes> = {
+    const attributes: LLMSpanAttributes = {
       "langtrace.service.name": serviceProvider,
       "langtrace.service.type": "llm",
       "langtrace.service.version": version,
@@ -45,12 +38,10 @@ export function imagesGenerate(
         const span = new LangTraceSpan(tracer, APIS.IMAGES_GENERATION.METHOD, {
           kind: SpanKind.SERVER,
         });
-        span.addAttribute(attributes);
+        span.addAttributes(attributes);
         try {
           const response = await originalMethod.apply(originalContext, args);
-          span.addAttribute({
-            "llm.responses": JSON.stringify(response?.data),
-          });
+          attributes["llm.responses"] = JSON.stringify(response?.data);
           span.setStatus({ code: SpanStatusCode.OK });
           span.end();
           return response;
@@ -121,7 +112,7 @@ export function chatCompletionCreate(
           const span = new LangTraceSpan(tracer, APIS.CHAT_COMPLETION.METHOD, {
             kind: SpanKind.CLIENT,
           });
-          span.addAttribute(attributes);
+          span.addAttributes(attributes);
           try {
             const resp = await originalMethod.apply(this, args);
             const responses = resp?.choices?.map((choice: any) => {
@@ -133,16 +124,16 @@ export function chatCompletionCreate(
               }
               return result;
             });
-            span.addAttribute({
+            span.addAttributes({
               "llm.responses": JSON.stringify(responses),
             });
 
             if (resp?.system_fingerprint) {
-              span.addAttribute({
+              span.addAttributes({
                 "llm.system.fingerprint": resp?.system_fingerprint,
               });
             }
-            span.addAttribute({
+            span.addAttributes({
               "llm.token.counts": JSON.stringify({
                 prompt_tokens: resp?.usage?.prompt_tokens || 0,
                 completion_tokens: resp?.usage?.completion_tokens || 0,
@@ -173,7 +164,7 @@ export function chatCompletionCreate(
           const span = new LangTraceSpan(tracer, APIS.CHAT_COMPLETION.METHOD, {
             kind: SpanKind.CLIENT,
           });
-          span.addAttribute(attributes);
+          span.addAttributes(attributes);
           const model = args[0].model;
           const promptContent = JSON.stringify(args[0].messages[0]);
           const promptTokens = calculatePromptTokens(promptContent, model);
@@ -214,7 +205,7 @@ async function* handleStreamResponse(
     }
 
     span.setStatus({ code: SpanStatusCode.OK });
-    span.addAttribute({
+    span.addAttributes({
       "llm.token.counts": JSON.stringify({
         prompt_tokens: promptTokens,
         completion_tokens: completionTokens,
@@ -283,7 +274,7 @@ export function embeddingsCreate(
         const span = new LangTraceSpan(tracer, APIS.EMBEDDINGS_CREATE.METHOD, {
           kind: SpanKind.SERVER,
         });
-        span.addAttribute(attributes);
+        span.addAttributes(attributes);
         try {
           const resp = await originalMethod.apply(originalContext, args);
 

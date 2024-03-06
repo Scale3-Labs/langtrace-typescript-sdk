@@ -1,10 +1,10 @@
-import { setupInstrumentation } from "../setup";
-
-setupInstrumentation();
-
+import { init } from "@langtrace-init/init";
 import dotenv from "dotenv";
 import OpenAI from "openai";
+
 dotenv.config();
+
+init();
 
 export async function embeddingsCreate() {
   const openai = new OpenAI();

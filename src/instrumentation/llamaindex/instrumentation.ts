@@ -1,4 +1,4 @@
-import { DiagConsoleLogger, DiagLogLevel, diag } from "@opentelemetry/api";
+import { diag } from "@opentelemetry/api";
 import {
   InstrumentationBase,
   InstrumentationModuleDefinition,
@@ -6,9 +6,8 @@ import {
   isWrapped,
 } from "@opentelemetry/instrumentation";
 import * as llamaindex from "llamaindex";
-import { genericPatch } from "./patch";
+import { genericPatch } from "@langtrace-instrumentation/llamaindex/patch";
 
-diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 class LlamaIndexInstrumentation extends InstrumentationBase<any> {
   constructor() {
     super("@langtrase/node-sdk", "1.0.0");

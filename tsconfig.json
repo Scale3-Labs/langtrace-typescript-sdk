@@ -5,8 +5,19 @@
         "outDir": "./dist",
         "strict": true,
         "esModuleInterop": true,
+        "declaration": true,
         "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true
+        "sourceMap": true,
+        "forceConsistentCasingInFileNames": true,
+        "baseUrl": "./src",
+        "paths": {
+            "@langtrace-instrumentation/*": ["instrumentation/*"],
+            "@langtrace-init/*": ["init/*"],
+            "@langtrace-constants/*": ["constants/*"],
+            "@langtrace-examples/*": ["examples/*"],
+            "@langtrace-extensions/*": ["extensions/*"],
+            "@langtrace-utils/*": ["utils/*"],
+          },
     },
     "include": [
         "src/**/*"

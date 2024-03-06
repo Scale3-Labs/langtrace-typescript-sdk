@@ -1,15 +1,9 @@
-import { DiagConsoleLogger, DiagLogLevel, diag } from "@opentelemetry/api";
-import {
-  InstrumentationBase,
-  InstrumentationModuleDefinition,
-  InstrumentationNodeModuleDefinition,
-  isWrapped,
-} from "@opentelemetry/instrumentation";
-import type { Pinecone } from "@pinecone-database/pinecone";
-import { APIS } from "./apis";
-import { genericPatch } from "./patch";
+import { APIS } from "@langtrace-constants/instrumentation/chroma";
+import { diag } from "@opentelemetry/api";
+import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from "@opentelemetry/instrumentation";
+import { Pinecone } from "@pinecone-database/pinecone";
+import { genericPatch } from "@langtrace-instrumentation/pinecone/patch";
 
-diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 class PineconeInstrumentation extends InstrumentationBase<any> {
   constructor() {
     super("@langtrase/node-sdk", "1.0.0");

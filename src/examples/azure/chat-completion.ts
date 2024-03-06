@@ -1,11 +1,10 @@
-import { setupInstrumentation } from "../setup";
-
-setupInstrumentation();
-
 // Initialize dotenv
+import { init } from "@langtrace-init/init";
 import dotenv from "dotenv";
 import OpenAI from "openai";
 dotenv.config();
+
+init();
 
 export async function azureChatCompletion() {
   const openai = new OpenAI({
