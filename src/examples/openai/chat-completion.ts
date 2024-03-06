@@ -1,11 +1,15 @@
 // Initialize dotenv
 import { init } from "@langtrace-init/init";
+import { withLangTraceRootSpan } from "@langtrace-utils/instrumentation";
 import dotenv from "dotenv";
-dotenv.config();
 import OpenAI from "openai";
-import {withLangTraceRootSpan} from "@langtrace-utils/instrumentation";
+dotenv.config();
 
-init()
+init({
+  write_to_remote_url: false,
+  log_spans_to_console: true,
+  batch: false,
+});
 
 export async function chatCompletion() {
   const openai = new OpenAI();
@@ -21,12 +25,14 @@ export async function chatCompletion() {
         // },
         // { role: "user", content: "Say this is a mock 4 times" },
       ],
-      stream: true,
+      stream: false,
     });
 
-    for await (const part of response) {
-      process.stdout.write(part.choices[0]?.delta?.content || "");
-    }
+    console.log(response);
+
+    // for await (const part of response) {
+    //   process.stdout.write(part.choices[0]?.delta?.content || "");
+    // }
 
     // const completion2 = await openai.chat.completions.create({
     //   model: "gpt-4",

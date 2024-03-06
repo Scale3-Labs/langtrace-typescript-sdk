@@ -1,3 +1,4 @@
+import { genericPatch } from "@langtrace-instrumentation/llamaindex/patch";
 import { diag } from "@opentelemetry/api";
 import {
   InstrumentationBase,
@@ -6,7 +7,6 @@ import {
   isWrapped,
 } from "@opentelemetry/instrumentation";
 import * as llamaindex from "llamaindex";
-import { genericPatch } from "@langtrace-instrumentation/llamaindex/patch";
 
 class LlamaIndexInstrumentation extends InstrumentationBase<any> {
   constructor() {
@@ -172,6 +172,11 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
         if (cls.prototype.extract !== undefined) {
           if (isWrapped(cls.prototype)) {
             this._unwrap(cls.prototype, "extract");
+          }
+        }
+        if (cls.prototype.loadData !== undefined) {
+          if (isWrapped(cls.prototype)) {
+            this._unwrap(cls.prototype, "loadData");
           }
         }
       }

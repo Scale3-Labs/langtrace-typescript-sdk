@@ -1,6 +1,4 @@
-import { OpenAIMethods } from "@langtrase/trace-attributes";
-
-export const OPENAI_COST_TABLE: Record<string, any> = {
+export const ANTHROPIC_COST_TABLE: Record<string, any> = {
   "gpt-4-0125-preview": {
     input: 0.01,
     output: 0.03,
@@ -32,16 +30,8 @@ export const OPENAI_COST_TABLE: Record<string, any> = {
 };
 
 export const APIS = {
-  CHAT_COMPLETION: {
-    METHOD: OpenAIMethods.CHAT_COMPLETION,
-    ENDPOINT: "/chat/completions",
-  },
-  IMAGES_GENERATION: {
-    METHOD: OpenAIMethods.IMAGES_GENERATION,
-    ENDPOINT: "/images/generations",
-  },
-  EMBEDDINGS_CREATE: {
-    METHOD: OpenAIMethods.EMBEDDINGS_CREATE,
-    ENDPOINT: "/embeddings",
+  MESSAGES_CREATE: {
+    METHOD: "anthropic.messages.create",
+    ENDPOINT: "/v1/messages",
   },
 };

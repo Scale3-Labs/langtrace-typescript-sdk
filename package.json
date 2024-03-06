@@ -10,6 +10,7 @@
   "author": "Scale3 Labs",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.16.1",
     "@langchain/community": "^0.0.30",
     "@langchain/openai": "^0.0.14",
     "@langtrase/trace-attributes": "^1.0.34",

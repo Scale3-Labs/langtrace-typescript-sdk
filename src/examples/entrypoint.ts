@@ -1,3 +1,3 @@
-import { basic } from "./llamaindex/basic";
+import { basic } from "./anthropic/basic";
 
 basic();

@@ -1,9 +1,16 @@
-import { APIS } from "@langtrace-constants/instrumentation/openai";
 import { SERVICE_PROVIDERS } from "@langtrace-constants/instrumentation/common";
+import { APIS } from "@langtrace-constants/instrumentation/openai";
 import { LangTraceSpan } from "@langtrace-extensions/langtracespan/langtrace_span";
+import { calculatePromptTokens, estimateTokens } from "@langtrace-utils/llm";
 import { Event, LLMSpanAttributes } from "@langtrase/trace-attributes";
-import { Tracer, context, trace, Span, SpanKind, SpanStatusCode } from "@opentelemetry/api";
-import { calculatePromptTokens, estimateTokens } from "./token_estimation";
+import {
+  Span,
+  SpanKind,
+  SpanStatusCode,
+  Tracer,
+  context,
+  trace,
+} from "@opentelemetry/api";
 
 export function imagesGenerate(
   originalMethod: (...args: any[]) => any,

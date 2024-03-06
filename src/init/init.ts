@@ -1,5 +1,6 @@
 import { LangTraceExporter } from "@langtrace-extensions/langtraceexporter/langtrace_exporter";
 import { LangTraceInit, LangtraceInitOptions } from "@langtrace-init/types";
+import { anthropicInstrumentation } from "@langtrace-instrumentation/anthropic/instrumentation";
 import { chromaInstrumentation } from "@langtrace-instrumentation/chroma/instrumentation";
 import { llamaIndexInstrumentation } from "@langtrace-instrumentation/llamaindex/instrumentation";
 import { openAIInstrumentation } from "@langtrace-instrumentation/openai/instrumentation";
@@ -73,6 +74,7 @@ export const init: LangTraceInit = (
       chromaInstrumentation,
       llamaIndexInstrumentation,
       openAIInstrumentation,
+      anthropicInstrumentation,
     ],
     tracerProvider: provider,
   });
