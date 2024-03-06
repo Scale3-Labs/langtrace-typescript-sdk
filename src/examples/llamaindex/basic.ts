@@ -2,7 +2,6 @@ import { init } from "@langtrace-init/init";
 import dotenv from "dotenv";
 import fs from "fs/promises";
 import type { BaseReader, Metadata } from "llamaindex";
-import {withLangTraceRootSpan} from "../../utils/instrumentation";
 import {
   Document,
   FILE_EXT_TO_READER,
@@ -13,9 +12,14 @@ import {
   TitleExtractor,
   VectorStoreIndex,
 } from "llamaindex";
+import { withLangTraceRootSpan } from "../../utils/instrumentation";
 dotenv.config();
 
-init()
+init({
+  batch: false,
+  log_spans_to_console: true,
+  write_to_remote_url: false,
+});
 
 export async function basic() {
   withLangTraceRootSpan(async () => {
