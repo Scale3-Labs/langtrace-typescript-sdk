@@ -1,4 +1,3 @@
-import { LlamaIndexMethods } from "@langtrase/trace-attributes";
 import { diag } from "@opentelemetry/api";
 import {
   InstrumentationBase,
@@ -40,13 +39,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
     for (let key in llama) {
       const cls = (llama as any)[key];
       if (cls.prototype) {
-        if (
-          (cls.prototype as llamaindex.RetrieverQueryEngine).query !==
-            undefined ||
-          (cls.prototype as llamaindex.RouterQueryEngine).query !== undefined ||
-          (cls.prototype as llamaindex.SubQuestionQueryEngine).query !==
-            undefined
-        ) {
+        if (cls.prototype.query !== undefined) {
           if (isWrapped(cls.prototype)) {
             this._unwrap(cls.prototype, "query");
           }
@@ -56,16 +49,14 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             (originalMethod: (...args: any[]) => any) =>
               genericPatch(
                 originalMethod,
-                LlamaIndexMethods.QUERYENGINE_QUERY,
+                `llamaindex.${key}.query`,
                 "query",
                 this.tracer,
                 version
               )
           );
         }
-        if (
-          (cls.prototype as llamaindex.BaseRetriever).retrieve !== undefined
-        ) {
+        if (cls.prototype.retrieve !== undefined) {
           if (isWrapped(cls.prototype)) {
             this._unwrap(cls.prototype, "retrieve");
           }
@@ -75,14 +66,14 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             (originalMethod: (...args: any[]) => any) =>
               genericPatch(
                 originalMethod,
-                LlamaIndexMethods.RETRIEVER_RETRIEVE,
-                "retrieve",
+                `llamaindex.${key}.retrieve`,
+                "retrieve_data",
                 this.tracer,
                 version
               )
           );
         }
-        if ((cls.prototype as llamaindex.ChatEngine).chat !== undefined) {
+        if (cls.prototype.chat !== undefined) {
           if (isWrapped(cls.prototype)) {
             this._unwrap(cls.prototype, "chat");
           }
@@ -92,16 +83,16 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             (originalMethod: (...args: any[]) => any) =>
               genericPatch(
                 originalMethod,
-                LlamaIndexMethods.CHATENGINE_EXTRACT,
+                `llamaindex.${key}.chat`,
                 "chat",
                 this.tracer,
                 version
               )
           );
         }
-        if ((cls.prototype as llamaindex.SimplePrompt).call !== undefined) {
+        if (cls.prototype.call !== undefined) {
           if (isWrapped(cls.prototype)) {
-            this._unwrap(cls.prototype, "promptcall");
+            this._unwrap(cls.prototype, "call");
           }
           this._wrap(
             cls.prototype,
@@ -109,14 +100,14 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             (originalMethod: (...args: any[]) => any) =>
               genericPatch(
                 originalMethod,
-                LlamaIndexMethods.SIMPLEPROMPT_CALL,
+                `llamaindex.${key}.call`,
                 "prompt",
                 this.tracer,
                 version
               )
           );
         }
-        if ((cls.prototype as llamaindex.BaseExtractor).extract !== undefined) {
+        if (cls.prototype.extract !== undefined) {
           if (isWrapped(cls.prototype)) {
             this._unwrap(cls.prototype, "extract");
           }
@@ -126,14 +117,14 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             (originalMethod: (...args: any[]) => any) =>
               genericPatch(
                 originalMethod,
-                LlamaIndexMethods.BASEEXTRACTOR_EXTRACT,
-                "extract",
+                `llamaindex.${key}.extract`,
+                "extract_data",
                 this.tracer,
                 version
               )
           );
         }
-        if ((cls.prototype as llamaindex.BaseReader).loadData !== undefined) {
+        if (cls.prototype.loadData !== undefined) {
           if (isWrapped(cls.prototype)) {
             this._unwrap(cls.prototype, "loadData");
           }
@@ -143,8 +134,8 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
             (originalMethod: (...args: any[]) => any) =>
               genericPatch(
                 originalMethod,
-                LlamaIndexMethods.BASEREADER_LOADDATA,
-                "loaddata",
+                `llamaindex.${key}.loadData`,
+                "load_data",
                 this.tracer,
                 version
               )
@@ -158,35 +149,27 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
     for (let key in llama) {
       const cls = (llama as any)[key];
       if (cls.prototype) {
-        if (
-          (cls.prototype as llamaindex.RetrieverQueryEngine).query !==
-            undefined ||
-          (cls.prototype as llamaindex.RouterQueryEngine).query !== undefined ||
-          (cls.prototype as llamaindex.SubQuestionQueryEngine).query !==
-            undefined
-        ) {
+        if (cls.prototype.query !== undefined) {
           if (isWrapped(cls.prototype)) {
             this._unwrap(cls.prototype, "query");
           }
         }
-        if (
-          (cls.prototype as llamaindex.BaseRetriever).retrieve !== undefined
-        ) {
+        if (cls.prototype.retrieve !== undefined) {
           if (isWrapped(cls.prototype)) {
             this._unwrap(cls.prototype, "retrieve");
           }
         }
-        if ((cls.prototype as llamaindex.ChatEngine).chat !== undefined) {
+        if (cls.prototype.chat !== undefined) {
           if (isWrapped(cls.prototype)) {
             this._unwrap(cls.prototype, "chat");
           }
         }
-        if ((cls.prototype as llamaindex.SimplePrompt).call !== undefined) {
+        if (cls.prototype.call !== undefined) {
           if (isWrapped(cls.prototype)) {
             this._unwrap(cls.prototype, "call");
           }
         }
-        if ((cls.prototype as llamaindex.BaseExtractor).extract !== undefined) {
+        if (cls.prototype.extract !== undefined) {
           if (isWrapped(cls.prototype)) {
             this._unwrap(cls.prototype, "extract");
           }
