@@ -1,5 +1,10 @@
-name: Publish
+name: Release-Flow
 on:
+  label:
+    types: [created, edited, deleted]
+  pull_request:
+    types: [synchronize, opened, edited, ready_for_review, reopened, unlocked]
+    branches: [main, development]
   push:
     branches: [main, development]
 
@@ -7,26 +12,112 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 permissions:
   contents: write
+  issues: write
   pull-requests: write
+  repository-projects: write
+  statuses: write
+  actions: write
 
 jobs:
-  publish:
+  auto-label:
     runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name , 'release:true') == false
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out Git repository
+        uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: 20
           cache: "npm"
 
       - name: Install Node.js dependencies
         run: npm ci
-      - name: Create Release Pull Request or Publish
-        id: changesets
-        uses: changesets/action@v1
+
+      - name: Labeler
+        uses: actions/labeler@v5.0.0
         with:
-          publish: npm run publish
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/config/labeler.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    if: contains(github.event.pull_request.labels.*.name, 'release:true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Extract package version
+        id: package-version
+        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      - name: Update PR title with version
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          PACKAGE_VERSION="${{ env.PACKAGE_VERSION }}"
+          RELEASE_PREFIX="Release $PACKAGE_VERSION - "
+
+          # Fetch the current PR title
+          PR_TITLE="$(gh pr view "$PR_NUMBER" --json title -q .title)"
+          echo "Current PR Title: $PR_TITLE"
+
+          # Regular expression to match the pattern "Release X.X.X - " at the beginning of the title
+          # It ensures that we replace only the first occurrence of such a pattern
+          # The logic here captures the rest of the title after the version string and appends it after the new version prefix
+          NEW_TITLE=$(echo "$PR_TITLE" | sed -E "s/^Release [0-9]+\.[0-9]+\.[0-9]+ - /$RELEASE_PREFIX/")
+
+          echo "Updating PR title to: $NEW_TITLE"
+
+          # Update the PR title using gh CLI
+          gh pr edit "$PR_NUMBER" --title "$NEW_TITLE"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
+
+      - name: Check for Changeset file
+        id: check
+        run: |
+          echo "Checking for Changeset files..."
+          git fetch origin +${{ github.base_ref }}:${{ github.base_ref }}
+          git fetch origin +${{ github.head_ref }}:${{ github.head_ref }}
+          CHANGES_FOUND=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '^\.changeset/' | wc -l)
+          echo "Changeset files found: $CHANGES_FOUND"
+          if [ "$CHANGES_FOUND" -eq "0" ]; then
+            echo "No Changeset found for PR labeled with 'release:true'."
+            echo "CHANGESET_PRESENT=false" >> $GITHUB_ENV
+          else
+            echo "Changeset found."
+            echo "CHANGESET_PRESENT=true" >> $GITHUB_ENV
+          fi
+
+      - name: Fail if no Changeset is present
+        if: env.CHANGESET_PRESENT == 'false'
+        run: |
+          echo "This PR is marked for release but does not contain a Changeset file."
+          echo "Please add a Changeset file to indicate the changes being released."
+          exit 1
+        env:
+          CHANGESET_PRESENT: ${{ env.CHANGESET_PRESENT }}
+
+      - name: Create Release Pull Request or release
+        uses: changesets/action@v1
+        id: changesets
+        with:
+          publish: npm run build && npm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        if: contains(github.event.pull_request.labels.*.name, 'release:true') && github.event_name == 'push'
