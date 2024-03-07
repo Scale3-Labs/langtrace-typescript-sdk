@@ -1,4 +1,4 @@
-name: Build-Flow
+name: Build SDK
 
 on:
   pull_request:
