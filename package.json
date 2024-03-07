@@ -1,12 +1,13 @@
 {
-  "name": "nodejs-sdk",
+  "name": "langtrace-typescript-sdk",
   "version": "1.0.0",
-  "description": "NodeJS SDK for Langtrace",
-  "main": "index.js",
+  "description": "A typescript SDK for Langtrace",
+  "main": "dist/init/init.js",
   "scripts": {
     "lint": "eslint . --ext .ts",
     "build": "npm run lint && tsc --build && tsc-alias",
-    "start": "node dist/init/init.js"
+    "start": "node dist/init/init.js",
+    "publish": "npm run build && changeset publish"
   },
   "author": "Scale3 Labs",
   "license": "AGPL-3.0-or-later",
@@ -19,19 +20,20 @@
     "tiktoken": "^1.0.13"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.16.1",
+    "@changesets/cli": "^2.27.1",
+    "@langchain/community": "^0.0.30",
     "@langchain/openai": "^0.0.14",
-    "llamaindex": "^0.1.21",
     "@pinecone-database/pinecone": "^2.0.1",
+    "@typescript-eslint/eslint-plugin": "^5.38.1",
     "axios": "^1.6.7",
     "dotenv": "^16.4.5",
-    "@anthropic-ai/sdk": "^0.16.1",
-    "@langchain/community": "^0.0.30",
-    "openai": "^4.28.4",
-    "@typescript-eslint/eslint-plugin": "^5.38.1",
     "eslint": "^8.34.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-promise": "^6.0.1",
     "eslint-plugin-unused-imports": "^2.0.0",
+    "llamaindex": "^0.1.21",
+    "openai": "^4.28.4",
     "tsc-alias": "^1.8.8",
     "typescript": "^4.9.5"
   }
