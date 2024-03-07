@@ -1,8 +1,9 @@
 {
-  "name": "langtrace-typescript-sdk",
+  "name": "@langtrase/typescript-sdk",
   "version": "1.0.0",
   "description": "A typescript SDK for Langtrace",
   "main": "dist/init/init.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "lint": "eslint . --ext .ts",
     "build": "npm run lint && tsc --build && tsc-alias",
