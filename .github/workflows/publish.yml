@@ -31,17 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Add publish:false label"
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'publish:true') }}
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const pr_number = github.context.payload.pull_request.number;
-            await github.rest.issues.addLabels({
-              owner: github.context.repo.owner,
-              repo: github.context.repo.repo,
-              issue_number: pr_number,
-              labels: ['publish:false']
-            });
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'publish:true') }} && ${{ github.event_name == 'pull_request' }}
+        run: gh pr edit ${{ github.event.pull_request.number }} --add-label "publish:false"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   check-publish-label:
@@ -74,6 +65,7 @@ jobs:
 
       - name: Create Release Pull Request or Publish
         uses: changesets/action@v1
+        id: changesets
         with:
           publish: npm run publish
         env:
