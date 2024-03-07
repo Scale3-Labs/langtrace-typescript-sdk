@@ -4,8 +4,6 @@ on:
   pull_request:
     types: [synchronize, opened, edited, ready_for_review, reopened, unlocked]
     branches: [main, development]
-  push:
-    branches: [main, development]
 
 permissions:
   checks: write

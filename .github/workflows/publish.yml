@@ -114,10 +114,10 @@ jobs:
 
       - name: Create Release Pull Request or release
         uses: changesets/action@v1
+        if: github.event.pull_request.merged == true
         id: changesets
         with:
           publish: npm run build && npm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        if: contains(github.event.pull_request.labels.*.name, 'release:true') && github.event.pull_request.merged == true
