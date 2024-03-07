@@ -6,7 +6,7 @@ dotenv.config();
 
 const openai = new OpenAI();
 
-init();
+init({batch: true});
 
 export async function chatCompletionStreaming() {
   const stream = await openai.chat.completions.create({
