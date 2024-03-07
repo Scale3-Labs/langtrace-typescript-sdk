@@ -2,4 +2,4 @@
 "@langtrase/typescript-sdk": major
 ---
 
-Lang Trace SDK V1.0.0
+Lang Trace SDK V1.0.0 release

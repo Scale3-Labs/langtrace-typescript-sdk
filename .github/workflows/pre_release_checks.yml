@@ -28,6 +28,11 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name , 'release:true') == false
     steps:
+      - name: check event
+        run: |
+          echo "Event: ${{ github.event.pull_request.labels }}"
+          echo (contains(github.event.pull_request.labels.*.name , 'release:true'))
+
       - name: Check out Git repository
         uses: actions/checkout@v3
 

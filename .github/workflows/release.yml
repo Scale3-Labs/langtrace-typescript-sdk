@@ -1,6 +1,7 @@
 name: Release Package
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches: [main, development]
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
@@ -22,11 +23,10 @@ jobs:
 
       - name: Install Node.js dependencies
         run: npm ci
-      - name: Create Release Pull Request or Publish
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          publish: npm run build && npm publish
+
+      - name: Release package
+        if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'release:true')
+        run: npm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
