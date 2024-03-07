@@ -1,5 +1,7 @@
 name: Release Checks
 on:
+  label:
+    types: [created, edited, deleted]
   pull_request:
     types: [synchronize, opened, edited, ready_for_review, reopened, unlocked]
     branches: [main, development]
@@ -14,6 +16,7 @@ permissions:
 
 jobs:
   auto-label:
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
@@ -37,7 +40,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   check-release-label:
-    needs: auto-label
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name, 'release:true')
     outputs:
