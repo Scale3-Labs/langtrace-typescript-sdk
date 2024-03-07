@@ -1,5 +1,5 @@
 {
-  "name": "@rkadhe99/langtrace-typescript-sdk",
+  "name": "langtrace-typescript-sdk",
   "version": "1.0.0",
   "description": "A typescript SDK for Langtrace",
   "main": "dist/init/init.js",
