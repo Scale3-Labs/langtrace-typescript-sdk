@@ -3,16 +3,31 @@ name: Build
 on:
   pull_request:
     types: [synchronize, opened, edited, ready_for_review, reopened, unlocked]
+    branches: [main, development]
+  push:
+    branches: [main, development]
 
 permissions:
   checks: write
   contents: write
 
 jobs:
+  check-publish-label:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'publish:true')
+    outputs:
+      should-run: ${{ steps.check-label.outputs.should-run }}
+
+    steps:
+      - name: Check for publish label
+        id: check-label
+        run: echo "::set-output name=should-run::true"
+
   Build:
     name: Build
-    runs-on: ubuntu-latest
+    needs: check-publish-label
 
+    runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v3
@@ -27,4 +42,5 @@ jobs:
         run: npm ci
 
       - name: Build
+        if: needs.check-publish-label.outputs.should-run == 'true'
         run: npm run build
