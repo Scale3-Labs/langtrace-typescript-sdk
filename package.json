@@ -8,7 +8,7 @@
     "lint": "eslint . --ext .ts",
     "build": "npm run lint && tsc --build && tsc-alias",
     "start": "node dist/init/init.js",
-    "publish": "changeset publish",
+    "release": "changeset publish",
     "version": "changeset version"
   },
   "author": "Scale3 Labs",

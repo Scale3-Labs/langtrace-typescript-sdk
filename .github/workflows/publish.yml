@@ -1,4 +1,4 @@
-name: Publish
+name: release
 on:
   pull_request:
     types: [synchronize, opened, edited, ready_for_review, reopened, unlocked]
@@ -16,8 +16,8 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
+      - name: Check out Git repository
+        uses: actions/checkout@v3
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -27,28 +27,30 @@ jobs:
       - name: Install Node.js dependencies
         run: npm ci
 
-  add-default-publish-label:
+  labler:
     runs-on: ubuntu-latest
     steps:
-      - name: "Add publish:false label"
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'publish:true') }} && ${{ github.event_name == 'pull_request' }}
-        run: gh pr edit ${{ github.event.pull_request.number }} --add-label "publish:false"
+      - name: Labeler
+        uses: actions/labeler@v5.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  check-publish-label:
+  check-release-label:
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'publish:true')
+    if: contains(github.event.pull_request.labels.*.name, 'release:true')
     outputs:
       should-run: ${{ steps.check-label.outputs.should-run }}
 
     steps:
-      - name: Check for publish label
+      - name: Check for release label
         id: check-label
         run: echo "::set-output name=should-run::true"
 
-  publish:
-    needs: check-publish-label
-    if: needs.check-publish-label.outputs.should-run == 'true'
+  release:
+    needs: check-release-label
+    if: needs.check-release-label.outputs.should-run == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Extract package version
@@ -63,12 +65,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
 
-      - name: Create Release Pull Request or Publish
+      - name: Create Release Pull Request or release
         uses: changesets/action@v1
         id: changesets
         with:
-          publish: npm run publish
+          publish: npm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        if: ${{ github.action.label.name == 'publish:true' }}
+        if: ${{ github.action.label.name == 'release:true' }}

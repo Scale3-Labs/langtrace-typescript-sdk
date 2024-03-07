@@ -12,20 +12,20 @@ permissions:
   contents: write
 
 jobs:
-  check-publish-label:
+  check-release-label:
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'publish:true')
+    if: contains(github.event.pull_request.labels.*.name, 'release:true')
     outputs:
       should-run: ${{ steps.check-label.outputs.should-run }}
 
     steps:
-      - name: Check for publish label
+      - name: Check for release label
         id: check-label
         run: echo "::set-output name=should-run::true"
 
   Build:
     name: Build
-    needs: check-publish-label
+    needs: check-release-label
 
     runs-on: ubuntu-latest
     steps:
@@ -42,5 +42,5 @@ jobs:
         run: npm ci
 
       - name: Build
-        if: needs.check-publish-label.outputs.should-run == 'true'
+        if: needs.check-release-label.outputs.should-run == 'true'
         run: npm run build
