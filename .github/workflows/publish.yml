@@ -91,6 +91,8 @@ jobs:
         id: check
         run: |
           echo "Checking for Changeset files..."
+          echo "Base Ref: ${{ github.base_ref }}"
+          echo "Head Ref: ${{ github.head_ref }}"
           CHANGES_FOUND=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '^\.changeset/' | wc -l)
           if [ "$CHANGES_FOUND" -eq "0" ]; then
             echo "No Changeset found for PR labeled with 'release:true'."
