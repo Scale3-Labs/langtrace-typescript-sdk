@@ -1,5 +1,8 @@
 name: Publish
 on:
+  pull_request:
+    types: [synchronize, opened, edited, ready_for_review, reopened, unlocked]
+    branches: [main, development]
   push:
     branches: [main, development]
 
@@ -10,23 +13,70 @@ permissions:
   pull-requests: write
 
 jobs:
-  publish:
+  setup:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: 20
           cache: "npm"
 
       - name: Install Node.js dependencies
         run: npm ci
+
+  add-default-publish-label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Add publish:false label"
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'publish:true') }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const github = require('@actions/github');
+            const { issue: { number: issue_number }, repo: { owner, repo } } = github.context;
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number,
+              labels: ['publish:false']
+            });
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+  check-publish-label:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'publish:true')
+    outputs:
+      should-run: ${{ steps.check-label.outputs.should-run }}
+
+    steps:
+      - name: Check for publish label
+        id: check-label
+        run: echo "::set-output name=should-run::true"
+
+  publish:
+    needs: check-label
+    if: needs.check-label.outputs.should-run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract package version
+        id: package-version
+        run: echo "::set-output name=version::$(node -p "require('./package.json').version")"
+
+      - name: Tag PR with Version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          gh pr edit "$PR_NUMBER" --add-label "version:$VERSION"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+
       - name: Create Release Pull Request or Publish
-        id: changesets
         uses: changesets/action@v1
         with:
           publish: npm run publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        if: ${{ github.event.label.name == 'publish:true' }}
