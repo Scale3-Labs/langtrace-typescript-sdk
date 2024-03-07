@@ -13,11 +13,12 @@ permissions:
   pull-requests: write
 
 jobs:
-  setup:
+  auto-label:
     runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v3
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -27,17 +28,16 @@ jobs:
       - name: Install Node.js dependencies
         run: npm ci
 
-  labler:
-    runs-on: ubuntu-latest
-    steps:
       - name: Labeler
         uses: actions/labeler@v5.0.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          configuration-path: .github/labeler.yml
+          configuration-path: .github/config/labeler.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   check-release-label:
+    needs: auto-label
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name, 'release:true')
     outputs:
@@ -48,7 +48,7 @@ jobs:
         id: check-label
         run: echo "::set-output name=should-run::true"
 
-  release:
+  release-checks:
     needs: check-release-label
     if: needs.check-release-label.outputs.should-run == 'true'
     runs-on: ubuntu-latest
