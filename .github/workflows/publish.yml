@@ -1,4 +1,4 @@
-name: release
+name: Release Checks
 on:
   pull_request:
     types: [synchronize, opened, edited, ready_for_review, reopened, unlocked]
@@ -48,7 +48,7 @@ jobs:
         id: check-label
         run: echo "::set-output name=should-run::true"
 
-  release-checks:
+  release:
     needs: check-release-label
     if: needs.check-release-label.outputs.should-run == 'true'
     runs-on: ubuntu-latest
