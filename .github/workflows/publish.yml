@@ -120,4 +120,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        if: contains(github.event.pull_request.labels.*.name, 'release:true') && github.event_name == 'push'
+        if: contains(github.event.pull_request.labels.*.name, 'release:true') && github.event.pull_request.merged == true
