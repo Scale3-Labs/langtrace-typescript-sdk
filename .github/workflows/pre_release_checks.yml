@@ -1,11 +1,16 @@
-name: Release-Flow
+name: Pre Release Checks
 on:
-  label:
-    types: [created, edited, deleted]
   pull_request:
-    types: [synchronize, opened, edited, ready_for_review, reopened, unlocked]
-    branches: [main, development]
-  push:
+    types:
+      [
+        synchronize,
+        opened,
+        edited,
+        ready_for_review,
+        reopened,
+        unlocked,
+        labeled,
+      ]
     branches: [main, development]
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
@@ -43,7 +48,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  release:
+  pre-release-checks:
     if: contains(github.event.pull_request.labels.*.name, 'release:true')
     runs-on: ubuntu-latest
     steps:
@@ -73,15 +78,17 @@ jobs:
           PR_TITLE="$(gh pr view "$PR_NUMBER" --json title -q .title)"
           echo "Current PR Title: $PR_TITLE"
 
-          # Regular expression to match the pattern "Release X.X.X - " at the beginning of the title
-          # It ensures that we replace only the first occurrence of such a pattern
-          # The logic here captures the rest of the title after the version string and appends it after the new version prefix
-          NEW_TITLE=$(echo "$PR_TITLE" | sed -E "s/^Release [0-9]+\.[0-9]+\.[0-9]+ - /$RELEASE_PREFIX/")
+          # Define the new title with version prefix
+          NEW_TITLE="$RELEASE_PREFIX$PR_TITLE"
 
-          echo "Updating PR title to: $NEW_TITLE"
-
-          # Update the PR title using gh CLI
-          gh pr edit "$PR_NUMBER" --title "$NEW_TITLE"
+          # Check if the title already starts with the version prefix
+          if [[ "$PR_TITLE" =~ ^Release\ $PACKAGE_VERSION\ -\ (.*) ]]; then
+            echo "Version is already present in the PR title. No update needed."
+          else
+            echo "Updating PR title to: $NEW_TITLE"
+            # Update the PR title using gh CLI
+            gh pr edit "$PR_NUMBER" --title "$NEW_TITLE"
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -111,13 +118,3 @@ jobs:
           exit 1
         env:
           CHANGESET_PRESENT: ${{ env.CHANGESET_PRESENT }}
-
-      - name: Create Release Pull Request or release
-        uses: changesets/action@v1
-        if: github.event.pull_request.merged == true
-        id: changesets
-        with:
-          publish: npm run build && npm run release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
