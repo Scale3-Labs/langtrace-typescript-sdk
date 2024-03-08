@@ -1,16 +1,7 @@
 name: Pre Release Checks
 on:
   pull_request:
-    types:
-      [
-        synchronize,
-        opened,
-        edited,
-        ready_for_review,
-        reopened,
-        unlocked,
-        labeled,
-      ]
+    types: [synchronize, opened, edited, reopened, unlocked, labeled]
     branches: [main, development]
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
@@ -28,11 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name , 'release:true') == false
     steps:
-      - name: check event
-        run: |
-          echo "Event: ${{ github.event.pull_request.labels }}"
-          echo (contains(github.event.pull_request.labels.*.name , 'release:true'))
-
       - name: Check out Git repository
         uses: actions/checkout@v3
 
@@ -77,23 +63,10 @@ jobs:
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
           PACKAGE_VERSION="${{ env.PACKAGE_VERSION }}"
-          RELEASE_PREFIX="Release $PACKAGE_VERSION - "
+          VERSION_PATTERN="Release $PACKAGE_VERSION"
+          NEW_TITLE=" ${VERSION_PATTERN}"
+          gh pr edit "$PR_NUMBER" --title "$NEW_TITLE"
 
-          # Fetch the current PR title
-          PR_TITLE="$(gh pr view "$PR_NUMBER" --json title -q .title)"
-          echo "Current PR Title: $PR_TITLE"
-
-          # Define the new title with version prefix
-          NEW_TITLE="$RELEASE_PREFIX$PR_TITLE"
-
-          # Check if the title already starts with the version prefix
-          if [[ "$PR_TITLE" =~ ^Release\ $PACKAGE_VERSION\ -\ (.*) ]]; then
-            echo "Version is already present in the PR title. No update needed."
-          else
-            echo "Updating PR title to: $NEW_TITLE"
-            # Update the PR title using gh CLI
-            gh pr edit "$PR_NUMBER" --title "$NEW_TITLE"
-          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
