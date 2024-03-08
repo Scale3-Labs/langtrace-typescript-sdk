@@ -63,23 +63,8 @@ jobs:
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
           PACKAGE_VERSION="${{ env.PACKAGE_VERSION }}"
-          RELEASE_PREFIX="Release $PACKAGE_VERSION - "
-
-          # PR_TITLE="$(gh pr view "$PR_NUMBER" --json title -q .title)"
-          echo "Current PR Title: $PR_TITLE"
-
-          # Pattern to match "Release x.x.x -", where x.x.x is any version number
-          pattern="Release [0-9]+\.[0-9]+\.[0-9]+ -"
-          VERSION_PATTERN="Release $PACKAGE_VERSION -"
-
-          # Use bash pattern matching to check if the version pattern exists in the string
-          if [[ $PR_TITLE =~ $pattern ]]; then
-              # Pattern found - replace it
-              NEW_TITLE=$(echo "$PR_TITLE" | sed -E "s/$pattern/$VERSION_PATTERN/")
-          else
-              # Pattern not found - append the new string
-              NEW_TITLE=" ${VERSION_PATTERN}${PR_TITLE}"
-          fi
+          VERSION_PATTERN="Release $PACKAGE_VERSION"
+          NEW_TITLE=" ${VERSION_PATTERN}"
           gh pr edit "$PR_NUMBER" --title "$NEW_TITLE"
 
         env:
