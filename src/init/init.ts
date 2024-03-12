@@ -1,18 +1,18 @@
-import { LangTraceExporter } from "@langtrace-extensions/langtraceexporter/langtrace_exporter";
-import { LangTraceInit, LangtraceInitOptions } from "@langtrace-init/types";
-import { anthropicInstrumentation } from "@langtrace-instrumentation/anthropic/instrumentation";
-import { chromaInstrumentation } from "@langtrace-instrumentation/chroma/instrumentation";
-import { llamaIndexInstrumentation } from "@langtrace-instrumentation/llamaindex/instrumentation";
-import { openAIInstrumentation } from "@langtrace-instrumentation/openai/instrumentation";
-import { pineconeInstrumentation } from "@langtrace-instrumentation/pinecone/instrumentation";
-import { DiagConsoleLogger, DiagLogLevel, diag } from "@opentelemetry/api";
-import { registerInstrumentations } from "@opentelemetry/instrumentation";
+import { LangTraceExporter } from '@langtrace-extensions/langtraceexporter/langtrace_exporter'
+import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
+import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
+import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
+import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex/instrumentation'
+import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
+import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
+import { DiagConsoleLogger, DiagLogLevel, diag } from '@opentelemetry/api'
+import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import {
   BatchSpanProcessor,
   ConsoleSpanExporter,
-  SimpleSpanProcessor,
-} from "@opentelemetry/sdk-trace-base";
-import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
+  SimpleSpanProcessor
+} from '@opentelemetry/sdk-trace-base'
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 
 /**
  *
@@ -28,48 +28,45 @@ export const init: LangTraceInit = (
     api_key,
     remote_url,
     batch,
-    log_spans_to_console,
     write_to_remote_url,
-    debug_log_to_console,
+    debug_log_to_console
   }: LangtraceInitOptions = {
     batch: false,
     debug_log_to_console: false,
-    log_spans_to_console: false,
-    write_to_remote_url: true,
+    write_to_remote_url: true
   }
 ) => {
   // Set up OpenTelemetry tracing
-  const provider = new NodeTracerProvider();
+  const provider = new NodeTracerProvider()
 
   const remoteWriteExporter = new LangTraceExporter(
     api_key,
     remote_url,
     write_to_remote_url
-  );
-  const consoleExporter = new ConsoleSpanExporter();
-  const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter);
-  const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter);
-  const batchProcessorConsole = new BatchSpanProcessor(consoleExporter);
-  const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter);
+  )
+  const consoleExporter = new ConsoleSpanExporter()
+  const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
+  const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
+  const batchProcessorConsole = new BatchSpanProcessor(consoleExporter)
+  const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
 
-  if(debug_log_to_console) {
-    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
+  if (debug_log_to_console) {
+    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG)
   }
-  if (log_spans_to_console) {
+  if (!write_to_remote_url) {
     if (batch) {
-      provider.addSpanProcessor(batchProcessorConsole);
+      provider.addSpanProcessor(batchProcessorConsole)
     } else {
-      provider.addSpanProcessor(simpleProcessorConsole);
+      provider.addSpanProcessor(simpleProcessorConsole)
+    }
+  } else {
+    if (batch) {
+      provider.addSpanProcessor(batchProcessorRemote)
+    } else {
+      provider.addSpanProcessor(simpleProcessorRemote)
     }
   }
-  if (write_to_remote_url) {
-    if (batch) {
-      provider.addSpanProcessor(batchProcessorRemote);
-    } else {
-      provider.addSpanProcessor(simpleProcessorRemote);
-    }
-  }
-  provider.register();
+  provider.register()
 
   // Register any automatic instrumentation and your custom OpenAI instrumentation
   registerInstrumentations({
@@ -78,8 +75,8 @@ export const init: LangTraceInit = (
       chromaInstrumentation,
       llamaIndexInstrumentation,
       openAIInstrumentation,
-      anthropicInstrumentation,
+      anthropicInstrumentation
     ],
-    tracerProvider: provider,
-  });
-};
+    tracerProvider: provider
+  })
+}
