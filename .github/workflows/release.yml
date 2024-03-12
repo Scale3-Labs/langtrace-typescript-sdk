@@ -21,6 +21,9 @@ jobs:
           node-version: 20
           cache: "npm"
 
+      - name: Install Node.js dependencies
+        run: npm ci
+
       - name: Configure npm for publish
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
 
