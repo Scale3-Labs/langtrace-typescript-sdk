@@ -1,6 +1,6 @@
 # What is Langtrace?
 
-Langtrace is a developer friendly open source **Opentelemetry** compatible solution which allows developers to quickly trace, monitor and debug their LLM applications with support for automatic instrumentation.
+Langtrace stands as a developer-centric, open-source solution, fully compatible with OpenTelemetry. It enables developers to effortlessly trace, monitor, and debug their LLM applications, offering robust support for automatic instrumentation.
 
 ## Supported LLM Modules
 
