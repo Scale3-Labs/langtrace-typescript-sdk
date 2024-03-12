@@ -1,16 +1,27 @@
 # What is Langtrace?
 
-Langtrace is a user-friendly SDK designed to empower developers by enabling them to efficiently trace, track, and monitor their usage of Large Language Models (LLMs). By integrating Langtrace with just three lines of code, developers gain the ability to oversee their LLM operations from start to finish 🚀.
+Langtrace is a developer friendly open source **Opentelemetry** compatible solution which allows developers to quickly trace, monitor and debug their LLM applications with support for automatic instrumentation.
 
 ## Supported LLM Modules
 
-Langtrace is compatible with a wide array of LLM libraries currently available, including:
+Langtrace supports a comprehensive range of LLMs, VectorDBs, and frameworks, ensuring wide coverage for your development needs:
 
-1. Anthropic
-2. OpenAI
-3. LlamaIndex
-4. Pinecone
-5. Chromadb
+### LLMs
+
+1. OpenAI
+2. Anthropic
+3. Azure OpenAI
+
+### VectorDBs
+
+1. Pinecone
+2. Chromadb
+
+### Frameworks
+
+1. LangChain
+2. LlamaIndex
+3. Haystack
 
 We are actively working to extend our support to additional libraries!
 
