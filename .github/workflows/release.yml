@@ -26,6 +26,6 @@ jobs:
 
       - name: Release package
         if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'release:true')
-        run: npm publish --access public
+        run: npm run build && npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
