@@ -96,3 +96,12 @@ jobs:
           exit 1
         env:
           CHANGESET_PRESENT: ${{ env.CHANGESET_PRESENT }}
+
+      - name: Bump version
+        if: env.CHANGESET_PRESENT == 'true' && github.event_name == 'pull_request' && github.event.action == 'opened'
+        run: |
+          echo "Bumping version..."
+          npm run bump_version
+          echo "Version bumped."
+        env:
+          CHANGESET_PRESENT: ${{ env.CHANGESET_PRESENT }}
