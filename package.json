@@ -7,8 +7,7 @@
   "scripts": {
     "lint": "eslint . --ext .ts",
     "build": "npm run lint && tsc --build && tsc-alias",
-    "start": "node dist/init/init.js",
-    "bump_version": "changeset version"
+    "start": "node dist/init/init.js"
   },
   "author": "Scale3 Labs",
   "license": "AGPL-3.0-or-later",
