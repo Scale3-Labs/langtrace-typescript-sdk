@@ -8,11 +8,7 @@
     "lint": "eslint . --ext .ts",
     "build": "npm run lint && tsc --build && tsc-alias",
     "start": "node dist/init/init.js",
-    "changeset": "changeset",
-    "version_major": "npm version major",
-    "version_minor": "npm version minor",
-    "version_patch": "npm version patch",
-    "version": "changeset version"
+    "bump_version": "changeset version"
   },
   "author": "Scale3 Labs",
   "license": "AGPL-3.0-or-later",
