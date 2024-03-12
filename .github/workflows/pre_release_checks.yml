@@ -60,23 +60,6 @@ jobs:
       - name: Install Node.js dependencies
         run: npm ci
 
-      - name: Extract package version
-        id: package-version
-        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
-
-      - name: Update PR title with version
-        run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          PACKAGE_VERSION="${{ env.PACKAGE_VERSION }}"
-          VERSION_PATTERN="Release $PACKAGE_VERSION"
-          NEW_TITLE=" ${VERSION_PATTERN}"
-          gh pr edit "$PR_NUMBER" --title "$NEW_TITLE"
-
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
-
       - name: Check for Changeset file
         id: check
         run: |
@@ -103,7 +86,7 @@ jobs:
           CHANGESET_PRESENT: ${{ env.CHANGESET_PRESENT }}
 
       - name: Bump version using changeset
-        if: env.CHANGESET_PRESENT == 'true' && github.event_name == 'pull_request'
+        if: env.CHANGESET_PRESENT == 'true' && github.event_name == 'pull_request' && github.event.action == 'opened'
         run: |
           npx changeset version
           git config user.name "github-actions[bot]"
@@ -114,3 +97,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CHANGESET_PRESENT: ${{ env.CHANGESET_PRESENT }}
+
+      - name: Extract package version
+        id: package-version
+        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      - name: Update PR title with version
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          PACKAGE_VERSION="${{ env.PACKAGE_VERSION }}"
+          VERSION_PATTERN="Release $PACKAGE_VERSION"
+          NEW_TITLE=" ${VERSION_PATTERN}"
+          gh pr edit "$PR_NUMBER" --title "$NEW_TITLE"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}

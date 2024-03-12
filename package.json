@@ -1,13 +1,14 @@
 {
   "name": "@langtrase/typescript-sdk",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "A typescript SDK for Langtrace",
   "main": "dist/init/init.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "lint": "eslint . --ext .ts",
     "build": "npm run lint && tsc --build && tsc-alias",
-    "start": "node dist/init/init.js"
+    "start": "node dist/init/init.js",
+    "changeset": "changeset"
   },
   "author": "Scale3 Labs",
   "license": "AGPL-3.0-or-later",
