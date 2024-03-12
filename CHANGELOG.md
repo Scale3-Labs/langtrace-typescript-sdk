@@ -1,10 +1,6 @@
 # @langtrase/typescript-sdk
 
-## 2.0.0
-
-### Major Changes
-
-- 509fe02: First major release
+## 1.1.5
 
 ### Minor Changes
 
