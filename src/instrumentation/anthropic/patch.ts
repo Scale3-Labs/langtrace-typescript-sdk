@@ -1,6 +1,5 @@
 import { APIS } from "@langtrace-constants/instrumentation/anthropic";
 import { SERVICE_PROVIDERS } from "@langtrace-constants/instrumentation/common";
-import { LangTraceSpan } from "@langtrace-extensions/langtracespan/langtrace_span";
 import { estimateTokens } from "@langtrace-utils/llm";
 import { Event, LLMSpanAttributes } from "@langtrase/trace-attributes";
 import {
@@ -23,7 +22,7 @@ export function messagesCreate(
     // Determine the service provider
     const serviceProvider = SERVICE_PROVIDERS.ANTHROPIC;
 
-    const attributes: Partial<LLMSpanAttributes> = {
+    const attributes: LLMSpanAttributes = {
       "langtrace.service.name": serviceProvider,
       "langtrace.service.type": "llm",
       "langtrace.service.version": version,
@@ -59,22 +58,22 @@ export function messagesCreate(
           trace.getSpan(context.active()) as Span
         ),
         async () => {
-          const span = new LangTraceSpan(tracer, APIS.MESSAGES_CREATE.METHOD, {
+          const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, {
             kind: SpanKind.CLIENT,
-          });
-          span.addAttributes(attributes);
+          })
+          span.setAttributes(attributes);
           try {
             const resp = await originalMethod.apply(this, args);
-            span.addAttributes({
+            span.setAttributes({
               "llm.responses": JSON.stringify(resp.content),
             });
 
             if (resp?.system_fingerprint) {
-              span.addAttributes({
+              span.setAttributes({
                 "llm.system.fingerprint": resp?.system_fingerprint,
               });
             }
-            span.addAttributes({
+            span.setAttributes({
               "llm.token.counts": JSON.stringify({
                 input_tokens: resp?.usage?.input_tokens || 0,
                 output_tokens: resp?.usage?.output_tokens || 0,
@@ -103,10 +102,10 @@ export function messagesCreate(
           trace.getSpan(context.active()) as Span
         ),
         async () => {
-          const span = new LangTraceSpan(tracer, APIS.MESSAGES_CREATE.METHOD, {
+          const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, {
             kind: SpanKind.CLIENT,
-          });
-          span.addAttributes(attributes);
+          })
+          span.setAttributes(attributes);
           const resp = await originalMethod.apply(this, args);
           return handleStreamResponse(span, resp);
         }
@@ -115,7 +114,7 @@ export function messagesCreate(
   };
 }
 
-async function* handleStreamResponse(span: LangTraceSpan, stream: any) {
+async function* handleStreamResponse(span: Span, stream: any) {
   const result: string[] = [];
 
   span.addEvent(Event.STREAM_START);
@@ -135,7 +134,7 @@ async function* handleStreamResponse(span: LangTraceSpan, stream: any) {
     }
 
     span.setStatus({ code: SpanStatusCode.OK });
-    span.addAttributes({
+    span.setAttributes({
       "llm.token.counts": JSON.stringify({
         input_tokens,
         output_tokens,

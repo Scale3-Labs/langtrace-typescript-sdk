@@ -25,7 +25,7 @@ export function genericPatch(
         const span = tracer.startSpan(method, {
           kind: SpanKind.CLIENT,
         });
-        const spanAttributes: Partial<FrameworkSpanAttributes> = {
+        const spanAttributes: FrameworkSpanAttributes = {
           "langtrace.service.name": SERVICE_PROVIDERS.LLAMAINDEX,
           "langtrace.service.type": "framework",
           "langtrace.service.version": version,

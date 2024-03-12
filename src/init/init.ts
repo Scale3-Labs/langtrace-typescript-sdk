@@ -30,13 +30,14 @@ export const init: LangTraceInit = (
     batch,
     log_spans_to_console,
     write_to_remote_url,
+    debug_log_to_console,
   }: LangtraceInitOptions = {
     batch: false,
+    debug_log_to_console: false,
     log_spans_to_console: false,
     write_to_remote_url: true,
   }
 ) => {
-  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
   // Set up OpenTelemetry tracing
   const provider = new NodeTracerProvider();
 
@@ -51,6 +52,9 @@ export const init: LangTraceInit = (
   const batchProcessorConsole = new BatchSpanProcessor(consoleExporter);
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter);
 
+  if(debug_log_to_console) {
+    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
+  }
   if (log_spans_to_console) {
     if (batch) {
       provider.addSpanProcessor(batchProcessorConsole);

@@ -1,6 +1,5 @@
 import { APIS } from "@langtrace-constants/instrumentation/chroma";
 import { SERVICE_PROVIDERS } from "@langtrace-constants/instrumentation/common";
-import { LangTraceSpan } from "@langtrace-extensions/langtracespan/langtrace_span";
 import { DatabaseSpanAttributes } from "@langtrase/trace-attributes";
 import {
   Span,
@@ -45,10 +44,10 @@ export function collectionPatch(
     return context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
-        const span = new LangTraceSpan(tracer, api.METHOD, {
+        const span = tracer.startSpan(api.METHOD, {
           kind: SpanKind.CLIENT,
         });
-        span.addAttributes(attributes);
+        span.setAttributes(attributes);
 
         try {
           // NOTE: Not tracing the response data as it can contain sensitive information

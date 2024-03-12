@@ -1,6 +1,5 @@
 import { APIS } from "@langtrace-constants/instrumentation/pinecone";
 import { SERVICE_PROVIDERS } from "@langtrace-constants/instrumentation/common";
-import { LangTraceSpan } from "@langtrace-extensions/langtracespan/langtrace_span";
 import { DatabaseSpanAttributes } from "@langtrase/trace-attributes";
 import { Tracer, context, trace, Span, SpanKind, SpanStatusCode } from "@opentelemetry/api";
 
@@ -14,7 +13,7 @@ originalMethod: (...args: any[]) => any,
   return async function (this: any, ...args: any[]) {
     const originalContext = this;
     const api = APIS[method];
-    const attributes: Partial<DatabaseSpanAttributes> = {
+    const attributes: DatabaseSpanAttributes = {
       "langtrace.service.name": SERVICE_PROVIDERS.PINECONE,
       "langtrace.service.type": "vectordb",
       "langtrace.service.version": version,
@@ -26,28 +25,28 @@ originalMethod: (...args: any[]) => any,
     return context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
-        const span = new LangTraceSpan(tracer, api.METHOD, {
+        const span = tracer.startSpan(api.METHOD, {
           kind: SpanKind.CLIENT,
         });
-        span.addAttributes(attributes);
+        span.setAttributes(attributes);
         try {
           if (this.target?.index) {
-            span.addAttributes({
+            span.setAttributes({
               "db.index": this.target?.index,
             });
           }
           if (this.target?.namespace) {
-            span.addAttributes({
+            span.setAttributes({
               "db.namespace": this.target?.namespace,
             });
           }
           if (this.target?.indexHostUrl) {
-            span.addAttributes({
+            span.setAttributes({
               "server.address": this.target?.indexHostUrl + api.ENDPOINT,
             });
           }
           if (args[0]?.topK) {
-            span.addAttributes({ "db.top_k": args[0]?.topK });
+            span.setAttributes({ "db.top_k": args[0]?.topK });
           }
 
           // Call the original create method
