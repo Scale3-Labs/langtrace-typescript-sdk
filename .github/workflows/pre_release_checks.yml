@@ -45,6 +45,11 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v3
+        with:
+          # This fetches the history for all branches and tags, necessary for changeset to calculate version bumps accurately.
+          fetch-depth: 0
+          # Ensures the action checks out the PR head commit rather than the merge commit.
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -55,30 +60,13 @@ jobs:
       - name: Install Node.js dependencies
         run: npm ci
 
-      - name: Extract package version
-        id: package-version
-        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
-
-      - name: Update PR title with version
-        run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          PACKAGE_VERSION="${{ env.PACKAGE_VERSION }}"
-          VERSION_PATTERN="Release $PACKAGE_VERSION"
-          NEW_TITLE=" ${VERSION_PATTERN}"
-          gh pr edit "$PR_NUMBER" --title "$NEW_TITLE"
-
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
-
       - name: Check for Changeset file
         id: check
         run: |
           echo "Checking for Changeset files..."
-          git fetch origin +${{ github.base_ref }}:${{ github.base_ref }}
-          git fetch origin +${{ github.head_ref }}:${{ github.head_ref }}
-          CHANGES_FOUND=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '^\.changeset/' | wc -l)
+          git fetch --no-tags --depth=1 origin +refs/heads/${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+          echo Ran diff command: $(git diff --name-only refs/remotes/origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '^\.changeset/')
+          CHANGES_FOUND=$(git diff --name-only refs/remotes/origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '^\.changeset/' | wc -l)
           echo "Changeset files found: $CHANGES_FOUND"
           if [ "$CHANGES_FOUND" -eq "0" ]; then
             echo "No Changeset found for PR labeled with 'release:true'."
@@ -96,3 +84,32 @@ jobs:
           exit 1
         env:
           CHANGESET_PRESENT: ${{ env.CHANGESET_PRESENT }}
+
+      - name: Bump version using changeset
+        if: env.CHANGESET_PRESENT == 'true' && github.event_name == 'pull_request' && github.event.action == 'opened'
+        run: |
+          npx changeset version
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "chore: version bump by changeset"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGESET_PRESENT: ${{ env.CHANGESET_PRESENT }}
+
+      - name: Extract package version
+        id: package-version
+        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      - name: Update PR title with version
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          PACKAGE_VERSION="${{ env.PACKAGE_VERSION }}"
+          VERSION_PATTERN="Release $PACKAGE_VERSION"
+          NEW_TITLE=" ${VERSION_PATTERN}"
+          gh pr edit "$PR_NUMBER" --title "$NEW_TITLE"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
