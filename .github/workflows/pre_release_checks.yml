@@ -64,6 +64,8 @@ jobs:
         id: check
         run: |
           echo "Checking for Changeset files..."
+          echo "Base ref: ${{ github.base_ref }}"
+          echo "Head ref: ${{ github.head_ref }}"
           echo Ran diff command: $(git diff --name-only refs/remotes/origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '^\.changeset/')
           CHANGES_FOUND=$(git diff --name-only refs/remotes/origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '^\.changeset/' | wc -l)
           echo "Changeset files found: $CHANGES_FOUND"
@@ -82,19 +84,6 @@ jobs:
           echo "Please add a Changeset file to indicate the changes being released."
           exit 1
         env:
-          CHANGESET_PRESENT: ${{ env.CHANGESET_PRESENT }}
-
-      - name: Bump version using changeset
-        if: env.CHANGESET_PRESENT == 'true' && github.event_name == 'pull_request' && github.event.action == 'opened'
-        run: |
-          npx changeset version
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "chore: version bump by changeset"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CHANGESET_PRESENT: ${{ env.CHANGESET_PRESENT }}
 
       - name: Extract package version
