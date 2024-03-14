@@ -42,7 +42,7 @@ To configure trace exporting, you have two options:
 You'll need both a Langtrace `api_key` and a `remote_url`, which can be acquired by logging into your Langtrace account.
 
 1. Direct Initialization: Utilize `LangTrace.init({ batch: true, api_key: <YOUR_API_KEY>, remote_url: <YOUR_REMOTE_URL>})`.
-2. Environment Variables: Set `LANGTRACE_API_KEY` and `LANGTRACE_URL`, then add `LangTrace.init({ batch: true })` at the beginning of your file.
+2. Environment Variables: Set `API_KEY` and `URL`, then add `LangTrace.init({ batch: true })` at the beginning of your file.
 
 ## Langtrace Cloud
 

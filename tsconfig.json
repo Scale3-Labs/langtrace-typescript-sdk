@@ -10,7 +10,7 @@
         "sourceMap": true,
         "forceConsistentCasingInFileNames": true,
         "baseUrl": "./src",
-        "rootDir": ".",
+        "rootDir": "./src",
         "paths": {
             "@langtrace-instrumentation/*": [
                 "instrumentation/*"

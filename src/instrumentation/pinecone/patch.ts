@@ -1,72 +1,71 @@
-import { APIS } from "@langtrace-constants/instrumentation/pinecone";
-import { SERVICE_PROVIDERS } from "@langtrace-constants/instrumentation/common";
-import { DatabaseSpanAttributes } from "@langtrase/trace-attributes";
-import { Tracer, context, trace, Span, SpanKind, SpanStatusCode } from "@opentelemetry/api";
+import { APIS } from '@langtrace-constants/instrumentation/pinecone'
+import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
+import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
+import { Tracer, context, trace, Span, SpanKind, SpanStatusCode, Exception } from '@opentelemetry/api'
 
-
-export function genericPatch(
-originalMethod: (...args: any[]) => any,
+export function genericPatch (
+  originalMethod: (...args: any[]) => any,
   method: string,
   tracer: Tracer,
   version: string
 ): (...args: any[]) => any {
-  return async function (this: any, ...args: any[]) {
-    const originalContext = this;
-    const api = APIS[method];
+  return async function (this: any, ...args: any[]): Promise<any> {
+    const originalContext = this
+    const api = APIS[method]
     const attributes: DatabaseSpanAttributes = {
-      "langtrace.service.name": SERVICE_PROVIDERS.PINECONE,
-      "langtrace.service.type": "vectordb",
-      "langtrace.service.version": version,
-      "langtrace.version": "1.0.0",
-      "db.system": "pinecone",
-      "db.operation": api.OPERATION,
-    };
+      'langtrace.service.name': SERVICE_PROVIDERS.PINECONE,
+      'langtrace.service.type': 'vectordb',
+      'langtrace.service.version': version,
+      'langtrace.version': '1.0.0',
+      'db.system': 'pinecone',
+      'db.operation': api.OPERATION
+    }
 
-    return context.with(
+    return await context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
         const span = tracer.startSpan(api.METHOD, {
-          kind: SpanKind.CLIENT,
-        });
-        span.setAttributes(attributes);
+          kind: SpanKind.CLIENT
+        })
+        span.setAttributes(attributes)
         try {
-          if (this.target?.index) {
+          if (this.target?.index !== undefined) {
             span.setAttributes({
-              "db.index": this.target?.index,
-            });
+              'db.index': this.target?.index
+            })
           }
-          if (this.target?.namespace) {
+          if (this.target?.namespace !== undefined) {
             span.setAttributes({
-              "db.namespace": this.target?.namespace,
-            });
+              'db.namespace': this.target?.namespace
+            })
           }
-          if (this.target?.indexHostUrl) {
+          if (this.target?.indexHostUrl !== undefined) {
             span.setAttributes({
-              "server.address": this.target?.indexHostUrl + api.ENDPOINT,
-            });
+              'server.address': `${this.target?.indexHostUrl}${api.ENDPOINT}`
+            })
           }
-          if (args[0]?.topK) {
-            span.setAttributes({ "db.top_k": args[0]?.topK });
+          if (args[0]?.topK !== undefined) {
+            span.setAttributes({ 'db.top_k': args[0]?.topK })
           }
 
           // Call the original create method
           // NOTE: Not tracing the response data as it can contain sensitive information
-          const response = await originalMethod.apply(originalContext, args);
+          const response = await originalMethod.apply(originalContext, args)
 
-          span.setStatus({ code: SpanStatusCode.OK });
-          span.end();
-          return response;
+          span.setStatus({ code: SpanStatusCode.OK })
+          span.end()
+          return response
         } catch (error: any) {
           // If an error occurs, record the exception and end the span
-          span.recordException(error);
+          span.recordException(error as Exception)
           span.setStatus({
             code: SpanStatusCode.ERROR,
-            message: error.message,
-          });
-          span.end();
-          throw error;
+            message: error.message
+          })
+          span.end()
+          throw error
         }
       }
-    );
-  };
+    )
+  }
 }

@@ -1,37 +1,37 @@
 export const ANTHROPIC_COST_TABLE: Record<string, any> = {
-  "gpt-4-0125-preview": {
+  'gpt-4-0125-preview': {
     input: 0.01,
-    output: 0.03,
+    output: 0.03
   },
-  "gpt-4-1106-preview": {
+  'gpt-4-1106-preview': {
     input: 0.01,
-    output: 0.03,
+    output: 0.03
   },
-  "gpt-4-1106-vision-preview": {
+  'gpt-4-1106-vision-preview': {
     input: 0.01,
-    output: 0.03,
+    output: 0.03
   },
-  "gpt-4": {
+  'gpt-4': {
     input: 0.03,
-    output: 0.06,
+    output: 0.06
   },
-  "gpt-4-32k": {
+  'gpt-4-32k': {
     input: 0.06,
-    output: 0.12,
+    output: 0.12
   },
-  "gpt-3.5-turbo-0125": {
+  'gpt-3.5-turbo-0125': {
     input: 0.0005,
-    output: 0.0015,
+    output: 0.0015
   },
-  "gpt-3.5-turbo-instruct": {
+  'gpt-3.5-turbo-instruct': {
     input: 0.0015,
-    output: 0.002,
-  },
-};
+    output: 0.002
+  }
+}
 
 export const APIS = {
   MESSAGES_CREATE: {
-    METHOD: "anthropic.messages.create",
-    ENDPOINT: "/v1/messages",
-  },
-};
+    METHOD: 'anthropic.messages.create',
+    ENDPOINT: '/v1/messages'
+  }
+}
