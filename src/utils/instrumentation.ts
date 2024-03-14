@@ -6,7 +6,7 @@ export async function withLangTraceRootSpan<T> (
   fn: () => Promise<T>,
   name = 'LangtraceRootSpan', // "LangtraceRootSpan" is the default name for the root span
   tracerName = 'langtrace',
-  spanAttributes?: LLMSpanAttributes | DatabaseSpanAttributes | FrameworkSpanAttributes,
+  spanAttributes?: Partial<LLMSpanAttributes> | Partial<DatabaseSpanAttributes> | Partial<FrameworkSpanAttributes>,
   spanKind: SpanKind = SpanKind.INTERNAL
 ): Promise<T> {
   const tracer = trace.getTracer(tracerName)
