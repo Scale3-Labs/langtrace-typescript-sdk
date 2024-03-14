@@ -1,5 +1,22 @@
 # @langtrase/typescript-sdk
 
+## 2.0.0
+
+### Major Changes
+
+- - Fix bugs causing failure if api key is missing despite `write_to_remote_url` being off
+  - Rename environment variables to better clarify usage
+  - README.md updates
+  - Fix linting in project
+
+### Minor Changes
+
+- 78f0988: Add more detailed README.md
+
+### Patch Changes
+
+- 432534b: Fix packaging issue causing import issues
+
 ## 1.1.5
 
 ### Minor Changes
