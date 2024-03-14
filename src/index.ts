@@ -1,3 +1,7 @@
-export { init } from './init/init';
-export { LangTraceInit, LangtraceInitOptions } from './init/types';
-export { withLangTraceRootSpan } from './utils/instrumentation';
+
+// Import the necessary modules
+import { init } from '@langtrace-init/init'
+import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
+import { withLangTraceRootSpan } from '@langtrace-utils/instrumentation'
+
+export { init, withLangTraceRootSpan, LangTraceInit, LangtraceInitOptions }

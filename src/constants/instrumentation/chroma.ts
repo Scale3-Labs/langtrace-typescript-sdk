@@ -1,32 +1,32 @@
-import { ChromaDBMethods } from "@langtrase/trace-attributes";
+import { ChromaDBMethods } from '@langtrase/trace-attributes'
 
-export const APIS: Record<string, { METHOD: string; OPERATION: string }> = {
+export const APIS: Record<string, { METHOD: string, OPERATION: string }> = {
   ADD: {
     METHOD: ChromaDBMethods.ADD,
-    OPERATION: "add",
+    OPERATION: 'add'
   },
   QUERY: {
     METHOD: ChromaDBMethods.QUERY,
-    OPERATION: "query",
+    OPERATION: 'query'
   },
   DELETE: {
     METHOD: ChromaDBMethods.DELETE,
-    OPERATION: "delete",
+    OPERATION: 'delete'
   },
   PEEK: {
     METHOD: ChromaDBMethods.PEEK,
-    OPERATION: "peek",
+    OPERATION: 'peek'
   },
   UPDATE: {
     METHOD: ChromaDBMethods.UPDATE,
-    OPERATION: "update",
+    OPERATION: 'update'
   },
   MODIFY: {
     METHOD: ChromaDBMethods.MODIFY,
-    OPERATION: "modify",
+    OPERATION: 'modify'
   },
   COUNT: {
     METHOD: ChromaDBMethods.COUNT,
-    OPERATION: "count",
-  },
-};
+    OPERATION: 'count'
+  }
+}
