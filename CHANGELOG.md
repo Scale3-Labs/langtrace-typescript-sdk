@@ -1,6 +1,6 @@
 # @langtrase/typescript-sdk
 
-## 2.0.0
+## 1.2.6
 
 ### Major Changes
 
