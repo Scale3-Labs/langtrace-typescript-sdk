@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 1.2.8
+
+### Patch Changes
+
+- 768e3f8: Bug fix to enable partial args to withLangtraceRootSpan
+
 ## 1.2.7
 
 ### Patch Changes
