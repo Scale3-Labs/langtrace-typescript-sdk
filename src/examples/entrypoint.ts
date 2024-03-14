@@ -1,3 +1,3 @@
-import { basic } from "./anthropic/basic";
+import { runSimpleServer } from '@langtrace-examples/simple-server/server'
 
-basic();
+void runSimpleServer()

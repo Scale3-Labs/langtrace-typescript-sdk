@@ -1,154 +1,153 @@
-import { APIS } from "@langtrace-constants/instrumentation/anthropic";
-import { SERVICE_PROVIDERS } from "@langtrace-constants/instrumentation/common";
-import { LangTraceSpan } from "@langtrace-extensions/langtracespan/langtrace_span";
-import { estimateTokens } from "@langtrace-utils/llm";
-import { Event, LLMSpanAttributes } from "@langtrase/trace-attributes";
+import { APIS } from '@langtrace-constants/instrumentation/anthropic'
+import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
+import { estimateTokens } from '@langtrace-utils/llm'
+import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
 import {
+  Exception,
   Span,
   SpanKind,
   SpanStatusCode,
   Tracer,
   context,
-  trace,
-} from "@opentelemetry/api";
+  trace
+} from '@opentelemetry/api'
 
-export function messagesCreate(
+export function messagesCreate (
   originalMethod: (...args: any[]) => any,
   tracer: Tracer,
   version: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
-    const originalContext = this;
+    const originalContext = this
 
     // Determine the service provider
-    let serviceProvider = SERVICE_PROVIDERS.ANTHROPIC;
+    const serviceProvider = SERVICE_PROVIDERS.ANTHROPIC
 
-    const attributes: Partial<LLMSpanAttributes> = {
-      "langtrace.service.name": serviceProvider,
-      "langtrace.service.type": "llm",
-      "langtrace.service.version": version,
-      "langtrace.version": "1.0.0",
-      "url.full": originalContext?._client?.baseURL,
-      "llm.api": APIS.MESSAGES_CREATE.ENDPOINT,
-      "llm.model": args[0]?.model,
-      "http.max.retries": originalContext?._client?.maxRetries,
-      "http.timeout": originalContext?._client?.timeout,
-      "llm.prompts": JSON.stringify(args[0]?.messages),
-    };
-
-    if (args[0]?.temperature) {
-      attributes["llm.temperature"] = args[0]?.temperature;
+    const attributes: LLMSpanAttributes = {
+      'langtrace.service.name': serviceProvider,
+      'langtrace.service.type': 'llm',
+      'langtrace.service.version': version,
+      'langtrace.version': '1.0.0',
+      'url.full': originalContext?._client?.baseURL,
+      'llm.api': APIS.MESSAGES_CREATE.ENDPOINT,
+      'llm.model': args[0]?.model,
+      'http.max.retries': originalContext?._client?.maxRetries,
+      'http.timeout': originalContext?._client?.timeout,
+      'llm.prompts': JSON.stringify(args[0]?.messages)
     }
 
-    if (args[0]?.top_p) {
-      attributes["llm.top_p"] = args[0]?.top_p;
+    if (args[0]?.temperature !== undefined) {
+      attributes['llm.temperature'] = args[0]?.temperature
     }
 
-    if (args[0]?.top_k) {
-      attributes["llm.top_k"] = args[0]?.top_k;
+    if (args[0]?.top_p !== undefined) {
+      attributes['llm.top_p'] = args[0]?.top_p
     }
 
-    if (args[0]?.user) {
-      attributes["llm.user"] = args[0]?.user;
+    if (args[0]?.top_k !== undefined) {
+      attributes['llm.top_k'] = args[0]?.top_k
     }
 
-    if (!args[0].stream || args[0].stream === false) {
-      return context.with(
+    if (args[0]?.user !== undefined) {
+      attributes['llm.user'] = args[0]?.user
+    }
+
+    if (!(args[0].stream as boolean) || args[0].stream === false) {
+      return await context.with(
         trace.setSpan(
           context.active(),
           trace.getSpan(context.active()) as Span
         ),
         async () => {
-          const span = new LangTraceSpan(tracer, APIS.MESSAGES_CREATE.METHOD, {
-            kind: SpanKind.CLIENT,
-          });
-          span.addAttributes(attributes);
+          const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, {
+            kind: SpanKind.CLIENT
+          })
+          span.setAttributes(attributes)
           try {
-            const resp = await originalMethod.apply(this, args);
-            span.addAttributes({
-              "llm.responses": JSON.stringify(resp.content),
-            });
+            const resp = await originalMethod.apply(this, args)
+            span.setAttributes({
+              'llm.responses': JSON.stringify(resp.content)
+            })
 
-            if (resp?.system_fingerprint) {
-              span.addAttributes({
-                "llm.system.fingerprint": resp?.system_fingerprint,
-              });
+            if (resp?.system_fingerprint !== undefined) {
+              span.setAttributes({
+                'llm.system.fingerprint': resp?.system_fingerprint
+              })
             }
-            span.addAttributes({
-              "llm.token.counts": JSON.stringify({
-                input_tokens: resp?.usage?.input_tokens || 0,
-                output_tokens: resp?.usage?.output_tokens || 0,
-                total_tokens:
-                  resp?.usage?.input_tokens + resp?.usage?.output_tokens || 0,
-              }),
-            });
-            span.setStatus({ code: SpanStatusCode.OK });
-            return resp;
+            span.setAttributes({
+              'llm.token.counts': JSON.stringify({
+                input_tokens: (resp?.usage?.input_tokens) ?? 0,
+                output_tokens: (resp?.usage?.output_tokens) ?? 0,
+                total_tokens: Number(resp?.usage?.input_tokens) + Number(resp?.usage?.output_tokens) ?? 0
+              })
+            })
+            span.setStatus({ code: SpanStatusCode.OK })
+            return resp
           } catch (error: any) {
-            span.recordException(error);
+            span.recordException(error as Exception)
             span.setStatus({
               code: SpanStatusCode.ERROR,
-              message: error.message,
-            });
-            throw error;
+              message: error.message
+            })
+            throw error
           } finally {
-            span.end();
+            span.end()
           }
         }
-      );
+      )
     } else {
-      return context.with(
+      return await context.with(
         trace.setSpan(
           context.active(),
           trace.getSpan(context.active()) as Span
         ),
         async () => {
-          const span = new LangTraceSpan(tracer, APIS.MESSAGES_CREATE.METHOD, {
-            kind: SpanKind.CLIENT,
-          });
-          span.addAttributes(attributes);
-          const resp = await originalMethod.apply(this, args);
-          return handleStreamResponse(span, resp);
+          const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, {
+            kind: SpanKind.CLIENT
+          })
+          span.setAttributes(attributes)
+          const resp = await originalMethod.apply(this, args)
+          return handleStreamResponse(span, resp)
         }
-      );
+      )
     }
-  };
+  }
 }
 
-async function* handleStreamResponse(span: LangTraceSpan, stream: any) {
-  let result: string[] = [];
+async function * handleStreamResponse (span: Span, stream: any): any {
+  const result: string[] = []
 
-  span.addEvent(Event.STREAM_START);
+  span.addEvent(Event.STREAM_START)
   try {
-    let input_tokens = 0;
-    let output_tokens = 0;
+    let input_tokens = 0
+    let output_tokens = 0
     for await (const chunk of stream) {
-      const content = chunk.delta?.text || "";
-      result.push(content);
-      input_tokens += chunk.message?.usage?.input_tokens || 0;
+      const content = (((chunk.delta?.text) as string).length > 0) || ''
+      result.push(content as string)
+      input_tokens += Number(chunk.message?.usage?.input_tokens) ?? 0
       output_tokens +=
-        chunk.message?.usage?.output_tokens || estimateTokens(content) || 0;
+        Number(chunk.message?.usage?.output_tokens) ?? estimateTokens(content as string)
       span.addEvent(Event.STREAM_OUTPUT, {
-        response: JSON.stringify(content),
-      });
-      yield chunk;
+        response: JSON.stringify(content)
+      })
+      yield chunk
     }
 
-    span.setStatus({ code: SpanStatusCode.OK });
-    span.addAttributes({
-      "llm.token.counts": JSON.stringify({
+    span.setStatus({ code: SpanStatusCode.OK })
+    span.setAttributes({
+      'llm.token.counts': JSON.stringify({
         input_tokens,
         output_tokens,
-        total_tokens: input_tokens + output_tokens,
+        total_tokens: input_tokens + output_tokens
       }),
-      "llm.responses": JSON.stringify([{ text: result.join("") }]),
-    });
-    span.addEvent(Event.STREAM_END);
+      'llm.responses': JSON.stringify([{ text: result.join('') }])
+    })
+    span.addEvent(Event.STREAM_END)
   } catch (error: any) {
-    span.recordException(error);
-    span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
-    throw error;
+    span.recordException(error as Exception)
+    span.setStatus({ code: SpanStatusCode.ERROR, message: error.message })
+    throw error
   } finally {
-    span.end();
+    span.end()
   }
 }

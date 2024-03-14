@@ -1,0 +1,29 @@
+name: Build SDK
+
+on:
+  pull_request:
+    types: [synchronize, opened, edited, ready_for_review, reopened, unlocked]
+    branches: [main, development]
+
+permissions:
+  checks: write
+  contents: write
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3.5.1
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build

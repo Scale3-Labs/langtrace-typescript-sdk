@@ -1,0 +1,114 @@
+name: Pre Release Checks
+on:
+  pull_request:
+    types: [synchronize, opened, edited, reopened, unlocked, labeled]
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  repository-projects: write
+  statuses: write
+  actions: write
+
+jobs:
+  auto-label:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name , 'release:true') == false
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Labeler
+        uses: actions/labeler@v5.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/config/labeler.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  pre-release-checks:
+    if: contains(github.event.pull_request.labels.*.name, 'release:true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+        with:
+          # This fetches the history for all branches and tags, necessary for changeset to calculate version bumps accurately.
+          fetch-depth: 0
+          # Ensures the action checks out the PR head commit rather than the merge commit.
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Check for Changeset file
+        id: check
+        run: |
+          echo "Checking for Changeset files..."
+          echo Ran diff command: $(git diff --name-only refs/remotes/origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '^\.changeset/')
+          CHANGES_FOUND=$(git diff --name-only refs/remotes/origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '^\.changeset/' | wc -l)
+          echo "Changeset files found: $CHANGES_FOUND"
+          if [ "$CHANGES_FOUND" -eq "0" ]; then
+            echo "No Changeset found for PR labeled with 'release:true'."
+            echo "CHANGESET_PRESENT=false" >> $GITHUB_ENV
+          else
+            echo "Changeset found."
+            echo "CHANGESET_PRESENT=true" >> $GITHUB_ENV
+          fi
+
+      - name: Fail if no Changeset is present
+        if: env.CHANGESET_PRESENT == 'false'
+        run: |
+          echo "This PR is marked for release but does not contain a Changeset file."
+          echo "Please add a Changeset file to indicate the changes being released."
+          exit 1
+        env:
+          CHANGESET_PRESENT: ${{ env.CHANGESET_PRESENT }}
+
+      - name: Bump version using changeset
+        if: env.CHANGESET_PRESENT == 'true' && github.event_name == 'pull_request' && github.event.action == 'opened'
+        run: |
+          npx changeset version
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "chore: version bump by changeset"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGESET_PRESENT: ${{ env.CHANGESET_PRESENT }}
+
+      - name: Extract package version
+        id: package-version
+        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      - name: Update PR title with version
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          PACKAGE_VERSION="${{ env.PACKAGE_VERSION }}"
+          VERSION_PATTERN="Release $PACKAGE_VERSION"
+          NEW_TITLE=" ${VERSION_PATTERN}"
+          gh pr edit "$PR_NUMBER" --title "$NEW_TITLE"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}

@@ -10,14 +10,27 @@
         "sourceMap": true,
         "forceConsistentCasingInFileNames": true,
         "baseUrl": "./src",
+        "rootDir": "./src",
         "paths": {
-            "@langtrace-instrumentation/*": ["instrumentation/*"],
-            "@langtrace-init/*": ["init/*"],
-            "@langtrace-constants/*": ["constants/*"],
-            "@langtrace-examples/*": ["examples/*"],
-            "@langtrace-extensions/*": ["extensions/*"],
-            "@langtrace-utils/*": ["utils/*"],
-          },
+            "@langtrace-instrumentation/*": [
+                "instrumentation/*"
+            ],
+            "@langtrace-init/*": [
+                "init/*"
+            ],
+            "@langtrace-constants/*": [
+                "constants/*"
+            ],
+            "@langtrace-examples/*": [
+                "examples/*"
+            ],
+            "@langtrace-extensions/*": [
+                "extensions/*"
+            ],
+            "@langtrace-utils/*": [
+                "utils/*"
+            ],
+        },
     },
     "include": [
         "src/**/*"
