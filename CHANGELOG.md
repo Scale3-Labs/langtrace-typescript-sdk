@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 1.2.7
+
+### Patch Changes
+
+- Bump dependency version to fix security vulnerability
+
 ## 1.2.6
 
 ### Major Changes
