@@ -1,4 +1,4 @@
-import { LANGTRACE_API } from '@langtrace-constants/exporter/langtrace_exporter'
+import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_exporter'
 import { ExportResult } from '@langtrace-extensions/langtraceexporter/types'
 import { ReadableSpan, SpanExporter } from '@opentelemetry/sdk-trace-base'
 import axios from 'axios'
@@ -10,13 +10,13 @@ export class LangTraceExporter implements SpanExporter {
 
   /**
    *
-   * @param apiKey Your API key. If not set, the value will be read from the LANGTRACE_API_KEY environment variable
-   * @param url The endpoint to send the spans to. If not set, the value will be read from the LANGTRACE_URL environment variable
+   * @param apiKey Your API key. If not set, the value will be read from the API_KEY environment variable
+   * @param url The endpoint to send the spans to. If not set, the value will be read from the REMOTE_URL environment variable. A POST request will be made to this URL with the spans as the body
    * @param write_to_remote_url If true, spans will be sent to the remote URL. The url parameter must be set if this is true.
    */
   constructor (apiKey?: string, url?: string, write_to_remote_url?: boolean) {
-    this.apiKey = apiKey ?? process.env.LANGTRACE_API_KEY
-    this.url = url ?? process.env.LANGTRACE_URL
+    this.apiKey = apiKey ?? process.env.API_KEY
+    this.url = url ?? process.env.REMOTE_URL
     this.write_to_remote_url = write_to_remote_url
     if (this.write_to_remote_url === true && this.url === undefined) {
       throw new Error('No URL provided')
@@ -54,7 +54,7 @@ export class LangTraceExporter implements SpanExporter {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     }
-    if (this.url?.includes(LANGTRACE_API) === true && this.apiKey !== undefined) {
+    if (this.url?.includes(LANGTRACE_REMOTE_URL) === true && this.apiKey !== undefined) {
       headers['x-api-key'] = this.apiKey
     }
     axios.post(this.url!, data, { headers }).then((response) => {

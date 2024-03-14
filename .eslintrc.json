@@ -6,6 +6,9 @@
       "node": true
    },
    "parser": "@typescript-eslint/parser",
+   "ignorePatterns": [
+      "dist/"
+   ],
    "extends": [
       "eslint:recommended",
       "standard-with-typescript",
@@ -30,6 +33,8 @@
             ]
          }
       ],
+      "@typescript-eslint/no-this-alias": "warn",
+      "@typescript-eslint/no-unsafe-return": "warn",
       "@typescript-eslint/naming-convention": [
          "error",
          {

@@ -1,1 +1,1 @@
-export const LANGTRACE_API = 'https://www.langtrace.ai/api'
+export const LANGTRACE_REMOTE_URL = 'https://www.langtrace.ai/api'
