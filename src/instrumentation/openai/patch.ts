@@ -1,6 +1,5 @@
 import { SERVICE_PROVIDERS } from "@langtrace-constants/instrumentation/common";
 import { APIS } from "@langtrace-constants/instrumentation/openai";
-import { LangTraceSpan } from "@langtrace-extensions/langtracespan/langtrace_span";
 import { calculatePromptTokens, estimateTokens } from "@langtrace-utils/llm";
 import { Event, LLMSpanAttributes } from "@langtrase/trace-attributes";
 import {
@@ -42,10 +41,10 @@ export function imagesGenerate(
     return context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
-        const span = new LangTraceSpan(tracer, APIS.IMAGES_GENERATION.METHOD, {
+        const span = tracer.startSpan(APIS.IMAGES_GENERATION.METHOD, {
           kind: SpanKind.SERVER,
         });
-        span.addAttributes(attributes);
+        span.setAttributes(attributes);
         try {
           const response = await originalMethod.apply(originalContext, args);
           attributes["llm.responses"] = JSON.stringify(response?.data);
@@ -80,7 +79,7 @@ export function chatCompletionCreate(
       serviceProvider = SERVICE_PROVIDERS.AZURE;
     }
 
-    const attributes: Partial<LLMSpanAttributes> = {
+    const attributes: LLMSpanAttributes = {
       "langtrace.service.name": serviceProvider,
       "langtrace.service.type": "llm",
       "langtrace.service.version": version,
@@ -116,10 +115,10 @@ export function chatCompletionCreate(
           trace.getSpan(context.active()) as Span
         ),
         async () => {
-          const span = new LangTraceSpan(tracer, APIS.CHAT_COMPLETION.METHOD, {
+          const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, {
             kind: SpanKind.CLIENT,
           });
-          span.addAttributes(attributes);
+          span.setAttributes(attributes);
           try {
             const resp = await originalMethod.apply(this, args);
             const responses = resp?.choices?.map((choice: any) => {
@@ -131,16 +130,16 @@ export function chatCompletionCreate(
               }
               return result;
             });
-            span.addAttributes({
+            span.setAttributes({
               "llm.responses": JSON.stringify(responses),
             });
 
             if (resp?.system_fingerprint) {
-              span.addAttributes({
+              span.setAttributes({
                 "llm.system.fingerprint": resp?.system_fingerprint,
               });
             }
-            span.addAttributes({
+            span.setAttributes({
               "llm.token.counts": JSON.stringify({
                 prompt_tokens: resp?.usage?.prompt_tokens || 0,
                 completion_tokens: resp?.usage?.completion_tokens || 0,
@@ -168,10 +167,10 @@ export function chatCompletionCreate(
           trace.getSpan(context.active()) as Span
         ),
         async () => {
-          const span = new LangTraceSpan(tracer, APIS.CHAT_COMPLETION.METHOD, {
+          const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, {
             kind: SpanKind.CLIENT,
           });
-          span.addAttributes(attributes);
+          span.setAttributes(attributes);
           const model = args[0].model;
           const promptContent = JSON.stringify(args[0].messages[0]);
           const promptTokens = calculatePromptTokens(promptContent, model);
@@ -189,7 +188,7 @@ export function chatCompletionCreate(
 }
 
 async function* handleStreamResponse(
-  span: LangTraceSpan,
+  span: Span,
   stream: any,
   promptTokens: number,
   functionCall = false
@@ -212,7 +211,7 @@ async function* handleStreamResponse(
     }
 
     span.setStatus({ code: SpanStatusCode.OK });
-    span.addAttributes({
+    span.setAttributes({
       "llm.token.counts": JSON.stringify({
         prompt_tokens: promptTokens,
         completion_tokens: completionTokens,
@@ -250,7 +249,7 @@ export function embeddingsCreate(
       serviceProvider = SERVICE_PROVIDERS.AZURE;
     }
 
-    const attributes: Partial<LLMSpanAttributes> = {
+    const attributes: LLMSpanAttributes = {
       "langtrace.service.name": serviceProvider,
       "langtrace.service.type": "llm",
       "langtrace.service.version": version,
@@ -261,6 +260,7 @@ export function embeddingsCreate(
       "http.max.retries": originalContext?._client?.maxRetries,
       "http.timeout": originalContext?._client?.timeout,
       "llm.stream": args[0]?.stream,
+      "llm.prompts": JSON.stringify(args[0]?.prompts),
     };
 
     if (args[0]?.encoding_format) {
@@ -278,10 +278,10 @@ export function embeddingsCreate(
     return context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
-        const span = new LangTraceSpan(tracer, APIS.EMBEDDINGS_CREATE.METHOD, {
+        const span = tracer.startSpan(APIS.EMBEDDINGS_CREATE.METHOD, {
           kind: SpanKind.SERVER,
         });
-        span.addAttributes(attributes);
+        span.setAttributes(attributes);
         try {
           const resp = await originalMethod.apply(originalContext, args);
 

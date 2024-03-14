@@ -4,6 +4,6 @@ export enum ExportResultCode {
 }
 
 export interface ExportResult {
-  code: ExportResultCode;
-  error?: Error;
+  code: ExportResultCode
+  error?: Error
 }
