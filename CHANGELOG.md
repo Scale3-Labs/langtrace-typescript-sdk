@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 1.2.9
+
+### Patch Changes
+
+- Fix function import error causing sdk to not function properly
+
 ## 1.2.8
 
 ### Patch Changes
