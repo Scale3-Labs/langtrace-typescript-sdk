@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 1.2.8
+
+### Patch Changes
+
+- fb8d162: Fix withLangTraceRootSpan bug
+
 ## 1.2.7
 
 ### Patch Changes

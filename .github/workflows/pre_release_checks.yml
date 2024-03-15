@@ -60,42 +60,31 @@ jobs:
       - name: Install Node.js dependencies
         run: npm ci
 
-      - name: Check for Changeset file
+      - name: Check for Changelog file
         id: check
         run: |
-          echo "Checking for Changeset files..."
-          echo Ran diff command: $(git diff --name-only refs/remotes/origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '^\.changeset/')
-          CHANGES_FOUND=$(git diff --name-only refs/remotes/origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '^\.changeset/' | wc -l)
+          echo "Checking for Changelog file..."
+          git fetch --all  --prune
+          echo "Base ref: ${{ github.base_ref }}"
+          echo "Head ref: ${{ github.head_ref }}"
+          CHANGES_FOUND=$(git diff --name-only refs/remotes/origin/${{  github.base_ref }}...${{ github.head_ref }} | grep 'CHANGELOG.md' | wc -l)
           echo "Changeset files found: $CHANGES_FOUND"
           if [ "$CHANGES_FOUND" -eq "0" ]; then
             echo "No Changeset found for PR labeled with 'release:true'."
-            echo "CHANGESET_PRESENT=false" >> $GITHUB_ENV
+            echo "CHANGE_LOG_PRESENT=false" >> $GITHUB_ENV
           else
             echo "Changeset found."
-            echo "CHANGESET_PRESENT=true" >> $GITHUB_ENV
+            echo "CHANGE_LOG_PRESENT=true" >> $GITHUB_ENV
           fi
 
-      - name: Fail if no Changeset is present
-        if: env.CHANGESET_PRESENT == 'false'
+      - name: Fail if no Changelog is present
+        if: env.CHANGE_LOG_PRESENT == 'false'
         run: |
           echo "This PR is marked for release but does not contain a Changeset file."
           echo "Please add a Changeset file to indicate the changes being released."
           exit 1
         env:
-          CHANGESET_PRESENT: ${{ env.CHANGESET_PRESENT }}
-
-      - name: Bump version using changeset
-        if: env.CHANGESET_PRESENT == 'true' && github.event_name == 'pull_request' && github.event.action == 'opened'
-        run: |
-          npx changeset version
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "chore: version bump by changeset"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CHANGESET_PRESENT: ${{ env.CHANGESET_PRESENT }}
+          CHANGE_LOG_PRESENT: ${{ env.CHANGE_LOG_PRESENT }}
 
       - name: Extract package version
         id: package-version
