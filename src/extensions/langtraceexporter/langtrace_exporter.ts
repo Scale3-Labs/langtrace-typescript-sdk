@@ -15,8 +15,8 @@ export class LangTraceExporter implements SpanExporter {
    * @param write_to_remote_url If true, spans will be sent to the remote URL. The url parameter must be set if this is true.
    */
   constructor (apiKey?: string, url?: string, write_to_remote_url?: boolean) {
-    this.apiKey = apiKey ?? process.env.API_KEY
-    this.url = url ?? process.env.REMOTE_URL
+    this.apiKey = apiKey ?? process.env.LANGTRACE_API_KEY
+    this.url = url ?? process.env.LANGTRACE_URL
     this.write_to_remote_url = write_to_remote_url
     if (this.write_to_remote_url === true && this.url === undefined) {
       throw new Error('No URL provided')
