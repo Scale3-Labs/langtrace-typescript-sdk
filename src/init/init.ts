@@ -29,7 +29,8 @@ export const init: LangTraceInit = (
     remote_url,
     batch,
     write_to_remote_url,
-    debug_log_to_console
+    debug_log_to_console,
+    custom_remote_exporter
   }: LangtraceInitOptions = {
     batch: false,
     debug_log_to_console: false,
@@ -39,7 +40,7 @@ export const init: LangTraceInit = (
   // Set up OpenTelemetry tracing
   const provider = new NodeTracerProvider()
 
-  const remoteWriteExporter = new LangTraceExporter(
+  const remoteWriteExporter = custom_remote_exporter ?? new LangTraceExporter(
     api_key,
     remote_url,
     write_to_remote_url

@@ -1,4 +1,3 @@
-import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_exporter'
 import { ExportResult } from '@langtrace-extensions/langtraceexporter/types'
 import { ReadableSpan, SpanExporter } from '@opentelemetry/sdk-trace-base'
 import axios from 'axios'
@@ -19,10 +18,10 @@ export class LangTraceExporter implements SpanExporter {
     this.url = url ?? process.env.REMOTE_URL
     this.write_to_remote_url = write_to_remote_url
     if (this.write_to_remote_url === true && this.url === undefined) {
-      throw new Error('No URL provided')
+      throw new Error('No Langtrace url provided')
     }
     if (this.write_to_remote_url === true && this.apiKey === undefined) {
-      throw new Error('No API key provided')
+      throw new Error('No LangTrace API key provided')
     }
   }
 
@@ -52,10 +51,10 @@ export class LangTraceExporter implements SpanExporter {
       return
     }
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json'
-    }
-    if (this.url?.includes(LANGTRACE_REMOTE_URL) === true && this.apiKey !== undefined) {
-      headers['x-api-key'] = this.apiKey
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'User-Agent': 'LangTraceExporter',
+      'x-api-key': this.apiKey!
     }
     axios.post(this.url!, data, { headers }).then((response) => {
       resultCallback({ code: response.status === 200 ? 0 : 1 })
