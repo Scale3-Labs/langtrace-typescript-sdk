@@ -16,25 +16,23 @@ import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 
 /**
  *
- * @param api_key Your API key. If not set, the value will be read from the API_KEY environment variable
- * @param remote_url The endpoint to send the spans to. If not set, the value will be read from the URL environment variable
+ * @param api_key Your API key. If not set, the value will be read from the LANGTRACE_API_KEY environment variable
  * @param batch If true, spans will be batched before being sent to the remote URL
  * @param log_spans_to_console If true, spans will be logged to the console
- * @param write_to_remote_url If true, spans will be sent to the remote URL
+ * @param write_to_langtrace_cloud If true, spans will be sent to the langtrace cloud
  * @returns void
  */
 export const init: LangTraceInit = (
   {
     api_key,
-    remote_url,
     batch,
-    write_to_remote_url,
+    write_to_langtrace_cloud,
     debug_log_to_console,
     custom_remote_exporter
   }: LangtraceInitOptions = {
     batch: false,
     debug_log_to_console: false,
-    write_to_remote_url: true
+    write_to_langtrace_cloud: true
   }
 ) => {
   // Set up OpenTelemetry tracing
@@ -42,8 +40,7 @@ export const init: LangTraceInit = (
 
   const remoteWriteExporter = custom_remote_exporter ?? new LangTraceExporter(
     api_key,
-    remote_url,
-    write_to_remote_url
+    write_to_langtrace_cloud
   )
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
