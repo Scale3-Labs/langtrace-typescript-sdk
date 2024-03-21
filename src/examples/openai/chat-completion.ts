@@ -6,7 +6,7 @@ import OpenAI from 'openai'
 dotenv.config()
 
 init({
-  write_to_remote_url: false,
+  write_to_langtrace_cloud: false,
   batch: false
 })
 

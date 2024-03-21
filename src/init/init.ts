@@ -51,7 +51,7 @@ export const init: LangTraceInit = (
   if (debug_log_to_console === true) {
     diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG)
   }
-  if (write_to_remote_url === false) {
+  if (write_to_langtrace_cloud === false) {
     if (batch === true) {
       provider.addSpanProcessor(batchProcessorConsole)
     } else {

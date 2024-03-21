@@ -7,7 +7,7 @@ dotenv.config()
 
 init({
   batch: false,
-  write_to_remote_url: false
+  write_to_langtrace_cloud: false
 })
 
 const anthropic = new Anthropic()
