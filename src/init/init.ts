@@ -57,6 +57,8 @@ export const init: LangTraceInit = (
     } else {
       provider.addSpanProcessor(simpleProcessorConsole)
     }
+  } else if (write_to_langtrace_cloud === true && batch === false) {
+    throw new Error('Batching is required when writing to the LangTrace cloud')
   } else {
     if (batch === true) {
       provider.addSpanProcessor(batchProcessorRemote)
