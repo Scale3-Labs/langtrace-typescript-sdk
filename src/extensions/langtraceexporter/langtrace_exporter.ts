@@ -55,13 +55,11 @@ export class LangTraceExporter implements SpanExporter {
       'User-Agent': 'LangTraceExporter',
       'x-api-key': this.apiKey!
     }
-    console.info(spans)
+
     await axios.post(LANGTRACE_REMOTE_URL, data, { headers }).then((response) => {
-      console.info('Response from LangTrace cloud', response.status)
       resultCallback({ code: response.status === 200 ? 0 : 1 })
     })
       .catch((error) => {
-        console.info('Error sending spans to LangTrace cloud', error.response?.data)
         resultCallback({ code: 1, error: error.response?.data })
       })
   }
