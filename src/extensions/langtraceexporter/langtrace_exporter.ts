@@ -21,9 +21,11 @@ export class LangTraceExporter implements SpanExporter {
     }
   }
 
-  export (spans: ReadableSpan[], resultCallback: (result: ExportResult) => void): void {
+  async export (spans: ReadableSpan[], resultCallback: (result: ExportResult) => void): Promise<void> {
     const data: Array<Partial<ReadableSpan>> = spans.map((span) => ({
       traceId: span.spanContext().traceId,
+      spanId: span.spanContext().spanId,
+      traceState: span.spanContext().traceState?.serialize(),
       name: span.name,
       startTime: span.startTime,
       endTime: span.endTime,
@@ -46,16 +48,20 @@ export class LangTraceExporter implements SpanExporter {
       resultCallback({ code: 0 })
       return
     }
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
       'User-Agent': 'LangTraceExporter',
       'x-api-key': this.apiKey!
     }
-    axios.post(LANGTRACE_REMOTE_URL, data, { headers }).then((response) => {
+    console.info(spans)
+    await axios.post(LANGTRACE_REMOTE_URL, data, { headers }).then((response) => {
+      console.info('Response from LangTrace cloud', response.status)
       resultCallback({ code: response.status === 200 ? 0 : 1 })
     })
       .catch((error) => {
+        console.info('Error sending spans to LangTrace cloud', error.response?.data)
         resultCallback({ code: 1, error: error.response?.data })
       })
   }

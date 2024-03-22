@@ -5,7 +5,7 @@ import * as http from 'http'
 import OpenAI from 'openai'
 
 dotenv.config()
-init()
+init({ api_key: 'dbda4e119945be3e8e542225655484d1807b3b50268262da958c8a45efed3bc4', write_to_langtrace_cloud: true })
 
 const hostname = '127.0.0.1'
 const port = 3000
@@ -31,7 +31,7 @@ const server = http.createServer(async (req, res) => {
         { role: 'user', content: 'Say this is a mock 4 times' }
       ]
     })
-  })
+  }, 'chat-completion', undefined, { 'user.id': '1234' })
   console.info('here2')
   // console.log(completion.choices[0]);
   res.end('Hello World\n')
