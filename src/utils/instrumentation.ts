@@ -1,15 +1,21 @@
 import { DatabaseSpanAttributes, LLMSpanAttributes, FrameworkSpanAttributes } from '@langtrase/trace-attributes'
 import { SpanKind, trace, context, SpanStatusCode } from '@opentelemetry/api'
 
-// This function wraps another function with a root span context
+/**
+ *
+ * @param fn  The function to be executed within the context of the root span
+ * @param name Name of the root span
+ * @param spanAttributes Attributes to be added to the root span
+ * @param spanKind The kind of span to be created
+ * @returns result of the function
+ */
 export async function withLangTraceRootSpan<T> (
   fn: () => Promise<T>,
-  name = 'LangtraceRootSpan', // "LangtraceRootSpan" is the default name for the root span
-  tracerName = 'langtrace',
+  name = 'LangtraceRootSpan',
   spanAttributes?: Partial<LLMSpanAttributes> | Partial<DatabaseSpanAttributes> | Partial<FrameworkSpanAttributes>,
   spanKind: SpanKind = SpanKind.INTERNAL
 ): Promise<T> {
-  const tracer = trace.getTracer(tracerName)
+  const tracer = trace.getTracer('langtrace')
   const rootSpan = tracer.startSpan(name, {
     kind: spanKind,
     attributes: spanAttributes
