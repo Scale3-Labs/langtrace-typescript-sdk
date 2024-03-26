@@ -31,7 +31,7 @@ const server = http.createServer(async (req, res) => {
         { role: 'user', content: 'Say this is a mock 4 times' }
       ]
     })
-  }, 'chat-completion', undefined, { 'user.id': '1234' })
+  }, 'chat-completion', undefined)
   console.info('here2')
   // console.log(completion.choices[0]);
   res.end('Hello World\n')
