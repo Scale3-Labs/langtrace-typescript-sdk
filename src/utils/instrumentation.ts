@@ -37,7 +37,12 @@ export async function withLangTraceRootSpan<T> (
   })
 }
 
-// Function to set custom attributes in the current context
+/**
+ *
+ * @param fn function to be executed within the context with the custom attributes added to the current context
+ * @param attributes custom attributes to be added to the current context
+ * @returns result of the function
+ */
 export async function withAdditionalAttributes <T> (fn: () => Promise<T>, attributes: Partial<LLMSpanAttributes>): Promise<T> {
   const currentContext = context.active()
   const contextWithAttributes = currentContext.setValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, attributes)
