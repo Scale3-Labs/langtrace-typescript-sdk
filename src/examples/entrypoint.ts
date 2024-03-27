@@ -1,3 +1,3 @@
-import { chatCompletion } from '@langtrace-examples/openai/chat-completion'
+import { imagesGeneration } from '@langtrace-examples/openai/images-generation'
 
-void chatCompletion()
+void imagesGeneration()
