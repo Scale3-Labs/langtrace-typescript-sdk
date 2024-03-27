@@ -1,6 +1,5 @@
 import { APIS } from '@langtrace-constants/instrumentation/anthropic'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
-import { estimateTokens } from '@langtrace-utils/llm'
 import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
 import {
   Exception,
@@ -122,11 +121,11 @@ async function * handleStreamResponse (span: Span, stream: any): any {
     let input_tokens = 0
     let output_tokens = 0
     for await (const chunk of stream) {
-      const content = (((chunk.delta?.text) as string).length > 0) || ''
+      const content = chunk.delta?.text !== undefined ? ((chunk.delta.text) as string).length > 0 ? chunk.delta.text : '' : ''
       result.push(content as string)
-      input_tokens += Number(chunk.message?.usage?.input_tokens) ?? 0
+      input_tokens += chunk.message?.usage?.input_tokens !== undefined ? Number(chunk.message?.usage?.input_tokens) : 0
       output_tokens +=
-        Number(chunk.message?.usage?.output_tokens) ?? estimateTokens(content as string)
+        chunk.message?.usage?.output_tokens !== undefined ? Number(chunk.message?.usage?.output_tokens) : chunk.usage?.output_tokens !== undefined ? Number(chunk.usage?.output_tokens) : 0
       span.addEvent(Event.STREAM_OUTPUT, {
         response: JSON.stringify(content)
       })

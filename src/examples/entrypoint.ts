@@ -1,3 +1,3 @@
-import { imagesGeneration } from '@langtrace-examples/openai/images-generation'
+import { basic } from '@langtrace-examples/anthropic/basic'
 
-void imagesGeneration()
+void basic()
