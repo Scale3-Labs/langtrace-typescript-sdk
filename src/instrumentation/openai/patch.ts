@@ -18,6 +18,7 @@ export function imagesGenerate (
   version: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const originalContext = this
 
     // Determine the service provider
@@ -39,6 +40,7 @@ export function imagesGenerate (
       'llm.prompts': JSON.stringify([args[0]?.prompt])
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
@@ -51,6 +53,7 @@ export function imagesGenerate (
           attributes['llm.responses'] = JSON.stringify(response?.data)
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return response
         } catch (error: any) {
           span.recordException(error as Exception)
@@ -72,6 +75,7 @@ export function chatCompletionCreate (
   version: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const originalContext = this
 
     // Determine the service provider
@@ -109,6 +113,7 @@ export function chatCompletionCreate (
     }
 
     if (!(args[0].stream as boolean) || args[0].stream === false) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return await context.with(
         trace.setSpan(
           context.active(),
@@ -148,6 +153,7 @@ export function chatCompletionCreate (
               })
             })
             span.setStatus({ code: SpanStatusCode.OK })
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return resp
           } catch (error: any) {
             span.recordException(error as Exception)
@@ -162,6 +168,7 @@ export function chatCompletionCreate (
         }
       )
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return await context.with(
         trace.setSpan(
           context.active(),
@@ -176,6 +183,7 @@ export function chatCompletionCreate (
           const promptContent = JSON.stringify(args[0].messages[0])
           const promptTokens = calculatePromptTokens(promptContent, model as string)
           const resp = await originalMethod.apply(this, args)
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return handleStreamResponse(
             span,
             resp,
@@ -247,6 +255,7 @@ export function embeddingsCreate (
   version: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const originalContext = this
 
     // Determine the service provider
@@ -281,6 +290,7 @@ export function embeddingsCreate (
       attributes['llm.user'] = args[0]?.user
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
@@ -293,6 +303,7 @@ export function embeddingsCreate (
 
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return resp
         } catch (error: any) {
           span.recordException(error as Exception)
