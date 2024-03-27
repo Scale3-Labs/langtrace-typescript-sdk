@@ -24,14 +24,15 @@ export async function chatCompletion (): Promise<void> {
         // },
         // { role: "user", content: "Say this is a mock 4 times" },
       ],
-      stream: false
+      stream: true
     })
 
-    console.info(response)
+    // console.info(response)
 
-    // for await (const part of response) {
-    //   process.stdout.write(part.choices[0]?.delta?.content || "");
-    // }
+    for await (const part of response) {
+      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/prefer-nullish-coalescing
+      process.stdout.write(part.choices[0]?.delta?.content || '')
+    }
 
     // const completion2 = await openai.chat.completions.create({
     //   model: "gpt-4",

@@ -87,7 +87,6 @@ export function chatCompletionCreate (
       'langtrace.version': '1.0.0',
       'url.full': originalContext?._client?.baseURL,
       'llm.api': APIS.CHAT_COMPLETION.ENDPOINT,
-      'llm.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
       'llm.prompts': JSON.stringify(args[0]?.messages)
@@ -132,7 +131,8 @@ export function chatCompletionCreate (
               return result
             })
             span.setAttributes({
-              'llm.responses': JSON.stringify(responses)
+              'llm.responses': JSON.stringify(responses),
+              'llm.model': resp.model
             })
 
             if (resp?.system_fingerprint !== undefined) {
@@ -142,9 +142,9 @@ export function chatCompletionCreate (
             }
             span.setAttributes({
               'llm.token.counts': JSON.stringify({
-                prompt_tokens: (Boolean((resp?.usage?.prompt_tokens))) || 0,
-                completion_tokens: (Boolean((resp?.usage?.completion_tokens))) || 0,
-                total_tokens: (Boolean((resp?.usage?.total_tokens))) || 0
+                input_tokens: (typeof resp?.usage?.prompt_tokens !== 'undefined') ? resp.usage.prompt_tokens : 0,
+                output_tokens: (typeof resp?.usage?.completion_tokens !== 'undefined') ? resp.usage.completion_tokens : 0,
+                total_tokens: (typeof resp?.usage?.total_tokens !== 'undefined') ? resp.usage.total_tokens : 0
               })
             })
             span.setStatus({ code: SpanStatusCode.OK })
@@ -199,7 +199,11 @@ async function * handleStreamResponse (
 
   span.addEvent(Event.STREAM_START)
   try {
+    let model = ''
     for await (const chunk of stream) {
+      if (model === '') {
+        model = chunk.model
+      }
       const content = chunk.choices[0]?.delta?.content ?? ''
       const tokenCount = estimateTokens(content as string)
       completionTokens += tokenCount
@@ -213,9 +217,10 @@ async function * handleStreamResponse (
 
     span.setStatus({ code: SpanStatusCode.OK })
     span.setAttributes({
+      'llm.model': model,
       'llm.token.counts': JSON.stringify({
-        prompt_tokens: promptTokens,
-        completion_tokens: completionTokens,
+        input_tokens: promptTokens,
+        output_tokens: completionTokens,
         total_tokens: completionTokens + promptTokens
       }),
       'llm.responses': functionCall
