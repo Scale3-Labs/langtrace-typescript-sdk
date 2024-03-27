@@ -19,7 +19,7 @@ export async function chatCompletion (): Promise<void> {
       messages: [
         { role: 'user', content: 'Say this is a test 3 times' }
       ],
-      stream: true
+      stream: false
     })
 
     console.info(response)

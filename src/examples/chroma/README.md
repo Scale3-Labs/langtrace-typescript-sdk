@@ -2,5 +2,5 @@ To start the database server install server package and start run command. The d
 
 ```
 pip install chromadb
-chroma run --path /Users/karthikkalyanaraman/work/langtrace/nodejs-sdk/src/examples/chroma/db
+chroma run --path src/examples/chroma/db
 ```
