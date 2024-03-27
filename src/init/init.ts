@@ -39,7 +39,6 @@ export const init: LangTraceInit = (
 
   const remoteWriteExporter = new LangTraceExporter(
     api_key,
-    undefined,
     write_to_remote_url
   )
   const consoleExporter = new ConsoleSpanExporter()
