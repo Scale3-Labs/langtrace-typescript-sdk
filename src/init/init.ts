@@ -20,7 +20,7 @@ export const init: LangTraceInit = ({
   // Set up OpenTelemetry tracing
   const provider = new NodeTracerProvider()
 
-  const remoteWriteExporter = custom_remote_exporter ?? new LangTraceExporter(api_key, write_to_langtrace_cloud)
+  const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
@@ -31,11 +31,16 @@ export const init: LangTraceInit = ({
     diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG)
   }
 
-  if (write_to_langtrace_cloud && !batch) {
+  if (write_to_langtrace_cloud && !batch && custom_remote_exporter === undefined) {
     throw new Error('Batching is required when writing to the LangTrace cloud')
   }
-
-  if (!write_to_langtrace_cloud) {
+  if (custom_remote_exporter !== undefined) {
+    if (batch) {
+      provider.addSpanProcessor(new BatchSpanProcessor(custom_remote_exporter))
+    } else {
+      provider.addSpanProcessor(new SimpleSpanProcessor(custom_remote_exporter))
+    }
+  } else if (!write_to_langtrace_cloud) {
     if (batch) {
       provider.addSpanProcessor(batchProcessorConsole)
     } else {

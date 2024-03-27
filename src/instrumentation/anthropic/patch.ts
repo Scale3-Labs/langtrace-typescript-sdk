@@ -1,3 +1,4 @@
+import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { APIS } from '@langtrace-constants/instrumentation/anthropic'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
 import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
@@ -21,7 +22,7 @@ export function messagesCreate (
 
     // Determine the service provider
     const serviceProvider = SERVICE_PROVIDERS.ANTHROPIC
-
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const attributes: LLMSpanAttributes = {
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
@@ -32,7 +33,8 @@ export function messagesCreate (
       'llm.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.prompts': JSON.stringify(args[0]?.messages)
+      'llm.prompts': JSON.stringify(args[0]?.messages),
+      ...customAttributes
     }
 
     if (args[0]?.temperature !== undefined) {

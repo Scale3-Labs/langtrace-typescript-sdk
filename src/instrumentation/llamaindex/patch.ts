@@ -1,3 +1,4 @@
+import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
 import { FrameworkSpanAttributes } from '@langtrase/trace-attributes'
 import {
@@ -23,12 +24,14 @@ export function genericPatch (
       trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
         const span = tracer.startSpan(method, { kind: SpanKind.CLIENT })
+        const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
         const spanAttributes: FrameworkSpanAttributes = {
           'langtrace.service.name': SERVICE_PROVIDERS.LLAMAINDEX,
           'langtrace.service.type': 'framework',
           'langtrace.service.version': version,
           'langtrace.version': '1.0.0',
-          'llamaindex.task.name': task
+          'llamaindex.task.name': task,
+          ...customAttributes
         }
         span.setAttributes(spanAttributes as Attributes)
 

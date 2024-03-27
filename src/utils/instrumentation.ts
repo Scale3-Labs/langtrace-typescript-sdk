@@ -1,8 +1,6 @@
-import { DatabaseSpanAttributes, LLMSpanAttributes, FrameworkSpanAttributes } from '@langtrase/trace-attributes'
-import {
-  SpanKind, trace, context, SpanStatusCode
-} from '@opentelemetry/api'
-
+import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
+import { LLMSpanAttributes } from '@langtrase/trace-attributes'
+import { SpanKind, trace, context, SpanStatusCode } from '@opentelemetry/api'
 /**
  *
  * @param fn  The function to be executed within the context of the root span
@@ -14,14 +12,10 @@ import {
 export async function withLangTraceRootSpan<T> (
   fn: () => Promise<T>,
   name = 'LangtraceRootSpan',
-  spanAttributes?: Partial<LLMSpanAttributes> | Partial<DatabaseSpanAttributes> | Partial<FrameworkSpanAttributes>,
   spanKind: SpanKind = SpanKind.INTERNAL
 ): Promise<T> {
   const tracer = trace.getTracer('langtrace')
-  const rootSpan = tracer.startSpan(name, {
-    kind: spanKind,
-    attributes: spanAttributes
-  })
+  const rootSpan = tracer.startSpan(name, { kind: spanKind })
 
   // Use the OpenTelemetry context management API to set the current span
   return await context.with(trace.setSpan(context.active(), rootSpan), async () => {
@@ -41,4 +35,13 @@ export async function withLangTraceRootSpan<T> (
       rootSpan.end()
     }
   })
+}
+
+// Function to set custom attributes in the current context
+export async function withAdditionalAttributes <T> (fn: () => Promise<T>, attributes: Partial<LLMSpanAttributes>): Promise<T> {
+  const currentContext = context.active()
+  const contextWithAttributes = currentContext.setValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, attributes)
+
+  // Execute the function within the context that has the custom attributes
+  return await context.with(contextWithAttributes, fn)
 }

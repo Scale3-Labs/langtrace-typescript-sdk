@@ -1,3 +1,4 @@
+import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { APIS } from '@langtrace-constants/instrumentation/chroma'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
 import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
@@ -20,14 +21,16 @@ export function collectionPatch (
   return async function (this: any, ...args: any[]) {
     const originalContext = this
     const api = APIS[method]
-
+    // Extract custom attributes from the current context
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const attributes: DatabaseSpanAttributes = {
       'langtrace.service.name': SERVICE_PROVIDERS.CHROMA,
       'langtrace.service.type': 'vectordb',
       'langtrace.service.version': version,
       'langtrace.version': '1.0.0',
       'db.system': 'chromadb',
-      'db.operation': api.OPERATION
+      'db.operation': api.OPERATION,
+      ...customAttributes
     }
 
     if (this.name !== undefined) {

@@ -1,9 +1,8 @@
 import { APIS } from '@langtrace-constants/instrumentation/pinecone'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
 import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
-import {
-  Tracer, context, trace, Span, SpanKind, SpanStatusCode, Exception
-} from '@opentelemetry/api'
+import { Tracer, context, trace, Span, SpanKind, SpanStatusCode, Exception } from '@opentelemetry/api'
+import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 
 export function genericPatch (
   originalMethod: (...args: any[]) => any,
@@ -14,13 +13,15 @@ export function genericPatch (
   return async function (this: any, ...args: any[]): Promise<any> {
     const originalContext = this
     const api = APIS[method]
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const attributes: DatabaseSpanAttributes = {
       'langtrace.service.name': SERVICE_PROVIDERS.PINECONE,
       'langtrace.service.type': 'vectordb',
       'langtrace.service.version': version,
       'langtrace.version': '1.0.0',
       'db.system': 'pinecone',
-      'db.operation': api.OPERATION
+      'db.operation': api.OPERATION,
+      ...customAttributes
     }
 
     return await context.with(
