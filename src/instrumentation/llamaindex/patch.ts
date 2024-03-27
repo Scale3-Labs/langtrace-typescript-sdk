@@ -22,9 +22,7 @@ export function genericPatch (
     return await context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
-        const span = tracer.startSpan(method, {
-          kind: SpanKind.CLIENT
-        })
+        const span = tracer.startSpan(method, { kind: SpanKind.CLIENT })
         const spanAttributes: FrameworkSpanAttributes = {
           'langtrace.service.name': SERVICE_PROVIDERS.LLAMAINDEX,
           'langtrace.service.type': 'framework',

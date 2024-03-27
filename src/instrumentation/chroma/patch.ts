@@ -45,9 +45,7 @@ export function collectionPatch (
     return await context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
-        const span = tracer.startSpan(api.METHOD, {
-          kind: SpanKind.CLIENT
-        })
+        const span = tracer.startSpan(api.METHOD, { kind: SpanKind.CLIENT })
         span.setAttributes(attributes)
 
         try {

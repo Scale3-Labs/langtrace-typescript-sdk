@@ -15,10 +15,7 @@ import {
 } from 'llamaindex'
 dotenv.config()
 
-init({
-  batch: false,
-  write_to_langtrace_cloud: false
-})
+init({ batch: false, write_to_langtrace_cloud: false })
 
 export async function basic (): Promise<void> {
   await withLangTraceRootSpan(async () => {
@@ -35,9 +32,7 @@ export async function basic (): Promise<void> {
 
     // Query the index
     const queryEngine = index.asQueryEngine()
-    const response = await queryEngine.query({
-      query: 'What did the author do in college?'
-    })
+    const response = await queryEngine.query({ query: 'What did the author do in college?' })
 
     // Output response
     console.info(response.toString())
@@ -48,9 +43,7 @@ export async function extractor (): Promise<void> {
   const pipeline = new IngestionPipeline({
     transformations: [
       new TitleExtractor(),
-      new QuestionsAnsweredExtractor({
-        questions: 5
-      })
+      new QuestionsAnsweredExtractor({ questions: 5 })
     ]
   })
 
