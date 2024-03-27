@@ -1,7 +1,9 @@
 import { APIS } from '@langtrace-constants/instrumentation/pinecone'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
 import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
-import { Tracer, context, trace, Span, SpanKind, SpanStatusCode, Exception } from '@opentelemetry/api'
+import {
+  Tracer, context, trace, Span, SpanKind, SpanStatusCode, Exception
+} from '@opentelemetry/api'
 
 export function genericPatch (
   originalMethod: (...args: any[]) => any,
@@ -24,25 +26,17 @@ export function genericPatch (
     return await context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
-        const span = tracer.startSpan(api.METHOD, {
-          kind: SpanKind.CLIENT
-        })
+        const span = tracer.startSpan(api.METHOD, { kind: SpanKind.CLIENT })
         span.setAttributes(attributes)
         try {
           if (this.target?.index !== undefined) {
-            span.setAttributes({
-              'db.index': this.target?.index
-            })
+            span.setAttributes({ 'db.index': this.target?.index })
           }
           if (this.target?.namespace !== undefined) {
-            span.setAttributes({
-              'db.namespace': this.target?.namespace
-            })
+            span.setAttributes({ 'db.namespace': this.target?.namespace })
           }
           if (this.target?.indexHostUrl !== undefined) {
-            span.setAttributes({
-              'server.address': `${this.target?.indexHostUrl}${api.ENDPOINT}`
-            })
+            span.setAttributes({ 'server.address': `${this.target?.indexHostUrl}${api.ENDPOINT}` })
           }
           if (args[0]?.topK !== undefined) {
             span.setAttributes({ 'db.top_k': args[0]?.topK })

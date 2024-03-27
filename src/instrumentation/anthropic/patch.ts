@@ -58,20 +58,14 @@ export function messagesCreate (
           trace.getSpan(context.active()) as Span
         ),
         async () => {
-          const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, {
-            kind: SpanKind.CLIENT
-          })
+          const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT })
           span.setAttributes(attributes)
           try {
             const resp = await originalMethod.apply(this, args)
-            span.setAttributes({
-              'llm.responses': JSON.stringify(resp.content)
-            })
+            span.setAttributes({ 'llm.responses': JSON.stringify(resp.content) })
 
             if (resp?.system_fingerprint !== undefined) {
-              span.setAttributes({
-                'llm.system.fingerprint': resp?.system_fingerprint
-              })
+              span.setAttributes({ 'llm.system.fingerprint': resp?.system_fingerprint })
             }
             span.setAttributes({
               'llm.token.counts': JSON.stringify({
@@ -101,9 +95,7 @@ export function messagesCreate (
           trace.getSpan(context.active()) as Span
         ),
         async () => {
-          const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, {
-            kind: SpanKind.CLIENT
-          })
+          const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT })
           span.setAttributes(attributes)
           const resp = await originalMethod.apply(this, args)
           return handleStreamResponse(span, resp)
@@ -126,9 +118,7 @@ async function * handleStreamResponse (span: Span, stream: any): any {
       input_tokens += chunk.message?.usage?.input_tokens !== undefined ? Number(chunk.message?.usage?.input_tokens) : 0
       output_tokens +=
         chunk.message?.usage?.output_tokens !== undefined ? Number(chunk.message?.usage?.output_tokens) : chunk.usage?.output_tokens !== undefined ? Number(chunk.usage?.output_tokens) : 0
-      span.addEvent(Event.STREAM_OUTPUT, {
-        response: JSON.stringify(content)
-      })
+      span.addEvent(Event.STREAM_OUTPUT, { response: JSON.stringify(content) })
       yield chunk
     }
 

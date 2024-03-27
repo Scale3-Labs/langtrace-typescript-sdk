@@ -4,10 +4,7 @@ import dotenv from 'dotenv'
 import OpenAI from 'openai'
 dotenv.config()
 
-init({
-  write_to_remote_url: false,
-  batch: false
-})
+init({ write_to_remote_url: false, batch: false })
 
 const openai = new OpenAI()
 

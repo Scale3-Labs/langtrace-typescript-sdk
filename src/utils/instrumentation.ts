@@ -1,5 +1,7 @@
 import { DatabaseSpanAttributes, LLMSpanAttributes, FrameworkSpanAttributes } from '@langtrase/trace-attributes'
-import { SpanKind, trace, context, SpanStatusCode } from '@opentelemetry/api'
+import {
+  SpanKind, trace, context, SpanStatusCode
+} from '@opentelemetry/api'
 
 // This function wraps another function with a root span context
 export async function withLangTraceRootSpan<T> (

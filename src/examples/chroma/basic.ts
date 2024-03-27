@@ -12,9 +12,7 @@ init({
 export async function basic (): Promise<void> {
   await withLangTraceRootSpan(async () => {
     const client = new ChromaClient()
-    const embedder = new OpenAIEmbeddingFunction({
-      openai_api_key: process.env.OPENAI_API_KEY as string
-    })
+    const embedder = new OpenAIEmbeddingFunction({ openai_api_key: process.env.OPENAI_API_KEY as string })
     console.info('Creating collection')
     await client.createCollection({
       name: 'test_collection',

@@ -44,9 +44,7 @@ export function imagesGenerate (
     return await context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
-        const span = tracer.startSpan(APIS.IMAGES_GENERATION.METHOD, {
-          kind: SpanKind.SERVER
-        })
+        const span = tracer.startSpan(APIS.IMAGES_GENERATION.METHOD, { kind: SpanKind.SERVER })
         span.setAttributes(attributes)
         try {
           const response = await originalMethod.apply(originalContext, args)
@@ -120,9 +118,7 @@ export function chatCompletionCreate (
           trace.getSpan(context.active()) as Span
         ),
         async () => {
-          const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, {
-            kind: SpanKind.CLIENT
-          })
+          const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT })
           span.setAttributes(attributes)
           try {
             const resp = await originalMethod.apply(this, args)
@@ -141,9 +137,7 @@ export function chatCompletionCreate (
             })
 
             if (resp?.system_fingerprint !== undefined) {
-              span.setAttributes({
-                'llm.system.fingerprint': resp?.system_fingerprint
-              })
+              span.setAttributes({ 'llm.system.fingerprint': resp?.system_fingerprint })
             }
             span.setAttributes({
               'llm.token.counts': JSON.stringify({
@@ -175,9 +169,7 @@ export function chatCompletionCreate (
           trace.getSpan(context.active()) as Span
         ),
         async () => {
-          const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, {
-            kind: SpanKind.CLIENT
-          })
+          const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT })
           span.setAttributes(attributes)
           const model = args[0].model
           const promptContent = JSON.stringify(args[0].messages[0])
@@ -294,9 +286,7 @@ export function embeddingsCreate (
     return await context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
-        const span = tracer.startSpan(APIS.EMBEDDINGS_CREATE.METHOD, {
-          kind: SpanKind.SERVER
-        })
+        const span = tracer.startSpan(APIS.EMBEDDINGS_CREATE.METHOD, { kind: SpanKind.SERVER })
         span.setAttributes(attributes)
         try {
           const resp = await originalMethod.apply(originalContext, args)

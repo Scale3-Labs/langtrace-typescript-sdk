@@ -51,9 +51,7 @@ export class LangTraceExporter implements SpanExporter {
       resultCallback({ code: 0 })
       return
     }
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json'
-    }
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (this.url?.includes(LANGTRACE_REMOTE_URL) === true && this.apiKey !== undefined) {
       headers['x-api-key'] = this.apiKey
     }
