@@ -1,6 +1,8 @@
 import { APIS } from '@langtrace-constants/instrumentation/chroma'
 import { diag } from '@opentelemetry/api'
-import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
+import {
+  InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped
+} from '@opentelemetry/instrumentation'
 import { Pinecone } from '@pinecone-database/pinecone'
 import { genericPatch } from '@langtrace-instrumentation/pinecone/patch'
 

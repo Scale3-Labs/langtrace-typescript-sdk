@@ -18,12 +18,12 @@ export async function basic (): Promise<void> {
       max_tokens: 1024,
       messages: [{ role: 'user', content: 'Hello, Claude' }],
       model: 'claude-3-opus-20240229',
-      stream: true
+      stream: false
     })
 
-    // console.log(message.content);
-    for await (const part of message) {
-      console.info(part)
-    }
+    console.info(message.content)
+    // for await (const part of message) {
+    //   console.info(part)
+    // }
   })
 }
