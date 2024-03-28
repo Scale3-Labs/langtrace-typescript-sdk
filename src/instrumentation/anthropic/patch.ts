@@ -23,6 +23,15 @@ export function messagesCreate (
     // Determine the service provider
     const serviceProvider = SERVICE_PROVIDERS.ANTHROPIC
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
+
+    // Get the prompt and deep copy it
+    const prompt = JSON.parse(JSON.stringify(args[0]?.messages))
+
+    // Get the system message if any from args and attach it to the prompt with system role
+    if (args[0]?.system !== undefined) {
+      prompt.push({ role: 'system', content: args[0]?.system })
+    }
+
     const attributes: LLMSpanAttributes = {
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
@@ -33,7 +42,7 @@ export function messagesCreate (
       'llm.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.prompts': JSON.stringify(args[0]?.messages),
+      'llm.prompts': JSON.stringify(prompt),
       ...customAttributes
     }
 
