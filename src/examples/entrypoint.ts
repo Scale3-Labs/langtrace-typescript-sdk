@@ -1,3 +1,3 @@
-import { chatCompletion } from '@langtrace-examples/openai/chat-completion'
+import { runSimpleServer } from '@langtrace-examples/simple-server/server'
 
-void chatCompletion()
+void runSimpleServer()

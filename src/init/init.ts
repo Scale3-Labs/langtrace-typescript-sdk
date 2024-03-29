@@ -1,69 +1,59 @@
 import { LangTraceExporter } from '@langtrace-extensions/langtraceexporter/langtrace_exporter'
-import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
 import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
 import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
 import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex/instrumentation'
 import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
 import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
-import { DiagConsoleLogger, DiagLogLevel, diag } from '@opentelemetry/api'
+import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api'
 import { registerInstrumentations } from '@opentelemetry/instrumentation'
-import {
-  BatchSpanProcessor,
-  ConsoleSpanExporter,
-  SimpleSpanProcessor
-} from '@opentelemetry/sdk-trace-base'
+import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
+import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
 
-/**
- *
- * @param api_key Your API key. If not set, the value will be read from the LANGTRACE_API_KEY environment variable
- * @param batch If true, spans will be batched before being sent to the remote URL
- * @param log_spans_to_console If true, spans will be logged to the console
- * @param write_to_remote_url If true, spans will be sent to the remote URL
- * @returns void
- */
-export const init: LangTraceInit = (
-  {
-    api_key,
-    batch,
-    write_to_remote_url,
-    debug_log_to_console
-  }: LangtraceInitOptions = {
-    batch: false,
-    debug_log_to_console: false,
-    write_to_remote_url: true
-  }
-) => {
+export const init: LangTraceInit = ({
+  api_key = undefined,
+  batch = true,
+  write_to_langtrace_cloud = true,
+  debug_log_to_console = false,
+  custom_remote_exporter = undefined
+}: LangtraceInitOptions = {}) => {
   // Set up OpenTelemetry tracing
   const provider = new NodeTracerProvider()
 
-  const remoteWriteExporter = new LangTraceExporter(
-    api_key,
-    undefined,
-    write_to_remote_url
-  )
+  const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
   const batchProcessorConsole = new BatchSpanProcessor(consoleExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
 
-  if (debug_log_to_console === true) {
+  if (debug_log_to_console) {
     diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG)
   }
-  if (write_to_remote_url === false) {
-    if (batch === true) {
+
+  if (write_to_langtrace_cloud && !batch && custom_remote_exporter === undefined) {
+    throw new Error('Batching is required when writing to the LangTrace cloud')
+  }
+  if (custom_remote_exporter !== undefined) {
+    if (batch) {
+      provider.addSpanProcessor(new BatchSpanProcessor(custom_remote_exporter))
+    } else {
+      provider.addSpanProcessor(new SimpleSpanProcessor(custom_remote_exporter))
+    }
+  } else if (!write_to_langtrace_cloud) {
+    if (batch) {
       provider.addSpanProcessor(batchProcessorConsole)
     } else {
       provider.addSpanProcessor(simpleProcessorConsole)
     }
   } else {
-    if (batch === true) {
+    if (batch) {
       provider.addSpanProcessor(batchProcessorRemote)
     } else {
       provider.addSpanProcessor(simpleProcessorRemote)
     }
   }
+
   provider.register()
 
   // Register any automatic instrumentation and your custom OpenAI instrumentation

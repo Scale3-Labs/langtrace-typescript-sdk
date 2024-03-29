@@ -1,3 +1,4 @@
+import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
 import { APIS } from '@langtrace-constants/instrumentation/openai'
 import { calculatePromptTokens, estimateTokens } from '@langtrace-utils/llm'
@@ -26,6 +27,7 @@ export function imagesGenerate (
     if (originalContext?._client?.baseURL?.includes('azure') === true) {
       serviceProvider = SERVICE_PROVIDERS.AZURE
     }
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
 
     const attributes: LLMSpanAttributes = {
       'langtrace.service.name': serviceProvider,
@@ -37,7 +39,8 @@ export function imagesGenerate (
       'llm.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.prompts': JSON.stringify([args[0]?.prompt])
+      'llm.prompts': JSON.stringify([args[0]?.prompt]),
+      ...customAttributes
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -75,7 +78,7 @@ export function chatCompletionCreate (
   return async function (this: any, ...args: any[]) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const originalContext = this
-
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     // Determine the service provider
     let serviceProvider = SERVICE_PROVIDERS.OPENAI
     if (originalContext?._client?.baseURL?.includes('azure') === true) {
@@ -91,7 +94,8 @@ export function chatCompletionCreate (
       'llm.api': APIS.CHAT_COMPLETION.ENDPOINT,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.prompts': JSON.stringify(args[0]?.messages)
+      'llm.prompts': JSON.stringify(args[0]?.messages),
+      ...customAttributes
     }
 
     if (args[0]?.temperature !== undefined) {
@@ -196,7 +200,7 @@ async function * handleStreamResponse (
 ): any {
   let completionTokens = 0
   const result: string[] = []
-
+  const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
   span.addEvent(Event.STREAM_START)
   try {
     let model = ''
@@ -219,9 +223,10 @@ async function * handleStreamResponse (
     span.setAttributes({
       'llm.model': model,
       'llm.token.counts': JSON.stringify({
-        input_tokens: promptTokens,
-        output_tokens: completionTokens,
-        total_tokens: completionTokens + promptTokens
+        prompt_tokens: promptTokens,
+        completion_tokens: completionTokens,
+        total_tokens: completionTokens + promptTokens,
+        ...customAttributes
       }),
       'llm.responses': functionCall
         ? JSON.stringify([
@@ -249,7 +254,7 @@ export function embeddingsCreate (
   return async function (this: any, ...args: any[]) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const originalContext = this
-
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     // Determine the service provider
     let serviceProvider = SERVICE_PROVIDERS.OPENAI
     if (originalContext?._client?.baseURL?.includes('azure') === true) {
@@ -267,7 +272,8 @@ export function embeddingsCreate (
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
       'llm.stream': args[0]?.stream,
-      'llm.prompts': JSON.stringify(args[0]?.prompts)
+      'llm.prompts': JSON.stringify(args[0]?.prompts),
+      ...customAttributes
     }
 
     if (args[0]?.encoding_format !== undefined) {

@@ -4,10 +4,7 @@ import { withLangTraceRootSpan } from '@langtrace-utils/instrumentation'
 import { ChromaClient, OpenAIEmbeddingFunction } from 'chromadb'
 import dotenv from 'dotenv'
 dotenv.config()
-init({
-  batch: false,
-  write_to_remote_url: false
-})
+init({ batch: false, write_to_langtrace_cloud: false })
 
 export async function basic (): Promise<void> {
   await withLangTraceRootSpan(async () => {
