@@ -1,5 +1,20 @@
+/*
+ * Copyright (c) 2024 Scale3 Labs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { TIKTOKEN_MODEL_MAPPING } from '@langtrace-constants/instrumentation/common'
-import { OPENAI_COST_TABLE } from '@langtrace-constants/instrumentation/openai'
 import { TiktokenEncoding, get_encoding } from 'tiktoken'
 
 export function estimateTokens (prompt: string): number {
@@ -29,19 +44,4 @@ export function calculatePromptTokens (
   } catch (error) {
     return estimateTokens(promptContent) // Fallback method
   }
-}
-
-export function calculatePriceFromUsage (
-  model: string,
-  usage: { prompt_tokens: number, completion_tokens: number }
-): number {
-  const costTable = OPENAI_COST_TABLE[model]
-  if (costTable !== undefined) {
-    return (
-      (costTable.input * usage.prompt_tokens +
-        costTable.output * usage.completion_tokens) /
-      1000
-    )
-  }
-  return 0
 }

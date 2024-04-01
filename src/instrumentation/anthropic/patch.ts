@@ -1,6 +1,22 @@
+/*
+ * Copyright (c) 2024 Scale3 Labs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { APIS } from '@langtrace-constants/instrumentation/anthropic'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
-import { estimateTokens } from '@langtrace-utils/llm'
 import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
 import {
   Exception,
@@ -22,6 +38,15 @@ export function messagesCreate (
 
     // Determine the service provider
     const serviceProvider = SERVICE_PROVIDERS.ANTHROPIC
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
+
+    // Get the prompt and deep copy it
+    const prompt = JSON.parse(JSON.stringify(args[0]?.messages))
+
+    // Get the system message if any from args and attach it to the prompt with system role
+    if (args[0]?.system !== undefined) {
+      prompt.push({ role: 'system', content: args[0]?.system })
+    }
 
     const attributes: LLMSpanAttributes = {
       'langtrace.service.name': serviceProvider,
@@ -33,7 +58,8 @@ export function messagesCreate (
       'llm.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.prompts': JSON.stringify(args[0]?.messages)
+      'llm.prompts': JSON.stringify(prompt),
+      ...customAttributes
     }
 
     if (args[0]?.temperature !== undefined) {
@@ -59,20 +85,14 @@ export function messagesCreate (
           trace.getSpan(context.active()) as Span
         ),
         async () => {
-          const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, {
-            kind: SpanKind.CLIENT
-          })
+          const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT })
           span.setAttributes(attributes)
           try {
             const resp = await originalMethod.apply(this, args)
-            span.setAttributes({
-              'llm.responses': JSON.stringify(resp.content)
-            })
+            span.setAttributes({ 'llm.responses': JSON.stringify(resp.content) })
 
             if (resp?.system_fingerprint !== undefined) {
-              span.setAttributes({
-                'llm.system.fingerprint': resp?.system_fingerprint
-              })
+              span.setAttributes({ 'llm.system.fingerprint': resp?.system_fingerprint })
             }
             span.setAttributes({
               'llm.token.counts': JSON.stringify({
@@ -102,9 +122,7 @@ export function messagesCreate (
           trace.getSpan(context.active()) as Span
         ),
         async () => {
-          const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, {
-            kind: SpanKind.CLIENT
-          })
+          const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT })
           span.setAttributes(attributes)
           const resp = await originalMethod.apply(this, args)
           return handleStreamResponse(span, resp)
@@ -122,14 +140,12 @@ async function * handleStreamResponse (span: Span, stream: any): any {
     let input_tokens = 0
     let output_tokens = 0
     for await (const chunk of stream) {
-      const content = (((chunk.delta?.text) as string).length > 0) || ''
+      const content = chunk.delta?.text !== undefined ? ((chunk.delta.text) as string).length > 0 ? chunk.delta.text : '' : ''
       result.push(content as string)
-      input_tokens += Number(chunk.message?.usage?.input_tokens) ?? 0
+      input_tokens += chunk.message?.usage?.input_tokens !== undefined ? Number(chunk.message?.usage?.input_tokens) : 0
       output_tokens +=
-        Number(chunk.message?.usage?.output_tokens) ?? estimateTokens(content as string)
-      span.addEvent(Event.STREAM_OUTPUT, {
-        response: JSON.stringify(content)
-      })
+        chunk.message?.usage?.output_tokens !== undefined ? Number(chunk.message?.usage?.output_tokens) : chunk.usage?.output_tokens !== undefined ? Number(chunk.usage?.output_tokens) : 0
+      span.addEvent(Event.STREAM_OUTPUT, { response: JSON.stringify(content) })
       yield chunk
     }
 
