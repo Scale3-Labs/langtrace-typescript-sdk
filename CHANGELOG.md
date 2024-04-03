@@ -1,5 +1,17 @@
 # @langtrase/typescript-sdk
 
+## 1.3.1
+
+### Patch Changes
+
+- Update readme
+
+## 1.3.0
+
+### Minor Changes
+
+- 735628e: Breaks export url which has changed. Also batching is mandated when sending to langtrace cloud
+
 ## 1.2.9
 
 ### Patch Changes
