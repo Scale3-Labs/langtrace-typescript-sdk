@@ -33,14 +33,14 @@ npm i @langtrase/typescript-sdk
 ```
 
 ``` typescript
-import * as Langtrace from '@langtrase/typescript-sdk // Must precede any llm module imports
+import * as Langtrace from '@langtrase/typescript-sdk' // Must precede any llm module imports
 Langtrace.init({ api_key: <your_api_key> })
 ```
 
 OR
 
 ``` typescript
-import * as Langtrace from '@langtrase/typescript-sdk // Must precede any llm module imports
+import * as Langtrace from '@langtrase/typescript-sdk' // Must precede any llm module imports
 LangTrace.init() // LANGTRACE_API_KEY as an ENVIRONMENT variable
 ```
 
@@ -53,7 +53,7 @@ npm i @langtrase/typescript-sdk
 ```
 
 ``` typescript
-import * as Langtrace from '@langtrase/typescript-sdk // Must precede any llm module imports
+import * as Langtrace from '@langtrase/typescript-sdk' // Must precede any llm module imports
 Langtrace.init({ write_to_langtrace_cloud: false, batch: false})
 ```
 
@@ -66,7 +66,7 @@ npm i @langtrase/typescript-sdk
 ```
 
 ``` typescript
-import * as Langtrace from '@langtrase/typescript-sdk // Must precede any llm module imports
+import * as Langtrace from '@langtrase/typescript-sdk' // Must precede any llm module imports
 Langtrace.init({ custom_remote_exporter: <your_exporter>, batch:<true or false>})
 ```
 
@@ -127,7 +127,7 @@ Langtrace automatically captures traces from the following vendors:
 
 ## Contributions
 
-We welcome contributions to this project. To get started, fork this repository and start developing. To get involved, join our Slack workspace.
+We welcome contributions to this project. To get started, fork this repository and start developing. To get involved, join our [Discord](https://discord.langtrace.ai) workspace.
 
 ---
 
