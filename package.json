@@ -1,6 +1,6 @@
 {
   "name": "@langtrase/typescript-sdk",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "A typescript SDK for Langtrace",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -21,20 +21,22 @@
   "author": "Scale3 Labs",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@langtrase/trace-attributes": "^1.0.41",
+    "@langtrase/trace-attributes": "^1.0.47",
     "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/instrumentation": "^0.49.1",
     "@opentelemetry/sdk-trace-base": "^1.22.0",
     "@opentelemetry/sdk-trace-node": "^1.22.0",
     "chromadb": "^1.8.1",
-    "tiktoken": "^1.0.13"
+    "tiktoken": "^1.0.13",
+    "openai": "^4.28.4",
+    "llamaindex": "^0.1.21",
+    "axios": "^1.6.7",
+    "@pinecone-database/pinecone": "^2.0.1",
+    "@anthropic-ai/sdk": "^0.16.1"
   },
   "devDependencies": {
-    "@anthropic-ai/sdk": "^0.16.1",
     "@changesets/cli": "^2.27.1",
-    "@pinecone-database/pinecone": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
-    "axios": "^1.6.7",
     "dotenv": "^16.4.5",
     "eslint": "^8.34.0",
     "eslint-config-standard-with-typescript": "^23.0.0",
@@ -42,8 +44,6 @@
     "eslint-plugin-n": "^15.3.0",
     "eslint-plugin-promise": "^6.0.1",
     "eslint-plugin-unused-imports": "^2.0.0",
-    "llamaindex": "^0.1.21",
-    "openai": "^4.28.4",
     "tsc-alias": "^1.8.8",
     "typescript": "^4.9.5"
   }

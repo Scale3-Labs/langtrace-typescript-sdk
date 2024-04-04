@@ -42,6 +42,7 @@ export function genericPatch (
         const span = tracer.startSpan(method, { kind: SpanKind.CLIENT })
         const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
         const spanAttributes: FrameworkSpanAttributes = {
+          'langtrace.sdk.name': '@langtrase/typescript-sdk',
           'langtrace.service.name': SERVICE_PROVIDERS.LLAMAINDEX,
           'langtrace.service.type': 'framework',
           'langtrace.service.version': version,

@@ -46,6 +46,7 @@ export function imagesGenerate (
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
 
     const attributes: LLMSpanAttributes = {
+      'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
@@ -102,6 +103,7 @@ export function chatCompletionCreate (
     }
 
     const attributes: LLMSpanAttributes = {
+      'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
@@ -278,6 +280,7 @@ export function embeddingsCreate (
     }
 
     const attributes: LLMSpanAttributes = {
+      'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
