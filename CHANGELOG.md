@@ -2,6 +2,8 @@
 
 ## 1.3.1
 
+- Adds 'langtrace.sdk.name' to the trace attributes
+
 ### Patch Changes
 
 - Update readme
