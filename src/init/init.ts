@@ -26,6 +26,7 @@ import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@o
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
 import OpenAI from 'openai'
+import Anthropic from '@anthropic-ai/sdk'
 
 export const init: LangTraceInit = ({
   api_key = undefined,
@@ -76,7 +77,13 @@ export const init: LangTraceInit = ({
 
   if (instrumentModules?.openAI !== undefined) {
     diag.info('Initializing OpenAI instrumentation')
+
     openAIInstrumentation.manuallyInstrument(instrumentModules.openAI as typeof OpenAI, '1.0.0')
+  }
+
+  if (instrumentModules?.anthropic !== undefined) {
+    diag.info('Initializing Anthropic instrumentation')
+    anthropicInstrumentation.manuallyInstrument(instrumentModules.anthropic as typeof Anthropic, '1.0.0')
   }
   // Register any automatic instrumentation and your custom OpenAI instrumentation
   registerInstrumentations({

@@ -27,6 +27,11 @@ class AnthropicInstrumentation extends InstrumentationBase<typeof Anthropic> {
     super('@langtrase/node-sdk', '1.0.0')
   }
 
+  public manuallyInstrument (anthropic: typeof Anthropic, version: string): void {
+    this._diag.debug('Manually instrumenting anthropic')
+    this._patch(anthropic, version)
+  }
+
   init (): Array<InstrumentationNodeModuleDefinition<typeof Anthropic>> {
     const module = new InstrumentationNodeModuleDefinition<typeof Anthropic>(
       '@anthropic-ai/sdk',
