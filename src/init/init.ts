@@ -25,13 +25,15 @@ import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
+import OpenAI from 'openai'
 
 export const init: LangTraceInit = ({
   api_key = undefined,
   batch = true,
   write_to_langtrace_cloud = true,
   debug_log_to_console = false,
-  custom_remote_exporter = undefined
+  custom_remote_exporter = undefined,
+  instrumentModules = {}
 }: LangtraceInitOptions = {}) => {
   // Set up OpenTelemetry tracing
   const provider = new NodeTracerProvider()
@@ -72,6 +74,10 @@ export const init: LangTraceInit = ({
 
   provider.register()
 
+  if (instrumentModules?.openAI !== undefined) {
+    diag.info('Initializing OpenAI instrumentation')
+    openAIInstrumentation.manuallyInstrument(instrumentModules.openAI as typeof OpenAI, '1.0.0')
+  }
   // Register any automatic instrumentation and your custom OpenAI instrumentation
   registerInstrumentations({
     instrumentations: [

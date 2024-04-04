@@ -16,5 +16,11 @@
 
 import { SpanExporter } from '@opentelemetry/sdk-trace-base'
 
-export interface LangtraceInitOptions { api_key?: string, batch?: boolean, write_to_langtrace_cloud?: boolean, debug_log_to_console?: boolean, custom_remote_exporter?: SpanExporter }
+export interface LangtraceInitOptions {
+  // eslint-disable-next-line @typescript-eslint/member-delimiter-style
+  api_key?: string, batch?: boolean, write_to_langtrace_cloud?: boolean, debug_log_to_console?: boolean, custom_remote_exporter?: SpanExporter, instrumentModules?: {
+    openAI?: any
+
+  }
+}
 export type LangTraceInit = (options?: LangtraceInitOptions) => void

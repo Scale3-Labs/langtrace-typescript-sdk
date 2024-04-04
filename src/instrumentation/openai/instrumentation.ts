@@ -28,6 +28,53 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
     super('@langtrase/node-sdk', '1.0.0')
   }
 
+  public manuallyInstrument (openai: typeof OpenAI, version: string): void {
+    this._diag.debug('Manually instrumenting openai')
+
+    // // Old version of OpenAI API (v3.1.0)
+    // if ((module as any).OpenAIApi) {
+    //   this._wrap(
+    //     (module as any).OpenAIApi.prototype,
+    //     'createChatCompletion',
+    //     this.patchOpenAI('chat', 'v3')
+    //   )
+    //   this._wrap(
+    //     (module as any).OpenAIApi.prototype,
+    //     'createCompletion',
+    //     this.patchOpenAI('completion', 'v3')
+    //   )
+    // } else {
+    if (isWrapped(openai.Chat.Completions.prototype)) {
+      this._unwrap(openai.Chat.Completions.prototype, 'create')
+    } else if (isWrapped(openai.Images.prototype)) {
+      this._unwrap(openai.Images.prototype, 'generate')
+    } else if (isWrapped(openai.Embeddings.prototype)) {
+      this._unwrap(openai.Embeddings.prototype, 'create')
+    }
+
+    this._wrap(
+      openai.Chat.Completions.prototype,
+      'create',
+      (originalMethod: (...args: any[]) => any) =>
+        chatCompletionCreate(originalMethod, this.tracer, version)
+    )
+
+    this._wrap(
+      openai.Images.prototype,
+      'generate',
+      (originalMethod: (...args: any[]) => any) =>
+        imagesGenerate(originalMethod, this.tracer, version)
+    )
+
+    this._wrap(
+      openai.Embeddings.prototype,
+      'create',
+      (originalMethod: (...args: any[]) => any) =>
+        embeddingsCreate(originalMethod, this.tracer, version)
+    )
+    // }
+  }
+
   init (): Array<InstrumentationNodeModuleDefinition<typeof OpenAI>> {
     const module = new InstrumentationNodeModuleDefinition<typeof OpenAI>(
       'openai',
