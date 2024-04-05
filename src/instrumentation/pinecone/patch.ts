@@ -31,6 +31,7 @@ export function genericPatch (
     const api = APIS[method]
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const attributes: DatabaseSpanAttributes = {
+      'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': SERVICE_PROVIDERS.PINECONE,
       'langtrace.service.type': 'vectordb',
       'langtrace.service.version': version,

@@ -46,6 +46,7 @@ export function imagesGenerate (
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
 
     const attributes: LLMSpanAttributes = {
+      'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
@@ -102,6 +103,7 @@ export function chatCompletionCreate (
     }
 
     const attributes: LLMSpanAttributes = {
+      'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
@@ -192,8 +194,20 @@ export function chatCompletionCreate (
           const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT })
           span.setAttributes(attributes)
           const model = args[0].model
-          const promptContent = JSON.stringify(args[0].messages[0])
-          const promptTokens = calculatePromptTokens(promptContent, model as string)
+
+          // iterate over messages and calculate tokens
+          const promptContent: string = args[0].messages.map((message: any) => message?.content).join(' ')
+          let promptTokens = calculatePromptTokens(promptContent, model as string)
+
+          // calculate tokens for function prompts (args[0]?.functions)
+          if (args[0]?.functions !== undefined) {
+            // iterate over function prompts and calculate tokens
+            const functionPromptsNames: string[] = args[0].functions.map((func: any) => func?.name)
+            const functionPromptDescriptions: string[] = args[0].functions.map((func: any) => func?.description)
+            const functionPromptContent: string = functionPromptsNames.join(' ') + ' ' + functionPromptDescriptions.join(' ')
+            promptTokens += calculatePromptTokens(functionPromptContent, model as string)
+          }
+
           const resp = await originalMethod.apply(this, args)
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return handleStreamResponse(
@@ -224,7 +238,8 @@ async function * handleStreamResponse (
       if (model === '') {
         model = chunk.model
       }
-      const content = chunk.choices[0]?.delta?.content ?? ''
+      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+      const content = chunk.choices[0]?.delta?.content ? chunk.choices[0]?.delta?.content : chunk.choices[0]?.delta?.function_call?.arguments ? chunk.choices[0]?.delta?.function_call?.arguments : ''
       const tokenCount = estimateTokens(content as string)
       completionTokens += tokenCount
       result.push(content as string)
@@ -244,13 +259,9 @@ async function * handleStreamResponse (
         total_tokens: completionTokens + promptTokens,
         ...customAttributes
       }),
-      'llm.responses': functionCall
-        ? JSON.stringify([
-          { message: { role: 'assistant', function_call: result.join('') } }
-        ])
-        : JSON.stringify([
-          { message: { role: 'assistant', content: result.join('') } }
-        ])
+      'llm.responses': JSON.stringify([
+        { message: { role: 'assistant', content: result.join('') } }
+      ])
     })
     span.addEvent(Event.STREAM_END)
   } catch (error: any) {
@@ -278,6 +289,7 @@ export function embeddingsCreate (
     }
 
     const attributes: LLMSpanAttributes = {
+      'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,

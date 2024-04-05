@@ -38,6 +38,7 @@ export class LangTraceExporter implements SpanExporter {
   }
 
   async export (spans: ReadableSpan[], resultCallback: (result: ExportResult) => void): Promise<void> {
+    spans = spans.filter((span) => span.attributes['langtrace.sdk.name'] === '@langtrase/typescript-sdk')
     const data: Array<Partial<ReadableSpan>> = spans.map((span) => ({
       traceId: span.spanContext().traceId,
       spanId: span.spanContext().spanId,
