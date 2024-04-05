@@ -17,12 +17,17 @@
 import { APIS } from '@langtrace-constants/instrumentation/chroma'
 import { diag } from '@opentelemetry/api'
 import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
-import { Collection } from 'chromadb'
+import { ChromaClient, Collection } from 'chromadb'
 import { collectionPatch } from '@langtrace-instrumentation/chroma/patch'
 
 class ChromaInstrumentation extends InstrumentationBase<any> {
   constructor () {
     super('@langtrase/node-sdk', '1.0.0')
+  }
+
+  public manuallyInstrument (chroma: typeof ChromaClient, version: string): void {
+    diag.debug('Manually instrumenting ChromaDB')
+    this._patch(chroma, version)
   }
 
   init (): Array<InstrumentationModuleDefinition<typeof Collection>> {

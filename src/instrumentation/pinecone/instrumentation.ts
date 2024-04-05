@@ -25,6 +25,11 @@ class PineconeInstrumentation extends InstrumentationBase<any> {
     super('@langtrase/node-sdk', '1.0.0')
   }
 
+  public manuallyInstrument (pinecone: typeof Pinecone, version: string): void {
+    diag.debug('Manually instrumenting pinecone')
+    this._patch(pinecone, version)
+  }
+
   init (): Array<InstrumentationModuleDefinition<typeof Pinecone>> {
     const module = new InstrumentationNodeModuleDefinition<typeof Pinecone>(
       '@pinecone-database/pinecone',

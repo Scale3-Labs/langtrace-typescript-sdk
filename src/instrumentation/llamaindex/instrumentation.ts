@@ -29,6 +29,11 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
     super('@langtrase/node-sdk', '1.0.0')
   }
 
+  public manuallyInstrument (llamaIndex: typeof llamaindex, version: string): void {
+    diag.debug('Manually instrumenting llamaIndex')
+    this._patch(llamaIndex, version)
+  }
+
   init (): Array<InstrumentationModuleDefinition<typeof llamaindex>> {
     const module = new InstrumentationNodeModuleDefinition<any>(
       'llamaindex',

@@ -27,6 +27,9 @@ import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
 import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
+import { ChromaClient } from 'chromadb'
+import * as llamaindex from 'llamaindex'
+import { Pinecone } from '@pinecone-database/pinecone'
 
 export const init: LangTraceInit = ({
   api_key = undefined,
@@ -84,6 +87,26 @@ export const init: LangTraceInit = ({
   if (instrumentModules?.anthropic !== undefined) {
     diag.info('Initializing Anthropic instrumentation')
     anthropicInstrumentation.manuallyInstrument(instrumentModules.anthropic as typeof Anthropic, '1.0.0')
+  }
+
+  if (instrumentModules?.chroma !== undefined) {
+    diag.info('Initializing Chroma instrumentation')
+    chromaInstrumentation.manuallyInstrument(instrumentModules.chroma as typeof ChromaClient, '1.8.1')
+  }
+
+  if (instrumentModules?.llamaIndex !== undefined) {
+    diag.info('Initializing LlamaIndex instrumentation')
+    llamaIndexInstrumentation.manuallyInstrument(instrumentModules.llamaIndex as typeof llamaindex, '1.0.0')
+  }
+
+  if (instrumentModules?.pinecone !== undefined) {
+    diag.info('Initializing Pinecone instrumentation')
+    pineconeInstrumentation.manuallyInstrument(instrumentModules.pinecone as typeof Pinecone, '2.0.0')
+  }
+
+  if (instrumentModules !== undefined) {
+    diag.info('Manuall Instrumentation complete')
+    return
   }
   // Register any automatic instrumentation and your custom OpenAI instrumentation
   registerInstrumentations({

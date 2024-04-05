@@ -20,7 +20,9 @@ export interface LangtraceInitOptions {
   api_key?: string, batch?: boolean, write_to_langtrace_cloud?: boolean, debug_log_to_console?: boolean, custom_remote_exporter?: SpanExporter, instrumentModules?: {
     openAI?: any
     anthropic?: any
-
+    chroma?: any
+    pinecone?: any
+    llamaIndex?: any
   }
 }
 export type LangTraceInit = (options?: LangtraceInitOptions) => void
