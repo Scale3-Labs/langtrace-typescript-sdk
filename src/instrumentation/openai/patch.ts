@@ -246,13 +246,9 @@ async function * handleStreamResponse (
         total_tokens: completionTokens + promptTokens,
         ...customAttributes
       }),
-      'llm.responses': functionCall
-        ? JSON.stringify([
-          { message: { role: 'assistant', function_call: result.join('') } }
-        ])
-        : JSON.stringify([
-          { message: { role: 'assistant', content: result.join('') } }
-        ])
+      'llm.responses': JSON.stringify([
+        { message: { role: 'assistant', content: result.join('') } }
+      ])
     })
     span.addEvent(Event.STREAM_END)
   } catch (error: any) {
