@@ -15,16 +15,13 @@
  */
 
 import { LangTraceExporter } from '@langtrace-extensions/langtraceexporter/langtrace_exporter'
-import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
-import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
-import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex/instrumentation'
-import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
-import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api'
 import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
+import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
+import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 
 export const init: LangTraceInit = ({
   api_key = undefined,
@@ -39,12 +36,15 @@ export const init: LangTraceInit = ({
   const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
+
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
   const batchProcessorConsole = new BatchSpanProcessor(consoleExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
 
+  const logLevel = debug_log_to_console ? DiagLogLevel.INFO : DiagLogLevel.NONE
+
   if (debug_log_to_console) {
-    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG)
+    diag.setLogger(new DiagConsoleLogger(), logLevel)
   }
 
   if (write_to_langtrace_cloud && !batch && custom_remote_exporter === undefined) {
@@ -71,16 +71,12 @@ export const init: LangTraceInit = ({
   }
 
   provider.register()
-
   // Register any automatic instrumentation and your custom OpenAI instrumentation
   registerInstrumentations({
+    tracerProvider: provider,
     instrumentations: [
-      pineconeInstrumentation,
-      chromaInstrumentation,
-      llamaIndexInstrumentation,
       openAIInstrumentation,
       anthropicInstrumentation
-    ],
-    tracerProvider: provider
+    ]
   })
 }
