@@ -20,22 +20,21 @@ import {
   InstrumentationNodeModuleDefinition,
   isWrapped
 } from '@opentelemetry/instrumentation'
-import type { OpenAI } from 'openai'
 import { chatCompletionCreate, embeddingsCreate, imagesGenerate } from '@langtrace-instrumentation/openai/patch'
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
-class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
+class OpenAIInstrumentation extends InstrumentationBase<any> {
   constructor () {
     super(name, version)
   }
 
-  public manualPatch (openai: typeof OpenAI): void {
+  public manualPatch (openai: any): void {
     diag.debug('Manually patching openai')
     this._patch(openai)
   }
 
-  init (): Array<InstrumentationNodeModuleDefinition<typeof OpenAI>> {
-    const module = new InstrumentationNodeModuleDefinition<typeof OpenAI>(
+  init (): Array<InstrumentationNodeModuleDefinition<any>> {
+    const module = new InstrumentationNodeModuleDefinition<any>(
       'openai',
       ['>=4.26.1 <6.0.0'],
       (moduleExports, moduleVersion) => {
@@ -54,7 +53,7 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
     return [module]
   }
 
-  private _patch (openai: typeof OpenAI, moduleVersion?: string): void {
+  private _patch (openai: any, moduleVersion?: string): void {
     if (isWrapped(openai.Chat.Completions.prototype)) {
       this._unwrap(openai.Chat.Completions.prototype, 'create')
     } else if (isWrapped(openai.Images.prototype)) {
@@ -85,7 +84,7 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
     )
   }
 
-  private _unpatch (openai: typeof OpenAI): void {
+  private _unpatch (openai: any): void {
     this._unwrap(openai.Chat.Completions.prototype, 'create')
     this._unwrap(openai.Images.prototype, 'generate')
     this._unwrap(openai.Embeddings.prototype, 'create')

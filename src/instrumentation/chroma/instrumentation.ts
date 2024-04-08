@@ -17,22 +17,22 @@
 import { APIS } from '@langtrace-constants/instrumentation/chroma'
 import { diag } from '@opentelemetry/api'
 import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
-import { ChromaClient, Collection } from 'chromadb'
 import { collectionPatch } from '@langtrace-instrumentation/chroma/patch'
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
-class ChromaInstrumentation extends InstrumentationBase<typeof ChromaClient> {
+
+class ChromaInstrumentation extends InstrumentationBase<any> {
   constructor () {
     super(name, version)
   }
 
-  public manualPatch (chroma: typeof ChromaClient): void {
+  public manualPatch (chroma: any): void {
     diag.debug('Manually instrumenting ChromaDB')
     this._patch(chroma)
   }
 
-  init (): Array<InstrumentationModuleDefinition<typeof Collection>> {
-    const module = new InstrumentationNodeModuleDefinition<typeof Collection>(
+  init (): Array<InstrumentationModuleDefinition<any>> {
+    const module = new InstrumentationNodeModuleDefinition<any>(
       'chromadb',
       ['>=1.8.1'],
       (moduleExports, moduleVersion) => {
