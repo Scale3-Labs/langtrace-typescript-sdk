@@ -25,18 +25,20 @@ import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
+import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_exporter'
 
 export const init: LangTraceInit = ({
   api_key = undefined,
   batch = true,
   write_to_langtrace_cloud = true,
   debug_log_to_console = false,
-  custom_remote_exporter = undefined
+  custom_remote_exporter = undefined,
+  api_host = LANGTRACE_REMOTE_URL
 }: LangtraceInitOptions = {}) => {
   // Set up OpenTelemetry tracing
   const provider = new NodeTracerProvider()
 
-  const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud)
+  const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud, api_host)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
