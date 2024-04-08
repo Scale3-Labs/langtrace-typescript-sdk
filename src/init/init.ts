@@ -25,11 +25,6 @@ import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
-import OpenAI from 'openai'
-import Anthropic from '@anthropic-ai/sdk'
-import { ChromaClient } from 'chromadb'
-import * as llamaindex from 'llamaindex'
-import { Pinecone } from '@pinecone-database/pinecone'
 
 export const init: LangTraceInit = ({
   api_key = undefined,
@@ -37,10 +32,10 @@ export const init: LangTraceInit = ({
   write_to_langtrace_cloud = true,
   debug_log_to_console = false,
   custom_remote_exporter = undefined,
-  instrumentModules = {}
+  instrumentations = {}
 }: LangtraceInitOptions = {}) => {
   // Set up OpenTelemetry tracing
-  const provider = new NodeTracerProvider()
+  const provider = new NodeTracerProvider({})
 
   const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud)
   const consoleExporter = new ConsoleSpanExporter()
@@ -50,7 +45,7 @@ export const init: LangTraceInit = ({
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
 
   if (debug_log_to_console) {
-    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG)
+    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
   }
 
   if (write_to_langtrace_cloud && !batch && custom_remote_exporter === undefined) {
@@ -77,46 +72,30 @@ export const init: LangTraceInit = ({
   }
 
   provider.register()
-
-  if (instrumentModules?.openAI !== undefined) {
-    diag.info('Initializing OpenAI instrumentation')
-
-    openAIInstrumentation.manuallyInstrument(instrumentModules.openAI as typeof OpenAI, '1.0.0')
-  }
-
-  if (instrumentModules?.anthropic !== undefined) {
-    diag.info('Initializing Anthropic instrumentation')
-    anthropicInstrumentation.manuallyInstrument(instrumentModules.anthropic as typeof Anthropic, '1.0.0')
-  }
-
-  if (instrumentModules?.chroma !== undefined) {
-    diag.info('Initializing Chroma instrumentation')
-    chromaInstrumentation.manuallyInstrument(instrumentModules.chroma as typeof ChromaClient, '1.8.1')
-  }
-
-  if (instrumentModules?.llamaIndex !== undefined) {
-    diag.info('Initializing LlamaIndex instrumentation')
-    llamaIndexInstrumentation.manuallyInstrument(instrumentModules.llamaIndex as typeof llamaindex, '1.0.0')
-  }
-
-  if (instrumentModules?.pinecone !== undefined) {
-    diag.info('Initializing Pinecone instrumentation')
-    pineconeInstrumentation.manuallyInstrument(instrumentModules.pinecone as typeof Pinecone, '2.0.0')
-  }
-
-  if (instrumentModules !== undefined) {
-    diag.info('Manuall Instrumentation complete')
+  if (instrumentations === undefined) {
+    registerInstrumentations({
+      instrumentations: [
+        pineconeInstrumentation,
+        chromaInstrumentation,
+        llamaIndexInstrumentation,
+        openAIInstrumentation,
+        anthropicInstrumentation
+      ],
+      tracerProvider: provider
+    })
     return
-  }
-  // Register any automatic instrumentation and your custom OpenAI instrumentation
-  registerInstrumentations({
-    instrumentations: [
-      pineconeInstrumentation,
+  } else {
+    const instrumentationChain = pineconeInstrumentation.SetInstrumentations(
       chromaInstrumentation,
       llamaIndexInstrumentation,
       openAIInstrumentation,
       anthropicInstrumentation
-    ],
-    tracerProvider: provider
-  })
+    )
+
+    for (const key in instrumentations) {
+      instrumentationChain.manualPatch(instrumentations[key as keyof typeof instrumentations], key)
+    }
+  }
+
+  registerInstrumentations({ tracerProvider: provider })
 }

@@ -16,21 +16,20 @@
 
 import { diag } from '@opentelemetry/api'
 import {
-  InstrumentationBase,
   InstrumentationNodeModuleDefinition,
   isWrapped
 } from '@opentelemetry/instrumentation'
 import type { OpenAI } from 'openai'
 import { chatCompletionCreate, embeddingsCreate, imagesGenerate } from '@langtrace-instrumentation/openai/patch'
+import { LangtraceInstrumentationBase, Patch } from '@langtrace-instrumentation/index'
 
-class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
-  constructor () {
-    super('@langtrase/node-sdk', '1.0.0')
-  }
-
-  public manuallyInstrument (openai: typeof OpenAI, version: string): void {
-    this._diag.debug('Manually instrumenting openai')
-    this._patch(openai, version)
+class OpenAIInstrumentation extends LangtraceInstrumentationBase<typeof OpenAI> implements Patch {
+  public manualPatch (openai: typeof OpenAI, moduleName: string): void {
+    if (moduleName !== 'openai') {
+      return this.nextManualPatcher?.manualPatch(openai, moduleName)
+    }
+    diag.debug('Manually patching openai')
+    this._patch(openai)
   }
 
   init (): Array<InstrumentationNodeModuleDefinition<typeof OpenAI>> {
@@ -53,7 +52,7 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
     return [module]
   }
 
-  private _patch (openai: typeof OpenAI, version: string): void {
+  private _patch (openai: typeof OpenAI, moduleVersion?: string): void {
     if (isWrapped(openai.Chat.Completions.prototype)) {
       this._unwrap(openai.Chat.Completions.prototype, 'create')
     } else if (isWrapped(openai.Images.prototype)) {
@@ -66,21 +65,21 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
       openai.Chat.Completions.prototype,
       'create',
       (originalMethod: (...args: any[]) => any) =>
-        chatCompletionCreate(originalMethod, this.tracer, version)
+        chatCompletionCreate(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion)
     )
 
     this._wrap(
       openai.Images.prototype,
       'generate',
       (originalMethod: (...args: any[]) => any) =>
-        imagesGenerate(originalMethod, this.tracer, version)
+        imagesGenerate(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion)
     )
 
     this._wrap(
       openai.Embeddings.prototype,
       'create',
       (originalMethod: (...args: any[]) => any) =>
-        embeddingsCreate(originalMethod, this.tracer, version)
+        embeddingsCreate(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion)
     )
   }
 

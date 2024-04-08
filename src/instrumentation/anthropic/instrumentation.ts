@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-import type Anthropic from '@anthropic-ai/sdk'
+import Anthropic from '@anthropic-ai/sdk'
 import { diag } from '@opentelemetry/api'
-import {
-  InstrumentationBase,
-  InstrumentationNodeModuleDefinition
-} from '@opentelemetry/instrumentation'
+import { InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation'
 import { messagesCreate } from '@langtrace-instrumentation/anthropic/patch'
+import { LangtraceInstrumentationBase, Patch } from '@langtrace-instrumentation/index'
 
-class AnthropicInstrumentation extends InstrumentationBase<typeof Anthropic> {
-  constructor () {
-    super('@langtrase/node-sdk', '1.0.0')
-  }
-
-  public manuallyInstrument (anthropic: typeof Anthropic, version: string): void {
+class AnthropicInstrumentation extends LangtraceInstrumentationBase<typeof Anthropic> implements Patch {
+  public manualPatch (anthropic: typeof Anthropic, moduleName: string): void {
+    if (moduleName !== 'anthropic') {
+      return this.nextManualPatcher?.manualPatch(anthropic, moduleName)
+    }
     this._diag.debug('Manually instrumenting anthropic')
-    this._patch(anthropic, version)
+    this._patch(anthropic)
   }
 
   init (): Array<InstrumentationNodeModuleDefinition<typeof Anthropic>> {
@@ -51,12 +48,12 @@ class AnthropicInstrumentation extends InstrumentationBase<typeof Anthropic> {
     return [module]
   }
 
-  private _patch (anthropic: typeof Anthropic, version: string): void {
+  private _patch (anthropic: typeof Anthropic, moduleVersion?: string): void {
     this._wrap(
       anthropic.Messages.prototype,
       'create',
       (originalMethod: (...args: any[]) => any) =>
-        messagesCreate(originalMethod, this.tracer, version)
+        messagesCreate(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion)
     )
   }
 

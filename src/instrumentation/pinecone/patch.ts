@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /*
  * Copyright (c) 2024 Scale3 Labs
  *
@@ -24,9 +25,11 @@ export function genericPatch (
   originalMethod: (...args: any[]) => any,
   method: string,
   tracer: Tracer,
-  version: string
+  langtraceVersion: string,
+  version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]): Promise<any> {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const originalContext = this
     const api = APIS[method]
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
@@ -34,8 +37,8 @@ export function genericPatch (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': SERVICE_PROVIDERS.PINECONE,
       'langtrace.service.type': 'vectordb',
-      'langtrace.service.version': version,
-      'langtrace.version': '1.0.0',
+      'langtrace.service.version': version ?? '',
+      'langtrace.version': langtraceVersion,
       'db.system': 'pinecone',
       'db.operation': api.OPERATION,
       ...customAttributes
@@ -66,6 +69,7 @@ export function genericPatch (
 
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return response
         } catch (error: any) {
           // If an error occurs, record the exception and end the span

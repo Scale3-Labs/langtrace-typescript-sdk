@@ -16,18 +16,18 @@
 
 import { APIS } from '@langtrace-constants/instrumentation/chroma'
 import { diag } from '@opentelemetry/api'
-import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
+import { InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
 import { ChromaClient, Collection } from 'chromadb'
 import { collectionPatch } from '@langtrace-instrumentation/chroma/patch'
+import { LangtraceInstrumentationBase, Patch } from '@langtrace-instrumentation/index'
 
-class ChromaInstrumentation extends InstrumentationBase<any> {
-  constructor () {
-    super('@langtrase/node-sdk', '1.0.0')
-  }
-
-  public manuallyInstrument (chroma: typeof ChromaClient, version: string): void {
+class ChromaInstrumentation extends LangtraceInstrumentationBase<any> implements Patch {
+  public manualPatch (chroma: typeof ChromaClient, moduleName: string): void {
+    if (moduleName !== 'chromadb') {
+      return this.nextManualPatcher?.manualPatch(chroma, moduleName)
+    }
     diag.debug('Manually instrumenting ChromaDB')
-    this._patch(chroma, version)
+    this._patch(chroma)
   }
 
   init (): Array<InstrumentationModuleDefinition<typeof Collection>> {
@@ -50,7 +50,7 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
     return [module]
   }
 
-  private _patch (chromadb: any, version: string): void {
+  private _patch (chromadb: any, moduleVersion?: string): void {
     if (isWrapped(chromadb.Collection.prototype)) {
       Object.keys(APIS).forEach((api) => {
         this._unwrap(chromadb.Collection.prototype, APIS[api].OPERATION)
@@ -62,7 +62,7 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
         chromadb.Collection.prototype,
         APIS[api].OPERATION,
         (originalMethod: (...args: any[]) => any) =>
-          collectionPatch(originalMethod, api, this.tracer, version)
+          collectionPatch(originalMethod, api, this.tracer, this.instrumentationVersion, moduleVersion)
       )
     })
   }

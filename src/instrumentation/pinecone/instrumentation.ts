@@ -16,18 +16,16 @@
 
 import { APIS } from '@langtrace-constants/instrumentation/chroma'
 import { diag } from '@opentelemetry/api'
-import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
-import { Pinecone } from '@pinecone-database/pinecone'
+import { InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
 import { genericPatch } from '@langtrace-instrumentation/pinecone/patch'
+import { Pinecone } from '@pinecone-database/pinecone'
+import { LangtraceInstrumentationBase, Patch } from '@langtrace-instrumentation/index'
 
-class PineconeInstrumentation extends InstrumentationBase<any> {
-  constructor () {
-    super('@langtrase/node-sdk', '1.0.0')
-  }
-
-  public manuallyInstrument (pinecone: typeof Pinecone, version: string): void {
-    diag.debug('Manually instrumenting pinecone')
-    this._patch(pinecone, version)
+class PineconeInstrumentation extends LangtraceInstrumentationBase<typeof Pinecone> implements Patch {
+  public manualPatch (pinecone: typeof Pinecone, moduleName: string): void {
+    if (moduleName !== 'pinecone') {
+      return this.nextManualPatcher?.manualPatch(pinecone, moduleName)
+    }
   }
 
   init (): Array<InstrumentationModuleDefinition<typeof Pinecone>> {
@@ -50,7 +48,7 @@ class PineconeInstrumentation extends InstrumentationBase<any> {
     return [module]
   }
 
-  private _patch (pinecone: any, version: string): void {
+  private _patch (pinecone: any, moduleVersion?: string): void {
     if (isWrapped(pinecone.Index.prototype)) {
       Object.keys(APIS).forEach((api) => {
         this._unwrap(pinecone.Index.prototype, APIS[api].OPERATION)
@@ -62,7 +60,7 @@ class PineconeInstrumentation extends InstrumentationBase<any> {
         pinecone.Index.prototype,
         APIS[api].OPERATION,
         (originalMethod: (...args: any[]) => any) =>
-          genericPatch(originalMethod, api, this.tracer, version)
+          genericPatch(originalMethod, api, this.tracer, this.instrumentationVersion, moduleVersion)
       )
     })
   }

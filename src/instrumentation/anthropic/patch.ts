@@ -31,7 +31,8 @@ import {
 export function messagesCreate (
   originalMethod: (...args: any[]) => any,
   tracer: Tracer,
-  version: string
+  langtraceVersion: string,
+  version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this
@@ -53,7 +54,7 @@ export function messagesCreate (
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
-      'langtrace.version': '1.0.0',
+      'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
       'llm.api': APIS.MESSAGES_CREATE.ENDPOINT,
       'llm.model': args[0]?.model,
