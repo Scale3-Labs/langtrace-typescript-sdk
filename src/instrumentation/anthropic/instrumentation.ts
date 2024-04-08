@@ -16,15 +16,17 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import { diag } from '@opentelemetry/api'
-import { InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation'
+import { InstrumentationBase, InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation'
 import { messagesCreate } from '@langtrace-instrumentation/anthropic/patch'
-import { LangtraceInstrumentationBase, Patch } from '@langtrace-instrumentation/index'
+// eslint-disable-next-line no-restricted-imports
+import { version, name } from '../../package.json'
 
-class AnthropicInstrumentation extends LangtraceInstrumentationBase<typeof Anthropic> implements Patch {
-  public manualPatch (anthropic: typeof Anthropic, moduleName: string): void {
-    if (moduleName !== 'anthropic') {
-      return this.nextManualPatcher?.manualPatch(anthropic, moduleName)
-    }
+class AnthropicInstrumentation extends InstrumentationBase<typeof Anthropic> {
+  constructor () {
+    super(name, version)
+  }
+
+  public manualPatch (anthropic: typeof Anthropic): void {
     this._diag.debug('Manually instrumenting anthropic')
     this._patch(anthropic)
   }

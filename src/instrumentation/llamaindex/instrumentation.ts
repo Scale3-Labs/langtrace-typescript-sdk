@@ -17,18 +17,21 @@
 import { genericPatch } from '@langtrace-instrumentation/llamaindex/patch'
 import { diag } from '@opentelemetry/api'
 import {
+  InstrumentationBase,
   InstrumentationModuleDefinition,
   InstrumentationNodeModuleDefinition,
   isWrapped
 } from '@opentelemetry/instrumentation'
 import * as llamaindex from 'llamaindex'
-import { LangtraceInstrumentationBase, Patch } from '@langtrace-instrumentation/index'
+// eslint-disable-next-line no-restricted-imports
+import { version, name } from '../../package.json'
 
-class LlamaIndexInstrumentation extends LangtraceInstrumentationBase<typeof llamaindex> implements Patch {
-  public manualPatch (llamaIndex: typeof llamaindex, moduleName: string): void {
-    if (moduleName !== 'llamaindex') {
-      return this.nextManualPatcher?.manualPatch(llamaIndex, moduleName)
-    }
+class LlamaIndexInstrumentation extends InstrumentationBase<typeof llamaindex> {
+  constructor () {
+    super(name, version)
+  }
+
+  public manualPatch (llamaIndex: typeof llamaindex): void {
     diag.debug('Manually patching llamaIndex')
     this._patch(llamaIndex)
   }

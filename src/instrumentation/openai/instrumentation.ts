@@ -16,18 +16,20 @@
 
 import { diag } from '@opentelemetry/api'
 import {
+  InstrumentationBase,
   InstrumentationNodeModuleDefinition,
   isWrapped
 } from '@opentelemetry/instrumentation'
 import type { OpenAI } from 'openai'
 import { chatCompletionCreate, embeddingsCreate, imagesGenerate } from '@langtrace-instrumentation/openai/patch'
-import { LangtraceInstrumentationBase, Patch } from '@langtrace-instrumentation/index'
+// eslint-disable-next-line no-restricted-imports
+import { version, name } from '../../package.json'
+class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
+  constructor () {
+    super(name, version)
+  }
 
-class OpenAIInstrumentation extends LangtraceInstrumentationBase<typeof OpenAI> implements Patch {
-  public manualPatch (openai: typeof OpenAI, moduleName: string): void {
-    if (moduleName !== 'openai') {
-      return this.nextManualPatcher?.manualPatch(openai, moduleName)
-    }
+  public manualPatch (openai: typeof OpenAI): void {
     diag.debug('Manually patching openai')
     this._patch(openai)
   }

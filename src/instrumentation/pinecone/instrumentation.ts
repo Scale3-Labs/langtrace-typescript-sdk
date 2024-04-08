@@ -16,16 +16,19 @@
 
 import { APIS } from '@langtrace-constants/instrumentation/chroma'
 import { diag } from '@opentelemetry/api'
-import { InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
+import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
 import { genericPatch } from '@langtrace-instrumentation/pinecone/patch'
 import { Pinecone } from '@pinecone-database/pinecone'
-import { LangtraceInstrumentationBase, Patch } from '@langtrace-instrumentation/index'
+// eslint-disable-next-line no-restricted-imports
+import { version, name } from '../../../package.json'
+class PineconeInstrumentation extends InstrumentationBase<typeof Pinecone> {
+  constructor () {
+    super(name, version)
+  }
 
-class PineconeInstrumentation extends LangtraceInstrumentationBase<typeof Pinecone> implements Patch {
-  public manualPatch (pinecone: typeof Pinecone, moduleName: string): void {
-    if (moduleName !== 'pinecone') {
-      return this.nextManualPatcher?.manualPatch(pinecone, moduleName)
-    }
+  public manualPatch (pinecone: typeof Pinecone): void {
+    diag.debug('Manually instrumenting pinecone')
+    this._patch(pinecone)
   }
 
   init (): Array<InstrumentationModuleDefinition<typeof Pinecone>> {

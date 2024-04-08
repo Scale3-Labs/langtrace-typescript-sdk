@@ -16,16 +16,17 @@
 
 import { APIS } from '@langtrace-constants/instrumentation/chroma'
 import { diag } from '@opentelemetry/api'
-import { InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
+import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
 import { ChromaClient, Collection } from 'chromadb'
 import { collectionPatch } from '@langtrace-instrumentation/chroma/patch'
-import { LangtraceInstrumentationBase, Patch } from '@langtrace-instrumentation/index'
+// eslint-disable-next-line no-restricted-imports
+import { version, name } from '../../package.json'
+class ChromaInstrumentation extends InstrumentationBase<typeof ChromaClient> {
+  constructor () {
+    super(name, version)
+  }
 
-class ChromaInstrumentation extends LangtraceInstrumentationBase<any> implements Patch {
-  public manualPatch (chroma: typeof ChromaClient, moduleName: string): void {
-    if (moduleName !== 'chromadb') {
-      return this.nextManualPatcher?.manualPatch(chroma, moduleName)
-    }
+  public manualPatch (chroma: typeof ChromaClient): void {
     diag.debug('Manually instrumenting ChromaDB')
     this._patch(chroma)
   }

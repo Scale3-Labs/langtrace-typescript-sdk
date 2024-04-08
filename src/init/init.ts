@@ -84,18 +84,25 @@ export const init: LangTraceInit = ({
       tracerProvider: provider
     })
     return
-  } else {
-    const instrumentationChain = pineconeInstrumentation.SetInstrumentations(
-      chromaInstrumentation,
-      llamaIndexInstrumentation,
-      openAIInstrumentation,
-      anthropicInstrumentation
-    )
-
-    for (const key in instrumentations) {
-      instrumentationChain.manualPatch(instrumentations[key as keyof typeof instrumentations], key)
-    }
+  }
+  if (instrumentations?.openai !== undefined) {
+    openAIInstrumentation.manualPatch(instrumentations.openai)
   }
 
+  if (instrumentations?.anthropic !== undefined) {
+    anthropicInstrumentation.manualPatch(instrumentations.anthropic)
+  }
+
+  if (instrumentations?.chromadb !== undefined) {
+    chromaInstrumentation.manualPatch(instrumentations.chromadb)
+  }
+
+  if (instrumentations?.llamaindex !== undefined) {
+    llamaIndexInstrumentation.manualPatch(instrumentations.llamaindex)
+  }
+
+  if (instrumentations?.pinecone !== undefined) {
+    pineconeInstrumentation.manualPatch(instrumentations.pinecone)
+  }
   registerInstrumentations({ tracerProvider: provider })
 }
