@@ -53,7 +53,7 @@ export function messagesCreate (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
-      'langtrace.service.version': version,
+      'langtrace.service.version': version ?? '',
       'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
       'llm.api': APIS.MESSAGES_CREATE.ENDPOINT,
