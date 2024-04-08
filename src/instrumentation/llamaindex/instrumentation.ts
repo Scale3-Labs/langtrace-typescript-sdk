@@ -24,7 +24,7 @@ import {
 } from '@opentelemetry/instrumentation'
 import * as llamaindex from 'llamaindex'
 // eslint-disable-next-line no-restricted-imports
-import { version, name } from '../../package.json'
+import { version, name } from '../../../package.json'
 
 class LlamaIndexInstrumentation extends InstrumentationBase<typeof llamaindex> {
   constructor () {

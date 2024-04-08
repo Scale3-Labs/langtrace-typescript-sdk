@@ -19,7 +19,7 @@ import { diag } from '@opentelemetry/api'
 import { InstrumentationBase, InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation'
 import { messagesCreate } from '@langtrace-instrumentation/anthropic/patch'
 // eslint-disable-next-line no-restricted-imports
-import { version, name } from '../../package.json'
+import { version, name } from '../../../package.json'
 
 class AnthropicInstrumentation extends InstrumentationBase<typeof Anthropic> {
   constructor () {

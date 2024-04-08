@@ -23,7 +23,7 @@ import {
 import type { OpenAI } from 'openai'
 import { chatCompletionCreate, embeddingsCreate, imagesGenerate } from '@langtrace-instrumentation/openai/patch'
 // eslint-disable-next-line no-restricted-imports
-import { version, name } from '../../package.json'
+import { version, name } from '../../../package.json'
 class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
   constructor () {
     super(name, version)

@@ -20,7 +20,7 @@ import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNo
 import { ChromaClient, Collection } from 'chromadb'
 import { collectionPatch } from '@langtrace-instrumentation/chroma/patch'
 // eslint-disable-next-line no-restricted-imports
-import { version, name } from '../../package.json'
+import { version, name } from '../../../package.json'
 class ChromaInstrumentation extends InstrumentationBase<typeof ChromaClient> {
   constructor () {
     super(name, version)
