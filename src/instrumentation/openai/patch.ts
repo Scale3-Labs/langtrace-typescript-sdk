@@ -99,6 +99,8 @@ export function chatCompletionCreate (
     let serviceProvider = SERVICE_PROVIDERS.OPENAI
     if (originalContext?._client?.baseURL?.includes('azure') === true) {
       serviceProvider = SERVICE_PROVIDERS.AZURE
+    } else if (originalContext?._client?.baseURL?.includes('perplexity') === true) {
+      serviceProvider = SERVICE_PROVIDERS.PPLX
     }
 
     const attributes: LLMSpanAttributes = {
