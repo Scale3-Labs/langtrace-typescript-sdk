@@ -17,16 +17,22 @@
 import { APIS } from '@langtrace-constants/instrumentation/chroma'
 import { diag } from '@opentelemetry/api'
 import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
-import { Collection } from 'chromadb'
 import { collectionPatch } from '@langtrace-instrumentation/chroma/patch'
+// eslint-disable-next-line no-restricted-imports
+import { version, name } from '../../../package.json'
 
 class ChromaInstrumentation extends InstrumentationBase<any> {
   constructor () {
-    super('@langtrase/node-sdk', '1.0.0')
+    super(name, version)
   }
 
-  init (): Array<InstrumentationModuleDefinition<typeof Collection>> {
-    const module = new InstrumentationNodeModuleDefinition<typeof Collection>(
+  public manualPatch (chroma: any): void {
+    diag.debug('Manually instrumenting ChromaDB')
+    this._patch(chroma)
+  }
+
+  init (): Array<InstrumentationModuleDefinition<any>> {
+    const module = new InstrumentationNodeModuleDefinition<any>(
       'chromadb',
       ['>=1.8.1'],
       (moduleExports, moduleVersion) => {
@@ -45,7 +51,7 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
     return [module]
   }
 
-  private _patch (chromadb: any, version: string): void {
+  private _patch (chromadb: any, moduleVersion?: string): void {
     if (isWrapped(chromadb.Collection.prototype)) {
       Object.keys(APIS).forEach((api) => {
         this._unwrap(chromadb.Collection.prototype, APIS[api].OPERATION)
@@ -57,7 +63,7 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
         chromadb.Collection.prototype,
         APIS[api].OPERATION,
         (originalMethod: (...args: any[]) => any) =>
-          collectionPatch(originalMethod, api, this.tracer, version)
+          collectionPatch(originalMethod, api, this.tracer, this.instrumentationVersion, moduleVersion)
       )
     })
   }

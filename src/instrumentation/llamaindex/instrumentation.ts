@@ -22,26 +22,33 @@ import {
   InstrumentationNodeModuleDefinition,
   isWrapped
 } from '@opentelemetry/instrumentation'
-import * as llamaindex from 'llamaindex'
+// eslint-disable-next-line no-restricted-imports
+import { version, name } from '../../../package.json'
 
 class LlamaIndexInstrumentation extends InstrumentationBase<any> {
   constructor () {
-    super('@langtrase/node-sdk', '1.0.0')
+    super(name, version)
   }
 
-  init (): Array<InstrumentationModuleDefinition<typeof llamaindex>> {
+  public manualPatch (llamaIndex: any): void {
+    diag.debug('Manually patching llamaIndex')
+    this._patch(llamaIndex)
+  }
+
+  init (): Array<InstrumentationModuleDefinition<any>> {
     const module = new InstrumentationNodeModuleDefinition<any>(
       'llamaindex',
       ['>=0.1.10'],
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching LlamaIndex SDK version ${moduleVersion}`)
-        this._patch(moduleExports as typeof llamaindex, moduleVersion as string)
+        this._patch(moduleExports, moduleVersion as string)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return moduleExports
       },
       (moduleExports, moduleVersion) => {
         diag.debug(`Unpatching LlamaIndex SDK version ${moduleVersion}`)
         if (moduleExports !== undefined) {
-          this._unpatch(moduleExports as typeof llamaindex)
+          this._unpatch(moduleExports)
         }
       }
     )
@@ -49,11 +56,11 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
     return [module]
   }
 
-  private _patch (llama: typeof llamaindex, version: string): void {
+  private _patch (llama: any, moduleVersion?: string): void {
     // Note: Instrumenting only the core concepts of LlamaIndex SDK
     // https://github.com/run-llama/LlamaIndexTS?tab=readme-ov-file
     for (const key in llama) {
-      const cls = (llama as any)[key]
+      const cls = (llama)[key]
       if (cls.prototype !== undefined) {
         if (cls.prototype.query !== undefined) {
           if (isWrapped(cls.prototype)) {
@@ -68,7 +75,8 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
                 `llamaindex.${key}.query`,
                 'query',
                 this.tracer,
-                version
+                this.instrumentationVersion,
+                moduleVersion
               )
           )
         }
@@ -85,7 +93,8 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
                 `llamaindex.${key}.retrieve`,
                 'retrieve_data',
                 this.tracer,
-                version
+                this.instrumentationVersion,
+                moduleVersion
               )
           )
         }
@@ -102,7 +111,8 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
                 `llamaindex.${key}.chat`,
                 'chat',
                 this.tracer,
-                version
+                this.instrumentationVersion,
+                moduleVersion
               )
           )
         }
@@ -119,7 +129,8 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
                 `llamaindex.${key}.call`,
                 'prompt',
                 this.tracer,
-                version
+                this.instrumentationVersion,
+                moduleVersion
               )
           )
         }
@@ -136,7 +147,8 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
                 `llamaindex.${key}.extract`,
                 'extract_data',
                 this.tracer,
-                version
+                this.instrumentationVersion,
+                moduleVersion
               )
           )
         }
@@ -153,7 +165,8 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
                 `llamaindex.${key}.loadData`,
                 'load_data',
                 this.tracer,
-                version
+                this.instrumentationVersion,
+                moduleVersion
               )
           )
         }
@@ -161,9 +174,9 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
     }
   }
 
-  private _unpatch (llama: typeof llamaindex): void {
+  private _unpatch (llama: any): void {
     for (const key in llama) {
-      const cls = (llama as any)[key]
+      const cls = (llama)[key]
       if (cls.prototype !== undefined) {
         if (cls.prototype.query !== undefined) {
           if (isWrapped(cls.prototype)) {

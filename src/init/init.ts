@@ -31,10 +31,11 @@ export const init: LangTraceInit = ({
   batch = true,
   write_to_langtrace_cloud = true,
   debug_log_to_console = false,
-  custom_remote_exporter = undefined
+  custom_remote_exporter = undefined,
+  instrumentations = {}
 }: LangtraceInitOptions = {}) => {
   // Set up OpenTelemetry tracing
-  const provider = new NodeTracerProvider()
+  const provider = new NodeTracerProvider({})
 
   const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud)
   const consoleExporter = new ConsoleSpanExporter()
@@ -44,7 +45,7 @@ export const init: LangTraceInit = ({
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
 
   if (debug_log_to_console) {
-    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG)
+    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
   }
 
   if (write_to_langtrace_cloud && !batch && custom_remote_exporter === undefined) {
@@ -71,16 +72,37 @@ export const init: LangTraceInit = ({
   }
 
   provider.register()
+  if (instrumentations === undefined) {
+    registerInstrumentations({
+      instrumentations: [
+        pineconeInstrumentation,
+        chromaInstrumentation,
+        llamaIndexInstrumentation,
+        openAIInstrumentation,
+        anthropicInstrumentation
+      ],
+      tracerProvider: provider
+    })
+    return
+  }
+  if (instrumentations?.openai !== undefined) {
+    openAIInstrumentation.manualPatch(instrumentations.openai)
+  }
 
-  // Register any automatic instrumentation and your custom OpenAI instrumentation
-  registerInstrumentations({
-    instrumentations: [
-      pineconeInstrumentation,
-      chromaInstrumentation,
-      llamaIndexInstrumentation,
-      openAIInstrumentation,
-      anthropicInstrumentation
-    ],
-    tracerProvider: provider
-  })
+  if (instrumentations?.anthropic !== undefined) {
+    anthropicInstrumentation.manualPatch(instrumentations.anthropic)
+  }
+
+  if (instrumentations?.chromadb !== undefined) {
+    chromaInstrumentation.manualPatch(instrumentations.chromadb)
+  }
+
+  if (instrumentations?.llamaindex !== undefined) {
+    llamaIndexInstrumentation.manualPatch(instrumentations.llamaindex)
+  }
+
+  if (instrumentations?.pinecone !== undefined) {
+    pineconeInstrumentation.manualPatch(instrumentations.pinecone)
+  }
+  registerInstrumentations({ tracerProvider: provider })
 }
