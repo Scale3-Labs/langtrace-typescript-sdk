@@ -18,7 +18,7 @@
 import { APIS } from '@langtrace-constants/instrumentation/pinecone'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
 import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
-import { Tracer, context, trace, Span, SpanKind, SpanStatusCode, Exception } from '@opentelemetry/api'
+import { Tracer, context, trace, SpanKind, SpanStatusCode, Exception } from '@opentelemetry/api'
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 
 export function genericPatch (
@@ -44,11 +44,10 @@ export function genericPatch (
       ...customAttributes
     }
 
+    const span = tracer.startSpan(api.METHOD, { kind: SpanKind.CLIENT, attributes })
     return await context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
+      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
       async () => {
-        const span = tracer.startSpan(api.METHOD, { kind: SpanKind.CLIENT })
-        span.setAttributes(attributes)
         try {
           if (this.target?.index !== undefined) {
             span.setAttributes({ 'db.index': this.target?.index })

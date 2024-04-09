@@ -25,6 +25,7 @@ import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
 import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex/instrumentation'
 import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
+import { LangtraceSampler } from '@langtrace-extensions/langtracesampler/langtrace_sampler'
 
 export const init: LangTraceInit = ({
   api_key = undefined,
@@ -35,7 +36,7 @@ export const init: LangTraceInit = ({
   instrumentations = {}
 }: LangtraceInitOptions = {}) => {
   // Set up OpenTelemetry tracing
-  const provider = new NodeTracerProvider({})
+  const provider = new NodeTracerProvider({ sampler: new LangtraceSampler() })
 
   const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud)
   const consoleExporter = new ConsoleSpanExporter()
