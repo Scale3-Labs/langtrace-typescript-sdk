@@ -17,16 +17,21 @@
 import { APIS } from '@langtrace-constants/instrumentation/chroma'
 import { diag } from '@opentelemetry/api'
 import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
-import { Pinecone } from '@pinecone-database/pinecone'
 import { genericPatch } from '@langtrace-instrumentation/pinecone/patch'
-
+// eslint-disable-next-line no-restricted-imports
+import { version, name } from '../../../package.json'
 class PineconeInstrumentation extends InstrumentationBase<any> {
   constructor () {
-    super('@langtrase/node-sdk', '1.0.0')
+    super(name, version)
   }
 
-  init (): Array<InstrumentationModuleDefinition<typeof Pinecone>> {
-    const module = new InstrumentationNodeModuleDefinition<typeof Pinecone>(
+  public manualPatch (pinecone: any): void {
+    diag.debug('Manually instrumenting pinecone')
+    this._patch(pinecone)
+  }
+
+  init (): Array<InstrumentationModuleDefinition<any>> {
+    const module = new InstrumentationNodeModuleDefinition<any>(
       '@pinecone-database/pinecone',
       ['>=2.0.0'],
       (moduleExports, moduleVersion) => {
@@ -45,7 +50,7 @@ class PineconeInstrumentation extends InstrumentationBase<any> {
     return [module]
   }
 
-  private _patch (pinecone: any, version: string): void {
+  private _patch (pinecone: any, moduleVersion?: string): void {
     if (isWrapped(pinecone.Index.prototype)) {
       Object.keys(APIS).forEach((api) => {
         this._unwrap(pinecone.Index.prototype, APIS[api].OPERATION)
@@ -57,7 +62,7 @@ class PineconeInstrumentation extends InstrumentationBase<any> {
         pinecone.Index.prototype,
         APIS[api].OPERATION,
         (originalMethod: (...args: any[]) => any) =>
-          genericPatch(originalMethod, api, this.tracer, version)
+          genericPatch(originalMethod, api, this.tracer, this.instrumentationVersion, moduleVersion)
       )
     })
   }

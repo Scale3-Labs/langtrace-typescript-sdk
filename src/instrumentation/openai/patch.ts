@@ -20,19 +20,17 @@ import { APIS } from '@langtrace-constants/instrumentation/openai'
 import { calculatePromptTokens, estimateTokens } from '@langtrace-utils/llm'
 import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
 import {
-  Exception,
+  context, Exception,
   Span,
   SpanKind,
-  SpanStatusCode,
-  Tracer,
-  context,
-  trace
+  SpanStatusCode, trace, Tracer
 } from '@opentelemetry/api'
 
 export function imagesGenerate (
   originalMethod: (...args: any[]) => any,
   tracer: Tracer,
-  version: string
+  langtraceVersion: string,
+  version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -49,8 +47,8 @@ export function imagesGenerate (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
-      'langtrace.service.version': version,
-      'langtrace.version': '1.0.0',
+      'langtrace.service.version': version ?? '',
+      'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
       'llm.api': APIS.IMAGES_GENERATION.ENDPOINT,
       'llm.model': args[0]?.model,
@@ -90,7 +88,8 @@ export function imagesGenerate (
 export function chatCompletionCreate (
   originalMethod: (...args: any[]) => any,
   tracer: Tracer,
-  version: string
+  langtraceVersion: string,
+  version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -106,8 +105,8 @@ export function chatCompletionCreate (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
-      'langtrace.service.version': version,
-      'langtrace.version': '1.0.0',
+      'langtrace.service.version': version ?? '',
+      'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
       'llm.api': APIS.CHAT_COMPLETION.ENDPOINT,
       'http.max.retries': originalContext?._client?.maxRetries,
@@ -276,7 +275,8 @@ async function * handleStreamResponse (
 export function embeddingsCreate (
   originalMethod: (...args: any[]) => any,
   tracer: Tracer,
-  version: string
+  langtraceVersion: string,
+  version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -292,8 +292,8 @@ export function embeddingsCreate (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
-      'langtrace.service.version': version,
-      'langtrace.version': '1.0.0',
+      'langtrace.service.version': version ?? '',
+      'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
       'llm.api': APIS.EMBEDDINGS_CREATE.ENDPOINT,
       'llm.model': args[0]?.model,

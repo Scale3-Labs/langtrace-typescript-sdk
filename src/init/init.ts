@@ -22,16 +22,20 @@ import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
 import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
 import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
+import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
+import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex/instrumentation'
+import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
 
 export const init: LangTraceInit = ({
   api_key = undefined,
   batch = true,
   write_to_langtrace_cloud = true,
   debug_log_to_console = false,
-  custom_remote_exporter = undefined
+  custom_remote_exporter = undefined,
+  instrumentations = {}
 }: LangtraceInitOptions = {}) => {
   // Set up OpenTelemetry tracing
-  const provider = new NodeTracerProvider()
+  const provider = new NodeTracerProvider({})
 
   const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud)
   const consoleExporter = new ConsoleSpanExporter()
@@ -42,10 +46,7 @@ export const init: LangTraceInit = ({
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
 
   const logLevel = debug_log_to_console ? DiagLogLevel.INFO : DiagLogLevel.NONE
-
-  if (debug_log_to_console) {
-    diag.setLogger(new DiagConsoleLogger(), logLevel)
-  }
+  diag.setLogger(new DiagConsoleLogger(), logLevel)
 
   if (write_to_langtrace_cloud && !batch && custom_remote_exporter === undefined) {
     throw new Error('Batching is required when writing to the LangTrace cloud')
@@ -71,12 +72,37 @@ export const init: LangTraceInit = ({
   }
 
   provider.register()
-  // Register any automatic instrumentation and your custom OpenAI instrumentation
-  registerInstrumentations({
-    tracerProvider: provider,
-    instrumentations: [
-      openAIInstrumentation,
-      anthropicInstrumentation
-    ]
-  })
+  if (instrumentations === undefined) {
+    registerInstrumentations({
+      instrumentations: [
+        pineconeInstrumentation,
+        chromaInstrumentation,
+        llamaIndexInstrumentation,
+        openAIInstrumentation,
+        anthropicInstrumentation
+      ],
+      tracerProvider: provider
+    })
+    return
+  }
+  if (instrumentations?.openai !== undefined) {
+    openAIInstrumentation.manualPatch(instrumentations.openai)
+  }
+
+  if (instrumentations?.anthropic !== undefined) {
+    anthropicInstrumentation.manualPatch(instrumentations.anthropic)
+  }
+
+  if (instrumentations?.chromadb !== undefined) {
+    chromaInstrumentation.manualPatch(instrumentations.chromadb)
+  }
+
+  if (instrumentations?.llamaindex !== undefined) {
+    llamaIndexInstrumentation.manualPatch(instrumentations.llamaindex)
+  }
+
+  if (instrumentations?.pinecone !== undefined) {
+    pineconeInstrumentation.manualPatch(instrumentations.pinecone)
+  }
+  registerInstrumentations({ tracerProvider: provider })
 }
