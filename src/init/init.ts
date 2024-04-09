@@ -15,16 +15,16 @@
  */
 
 import { LangTraceExporter } from '@langtrace-extensions/langtraceexporter/langtrace_exporter'
-import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
-import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
-import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex/instrumentation'
-import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
-import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api'
 import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
+import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
+import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
+import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
+import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex/instrumentation'
+import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
 
 export const init: LangTraceInit = ({
   api_key = undefined,
@@ -40,13 +40,13 @@ export const init: LangTraceInit = ({
   const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
+
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
   const batchProcessorConsole = new BatchSpanProcessor(consoleExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
 
-  if (debug_log_to_console) {
-    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL)
-  }
+  const logLevel = debug_log_to_console ? DiagLogLevel.INFO : DiagLogLevel.NONE
+  diag.setLogger(new DiagConsoleLogger(), logLevel)
 
   if (write_to_langtrace_cloud && !batch && custom_remote_exporter === undefined) {
     throw new Error('Batching is required when writing to the LangTrace cloud')
