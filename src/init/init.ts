@@ -15,7 +15,6 @@
  */
 
 import { LangTraceExporter } from '@langtrace-extensions/langtraceexporter/langtrace_exporter'
-import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api'
 import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
@@ -45,9 +44,6 @@ export const init: LangTraceInit = ({
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
   const batchProcessorConsole = new BatchSpanProcessor(consoleExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
-
-  const logLevel = debug_log_to_console ? DiagLogLevel.INFO : DiagLogLevel.NONE
-  diag.setLogger(new DiagConsoleLogger(), logLevel)
 
   if (write_to_langtrace_cloud && !batch && custom_remote_exporter === undefined) {
     throw new Error('Batching is required when writing to the LangTrace cloud')
