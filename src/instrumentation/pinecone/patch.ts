@@ -37,7 +37,7 @@ export function genericPatch (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': SERVICE_PROVIDERS.PINECONE,
       'langtrace.service.type': 'vectordb',
-      'langtrace.service.version': version ?? '',
+      'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
       'db.system': 'pinecone',
       'db.operation': api.OPERATION,

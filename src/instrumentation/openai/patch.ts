@@ -47,7 +47,7 @@ export function imagesGenerate (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
-      'langtrace.service.version': version ?? '',
+      'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
       'llm.api': APIS.IMAGES_GENERATION.ENDPOINT,
@@ -59,10 +59,10 @@ export function imagesGenerate (
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return await context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
+    const span = tracer.startSpan(APIS.IMAGES_GENERATION.METHOD, { kind: SpanKind.SERVER, attributes })
+    const f = await context.with(
+      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
       async () => {
-        const span = tracer.startSpan(APIS.IMAGES_GENERATION.METHOD, { kind: SpanKind.SERVER, attributes })
         try {
           const response = await originalMethod.apply(originalContext, args)
           attributes['llm.responses'] = JSON.stringify(response?.data)
@@ -81,6 +81,8 @@ export function imagesGenerate (
         }
       }
     )
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return f
   }
 }
 
@@ -105,7 +107,7 @@ export function chatCompletionCreate (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
-      'langtrace.service.version': version ?? '',
+      'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
       'llm.api': APIS.CHAT_COMPLETION.ENDPOINT,
@@ -290,7 +292,7 @@ export function embeddingsCreate (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
-      'langtrace.service.version': version ?? '',
+      'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
       'llm.api': APIS.EMBEDDINGS_CREATE.ENDPOINT,
@@ -315,10 +317,10 @@ export function embeddingsCreate (
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return await context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
+    const span = tracer.startSpan(APIS.EMBEDDINGS_CREATE.METHOD, { kind: SpanKind.SERVER, attributes })
+    const f = await context.with(
+      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
       async () => {
-        const span = tracer.startSpan(APIS.EMBEDDINGS_CREATE.METHOD, { kind: SpanKind.SERVER, attributes })
         try {
           const resp = await originalMethod.apply(originalContext, args)
 
@@ -337,5 +339,7 @@ export function embeddingsCreate (
         }
       }
     )
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return f
   }
 }

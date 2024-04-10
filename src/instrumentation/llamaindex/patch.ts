@@ -41,7 +41,7 @@ export function genericPatch (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': SERVICE_PROVIDERS.LLAMAINDEX,
       'langtrace.service.type': 'framework',
-      'langtrace.service.version': version ?? '',
+      'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
       'llamaindex.task.name': task,
       ...customAttributes
