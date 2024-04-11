@@ -15,16 +15,17 @@
  */
 
 import { LangTraceExporter } from '@langtrace-extensions/langtraceexporter/langtrace_exporter'
+import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
+import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
+import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex/instrumentation'
+import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
+import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api'
 import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
-import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
-import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
-import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
-import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
-import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex/instrumentation'
-import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
+import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
+import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_exporter'
 
 export const init: LangTraceInit = ({
   api_key = undefined,
@@ -32,12 +33,12 @@ export const init: LangTraceInit = ({
   write_to_langtrace_cloud = true,
   debug_log_to_console = false,
   custom_remote_exporter = undefined,
-  instrumentations = {}
+  api_host = LANGTRACE_REMOTE_URL
 }: LangtraceInitOptions = {}) => {
   // Set up OpenTelemetry tracing
-  const provider = new NodeTracerProvider({})
+  const provider = new NodeTracerProvider()
 
-  const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud)
+  const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud, api_host)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
 
@@ -72,37 +73,16 @@ export const init: LangTraceInit = ({
   }
 
   provider.register()
-  if (instrumentations === undefined) {
-    registerInstrumentations({
-      instrumentations: [
-        pineconeInstrumentation,
-        chromaInstrumentation,
-        llamaIndexInstrumentation,
-        openAIInstrumentation,
-        anthropicInstrumentation
-      ],
-      tracerProvider: provider
-    })
-    return
-  }
-  if (instrumentations?.openai !== undefined) {
-    openAIInstrumentation.manualPatch(instrumentations.openai)
-  }
 
-  if (instrumentations?.anthropic !== undefined) {
-    anthropicInstrumentation.manualPatch(instrumentations.anthropic)
-  }
-
-  if (instrumentations?.chromadb !== undefined) {
-    chromaInstrumentation.manualPatch(instrumentations.chromadb)
-  }
-
-  if (instrumentations?.llamaindex !== undefined) {
-    llamaIndexInstrumentation.manualPatch(instrumentations.llamaindex)
-  }
-
-  if (instrumentations?.pinecone !== undefined) {
-    pineconeInstrumentation.manualPatch(instrumentations.pinecone)
-  }
-  registerInstrumentations({ tracerProvider: provider })
+  // Register any automatic instrumentation and your custom OpenAI instrumentation
+  registerInstrumentations({
+    instrumentations: [
+      pineconeInstrumentation,
+      chromaInstrumentation,
+      llamaIndexInstrumentation,
+      openAIInstrumentation,
+      anthropicInstrumentation
+    ],
+    tracerProvider: provider
+  })
 }
