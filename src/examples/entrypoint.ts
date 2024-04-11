@@ -1,3 +1,3 @@
-import { basic } from '@langtrace-examples/llamaindex/basic'
+import { runSimpleServer } from '@langtrace-examples/simple-server/server'
 
-void basic()
+void runSimpleServer()
