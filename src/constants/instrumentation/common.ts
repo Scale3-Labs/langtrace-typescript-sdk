@@ -32,5 +32,6 @@ export const SERVICE_PROVIDERS = {
   LANGCHAIN: 'Langchain',
   PINECONE: 'Pinecone',
   LLAMAINDEX: 'LlamaIndex',
-  CHROMA: 'Chroma'
+  CHROMA: 'Chroma',
+  PPLX: 'Perplexity'
 }
