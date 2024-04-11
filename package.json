@@ -27,6 +27,7 @@
     "@opentelemetry/sdk-trace-base": "^1.22.0",
     "@opentelemetry/sdk-trace-node": "^1.22.0",
     "axios": "^1.6.7",
+    "node-loader": "^2.0.0",
     "tiktoken": "^1.0.13"
   },
   "devDependencies": {

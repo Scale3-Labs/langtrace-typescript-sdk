@@ -30,7 +30,6 @@ export const init: LangTraceInit = ({
   api_key = undefined,
   batch = true,
   write_to_langtrace_cloud = true,
-  debug_log_to_console = false,
   custom_remote_exporter = undefined,
   instrumentations = {}
 }: LangtraceInitOptions = {}) => {
