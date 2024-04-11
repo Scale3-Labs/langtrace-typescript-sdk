@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-import type Anthropic from '@anthropic-ai/sdk'
 import { diag } from '@opentelemetry/api'
-import {
-  InstrumentationBase,
-  InstrumentationNodeModuleDefinition
-} from '@opentelemetry/instrumentation'
+import { InstrumentationBase, InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation'
 import { messagesCreate } from '@langtrace-instrumentation/anthropic/patch'
+// eslint-disable-next-line no-restricted-imports
+import { version, name } from '../../../package.json'
 
-class AnthropicInstrumentation extends InstrumentationBase<typeof Anthropic> {
+class AnthropicInstrumentation extends InstrumentationBase<any> {
   constructor () {
-    super('@langtrase/node-sdk', '1.0.0')
+    super(name, version)
   }
 
-  init (): Array<InstrumentationNodeModuleDefinition<typeof Anthropic>> {
-    const module = new InstrumentationNodeModuleDefinition<typeof Anthropic>(
+  public manualPatch (anthropic: any): void {
+    this._diag.debug('Manually instrumenting anthropic')
+    this._patch(anthropic)
+  }
+
+  init (): Array<InstrumentationNodeModuleDefinition<any>> {
+    const module = new InstrumentationNodeModuleDefinition<any>(
       '@anthropic-ai/sdk',
       ['>=0.16.0'],
       (moduleExports, moduleVersion) => {
@@ -46,16 +49,16 @@ class AnthropicInstrumentation extends InstrumentationBase<typeof Anthropic> {
     return [module]
   }
 
-  private _patch (anthropic: typeof Anthropic, version: string): void {
+  private _patch (anthropic: any, moduleVersion?: string): void {
     this._wrap(
       anthropic.Messages.prototype,
       'create',
       (originalMethod: (...args: any[]) => any) =>
-        messagesCreate(originalMethod, this.tracer, version)
+        messagesCreate(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion)
     )
   }
 
-  private _unpatch (anthropic: typeof Anthropic): void {
+  private _unpatch (anthropic: any): void {
     this._unwrap(anthropic.Anthropic.Messages.prototype, 'create')
   }
 }

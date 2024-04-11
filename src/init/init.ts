@@ -41,13 +41,13 @@ export const init: LangTraceInit = ({
   const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud, api_host)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
+
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
   const batchProcessorConsole = new BatchSpanProcessor(consoleExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
 
-  if (debug_log_to_console) {
-    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG)
-  }
+  const logLevel = debug_log_to_console ? DiagLogLevel.INFO : DiagLogLevel.NONE
+  diag.setLogger(new DiagConsoleLogger(), logLevel)
 
   if (write_to_langtrace_cloud && !batch && custom_remote_exporter === undefined) {
     throw new Error('Batching is required when writing to the LangTrace cloud')

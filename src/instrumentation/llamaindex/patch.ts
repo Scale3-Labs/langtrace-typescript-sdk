@@ -33,9 +33,11 @@ export function genericPatch (
   method: string,
   task: string,
   tracer: Tracer,
-  version: string
+  langtraceVersion: string,
+  version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
       async () => {
@@ -45,8 +47,8 @@ export function genericPatch (
           'langtrace.sdk.name': '@langtrase/typescript-sdk',
           'langtrace.service.name': SERVICE_PROVIDERS.LLAMAINDEX,
           'langtrace.service.type': 'framework',
-          'langtrace.service.version': version,
-          'langtrace.version': '1.0.0',
+          'langtrace.service.version': version ?? '',
+          'langtrace.version': langtraceVersion,
           'llamaindex.task.name': task,
           ...customAttributes
         }
@@ -56,6 +58,7 @@ export function genericPatch (
           const response = await originalMethod.apply(this, args)
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return response
         } catch (error: any) {
           span.recordException(error as Exception)

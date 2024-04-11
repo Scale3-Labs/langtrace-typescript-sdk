@@ -32,7 +32,8 @@ export function collectionPatch (
   originalMethod: (...args: any[]) => any,
   method: string,
   tracer: Tracer,
-  version: string
+  langtraceVersion: string,
+  version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this
@@ -43,8 +44,8 @@ export function collectionPatch (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': SERVICE_PROVIDERS.CHROMA,
       'langtrace.service.type': 'vectordb',
-      'langtrace.service.version': version,
-      'langtrace.version': '1.0.0',
+      'langtrace.service.version': version ?? 'latest',
+      'langtrace.version': langtraceVersion,
       'db.system': 'chromadb',
       'db.operation': api.OPERATION,
       ...customAttributes
