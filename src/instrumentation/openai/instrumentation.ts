@@ -54,30 +54,30 @@ class OpenAIInstrumentation extends InstrumentationBase<any> {
   }
 
   private _patch (openai: any, moduleVersion?: string): void {
-    if (isWrapped(openai.Chat.Completions.prototype)) {
-      this._unwrap(openai.Chat.Completions.prototype, 'create')
-    } else if (isWrapped(openai.Images.prototype)) {
-      this._unwrap(openai.Images.prototype, 'generate')
-    } else if (isWrapped(openai.Embeddings.prototype)) {
-      this._unwrap(openai.Embeddings.prototype, 'create')
+    if (isWrapped(openai.OpenAI.Chat.Completions.prototype)) {
+      this._unwrap(openai.OpenAI.Chat.Completions.prototype, 'create')
+    } else if (isWrapped(openai.OpenAI.Images.prototype)) {
+      this._unwrap(openai.OpenAI.Images.prototype, 'generate')
+    } else if (isWrapped(openai.OpenAI.Embeddings.prototype)) {
+      this._unwrap(openai.OpenAI.Embeddings.prototype, 'create')
     }
 
     this._wrap(
-      openai.Chat.Completions.prototype,
+      openai.OpenAI.Chat.Completions.prototype,
       'create',
       (originalMethod: (...args: any[]) => any) =>
         chatCompletionCreate(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion)
     )
 
     this._wrap(
-      openai.Images.prototype,
+      openai.OpenAI.Images.prototype,
       'generate',
       (originalMethod: (...args: any[]) => any) =>
         imagesGenerate(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion)
     )
 
     this._wrap(
-      openai.Embeddings.prototype,
+      openai.OpenAI.Embeddings.prototype,
       'create',
       (originalMethod: (...args: any[]) => any) =>
         embeddingsCreate(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion)
@@ -85,9 +85,9 @@ class OpenAIInstrumentation extends InstrumentationBase<any> {
   }
 
   private _unpatch (openai: any): void {
-    this._unwrap(openai.Chat.Completions.prototype, 'create')
-    this._unwrap(openai.Images.prototype, 'generate')
-    this._unwrap(openai.Embeddings.prototype, 'create')
+    this._unwrap(openai.OpenAI.Chat.Completions.prototype, 'create')
+    this._unwrap(openai.OpenAI.Images.prototype, 'generate')
+    this._unwrap(openai.OpenAI.Embeddings.prototype, 'create')
   }
 }
 

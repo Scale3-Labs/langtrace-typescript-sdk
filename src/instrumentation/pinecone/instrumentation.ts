@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { APIS } from '@langtrace-constants/instrumentation/chroma'
+import { APIS } from '@langtrace-constants/instrumentation/pinecone'
 import { diag } from '@opentelemetry/api'
 import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
 import { genericPatch } from '@langtrace-instrumentation/pinecone/patch'
