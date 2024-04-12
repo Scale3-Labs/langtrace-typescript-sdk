@@ -20,6 +20,7 @@ export interface LangtraceInitOptions {
   batch?: boolean
   write_to_langtrace_cloud?: boolean
   custom_remote_exporter?: SpanExporter
+  api_host?: string
   instrumentations?: {
     openai?: any
     anthropic?: any

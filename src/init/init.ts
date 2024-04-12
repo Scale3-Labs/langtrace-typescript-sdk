@@ -17,57 +17,52 @@
 import { LangTraceExporter } from '@langtrace-extensions/langtraceexporter/langtrace_exporter'
 import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
-import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
-import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
-import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
 import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex/instrumentation'
 import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
 import { LangtraceSampler } from '@langtrace-extensions/langtracesampler/langtrace_sampler'
+import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
+import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_exporter'
+import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
+import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
 
 export const init: LangTraceInit = ({
   api_key = undefined,
   batch = true,
   write_to_langtrace_cloud = true,
   custom_remote_exporter = undefined,
-  instrumentations = {}
+  instrumentations = undefined,
+  api_host = LANGTRACE_REMOTE_URL
 }: LangtraceInitOptions = {}) => {
   // Set up OpenTelemetry tracing
   const provider = new NodeTracerProvider({ sampler: new LangtraceSampler() })
 
-  const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud)
+  const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud, api_host)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
 
-  const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
   const batchProcessorConsole = new BatchSpanProcessor(consoleExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
 
-  if (write_to_langtrace_cloud && !batch && custom_remote_exporter === undefined) {
-    throw new Error('Batching is required when writing to the LangTrace cloud')
-  }
-  if (custom_remote_exporter !== undefined) {
+  if (write_to_langtrace_cloud) {
+    provider.addSpanProcessor(batchProcessorRemote)
+  } else if (custom_remote_exporter !== undefined) {
     if (batch) {
       provider.addSpanProcessor(new BatchSpanProcessor(custom_remote_exporter))
     } else {
       provider.addSpanProcessor(new SimpleSpanProcessor(custom_remote_exporter))
     }
-  } else if (!write_to_langtrace_cloud) {
+  } else {
     if (batch) {
       provider.addSpanProcessor(batchProcessorConsole)
     } else {
       provider.addSpanProcessor(simpleProcessorConsole)
     }
-  } else {
-    if (batch) {
-      provider.addSpanProcessor(batchProcessorRemote)
-    } else {
-      provider.addSpanProcessor(simpleProcessorRemote)
-    }
   }
 
   provider.register()
+
   if (instrumentations === undefined) {
     registerInstrumentations({
       instrumentations: [
