@@ -20,16 +20,21 @@ import {
   InstrumentationNodeModuleDefinition,
   isWrapped
 } from '@opentelemetry/instrumentation'
-import type { OpenAI } from 'openai'
 import { chatCompletionCreate, embeddingsCreate, imagesGenerate } from '@langtrace-instrumentation/openai/patch'
-
-class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
+// eslint-disable-next-line no-restricted-imports
+import { version, name } from '../../../package.json'
+class OpenAIInstrumentation extends InstrumentationBase<any> {
   constructor () {
-    super('@langtrase/node-sdk', '1.0.0')
+    super(name, version)
   }
 
-  init (): Array<InstrumentationNodeModuleDefinition<typeof OpenAI>> {
-    const module = new InstrumentationNodeModuleDefinition<typeof OpenAI>(
+  public manualPatch (openai: any): void {
+    diag.debug('Manually patching openai')
+    this._patch(openai)
+  }
+
+  init (): Array<InstrumentationNodeModuleDefinition<any>> {
+    const module = new InstrumentationNodeModuleDefinition<any>(
       'openai',
       ['>=4.26.1 <6.0.0'],
       (moduleExports, moduleVersion) => {
@@ -48,41 +53,41 @@ class OpenAIInstrumentation extends InstrumentationBase<typeof OpenAI> {
     return [module]
   }
 
-  private _patch (openai: typeof OpenAI, version: string): void {
-    if (isWrapped(openai.Chat.Completions.prototype)) {
-      this._unwrap(openai.Chat.Completions.prototype, 'create')
-    } else if (isWrapped(openai.Images.prototype)) {
-      this._unwrap(openai.Images.prototype, 'generate')
-    } else if (isWrapped(openai.Embeddings.prototype)) {
-      this._unwrap(openai.Embeddings.prototype, 'create')
+  private _patch (openai: any, moduleVersion?: string): void {
+    if (isWrapped(openai.OpenAI.Chat.Completions.prototype)) {
+      this._unwrap(openai.OpenAI.Chat.Completions.prototype, 'create')
+    } else if (isWrapped(openai.OpenAI.Images.prototype)) {
+      this._unwrap(openai.OpenAI.Images.prototype, 'generate')
+    } else if (isWrapped(openai.OpenAI.Embeddings.prototype)) {
+      this._unwrap(openai.OpenAI.Embeddings.prototype, 'create')
     }
 
     this._wrap(
-      openai.Chat.Completions.prototype,
+      openai.OpenAI.Chat.Completions.prototype,
       'create',
       (originalMethod: (...args: any[]) => any) =>
-        chatCompletionCreate(originalMethod, this.tracer, version)
+        chatCompletionCreate(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion)
     )
 
     this._wrap(
-      openai.Images.prototype,
+      openai.OpenAI.Images.prototype,
       'generate',
       (originalMethod: (...args: any[]) => any) =>
-        imagesGenerate(originalMethod, this.tracer, version)
+        imagesGenerate(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion)
     )
 
     this._wrap(
-      openai.Embeddings.prototype,
+      openai.OpenAI.Embeddings.prototype,
       'create',
       (originalMethod: (...args: any[]) => any) =>
-        embeddingsCreate(originalMethod, this.tracer, version)
+        embeddingsCreate(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion)
     )
   }
 
-  private _unpatch (openai: typeof OpenAI): void {
-    this._unwrap(openai.Chat.Completions.prototype, 'create')
-    this._unwrap(openai.Images.prototype, 'generate')
-    this._unwrap(openai.Embeddings.prototype, 'create')
+  private _unpatch (openai: any): void {
+    this._unwrap(openai.OpenAI.Chat.Completions.prototype, 'create')
+    this._unwrap(openai.OpenAI.Images.prototype, 'generate')
+    this._unwrap(openai.OpenAI.Embeddings.prototype, 'create')
   }
 }
 

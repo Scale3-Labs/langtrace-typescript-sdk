@@ -20,19 +20,17 @@ import { APIS } from '@langtrace-constants/instrumentation/openai'
 import { calculatePromptTokens, estimateTokens } from '@langtrace-utils/llm'
 import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
 import {
-  Exception,
+  context, Exception,
   Span,
   SpanKind,
-  SpanStatusCode,
-  Tracer,
-  context,
-  trace
+  SpanStatusCode, trace, Tracer
 } from '@opentelemetry/api'
 
 export function imagesGenerate (
   originalMethod: (...args: any[]) => any,
   tracer: Tracer,
-  version: string
+  langtraceVersion: string,
+  version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -50,7 +48,7 @@ export function imagesGenerate (
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
-      'langtrace.version': '1.0.0',
+      'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
       'llm.api': APIS.IMAGES_GENERATION.ENDPOINT,
       'llm.model': args[0]?.model,
@@ -61,11 +59,10 @@ export function imagesGenerate (
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return await context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
+    const span = tracer.startSpan(APIS.IMAGES_GENERATION.METHOD, { kind: SpanKind.SERVER, attributes })
+    const f = await context.with(
+      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
       async () => {
-        const span = tracer.startSpan(APIS.IMAGES_GENERATION.METHOD, { kind: SpanKind.SERVER })
-        span.setAttributes(attributes)
         try {
           const response = await originalMethod.apply(originalContext, args)
           attributes['llm.responses'] = JSON.stringify(response?.data)
@@ -84,22 +81,28 @@ export function imagesGenerate (
         }
       }
     )
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return f
   }
 }
 
 export function chatCompletionCreate (
   originalMethod: (...args: any[]) => any,
   tracer: Tracer,
-  version: string
+  langtraceVersion: string,
+  version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const originalContext = this
+
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     // Determine the service provider
     let serviceProvider = SERVICE_PROVIDERS.OPENAI
     if (originalContext?._client?.baseURL?.includes('azure') === true) {
       serviceProvider = SERVICE_PROVIDERS.AZURE
+    } else if (originalContext?._client?.baseURL?.includes('perplexity') === true) {
+      serviceProvider = SERVICE_PROVIDERS.PPLX
     }
 
     const attributes: LLMSpanAttributes = {
@@ -107,7 +110,7 @@ export function chatCompletionCreate (
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
-      'langtrace.version': '1.0.0',
+      'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
       'llm.api': APIS.CHAT_COMPLETION.ENDPOINT,
       'http.max.retries': originalContext?._client?.maxRetries,
@@ -133,15 +136,12 @@ export function chatCompletionCreate (
     }
 
     if (!(args[0].stream as boolean) || args[0].stream === false) {
+      // eslint-disable-next-\line @typescript-eslint/no-unsafe-return
+      const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes })
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return await context.with(
-        trace.setSpan(
-          context.active(),
-          trace.getSpan(context.active()) as Span
-        ),
+        trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
         async () => {
-          const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT })
-          span.setAttributes(attributes)
           try {
             const resp = await originalMethod.apply(this, args)
             const responses = resp?.choices?.map((choice: any) => {
@@ -185,17 +185,18 @@ export function chatCompletionCreate (
       )
     } else {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes })
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return await context.with(
         trace.setSpan(
           context.active(),
-          trace.getSpan(context.active()) as Span
+          trace.getSpan(context.active()) ?? span
         ),
         async () => {
-          const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT })
-          span.setAttributes(attributes)
           const model = args[0].model
 
           // iterate over messages and calculate tokens
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           const promptContent: string = args[0].messages.map((message: any) => message?.content).join(' ')
           let promptTokens = calculatePromptTokens(promptContent, model as string)
 
@@ -254,8 +255,8 @@ async function * handleStreamResponse (
     span.setAttributes({
       'llm.model': model,
       'llm.token.counts': JSON.stringify({
-        prompt_tokens: promptTokens,
-        completion_tokens: completionTokens,
+        input_tokens: promptTokens,
+        output_tokens: completionTokens,
         total_tokens: completionTokens + promptTokens,
         ...customAttributes
       }),
@@ -276,7 +277,8 @@ async function * handleStreamResponse (
 export function embeddingsCreate (
   originalMethod: (...args: any[]) => any,
   tracer: Tracer,
-  version: string
+  langtraceVersion: string,
+  version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -293,7 +295,7 @@ export function embeddingsCreate (
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
-      'langtrace.version': '1.0.0',
+      'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
       'llm.api': APIS.EMBEDDINGS_CREATE.ENDPOINT,
       'llm.model': args[0]?.model,
@@ -317,11 +319,10 @@ export function embeddingsCreate (
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return await context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
+    const span = tracer.startSpan(APIS.EMBEDDINGS_CREATE.METHOD, { kind: SpanKind.SERVER, attributes })
+    const f = await context.with(
+      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
       async () => {
-        const span = tracer.startSpan(APIS.EMBEDDINGS_CREATE.METHOD, { kind: SpanKind.SERVER })
-        span.setAttributes(attributes)
         try {
           const resp = await originalMethod.apply(originalContext, args)
 
@@ -340,5 +341,7 @@ export function embeddingsCreate (
         }
       }
     )
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return f
   }
 }

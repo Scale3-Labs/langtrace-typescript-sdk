@@ -54,7 +54,7 @@ npm i @langtrase/typescript-sdk
 
 ``` typescript
 import * as Langtrace from '@langtrase/typescript-sdk' // Must precede any llm module imports
-Langtrace.init({ write_to_langtrace_cloud: false, batch: false})
+Langtrace.init({ write_to_langtrace_cloud: false})
 ```
 
 ## Langtrace self hosted custom exporter
@@ -110,6 +110,7 @@ Langtrace automatically captures traces from the following vendors:
 | ------ | ------ | ------ | ------ |
 | OpenAI | LLM | :white_check_mark: | :white_check_mark: |
 | Anthropic | LLM | :white_check_mark: | :white_check_mark: |
+| Cohere | LLM | :x: | :white_check_mark: |
 | Azure OpenAI | LLM | :white_check_mark: | :white_check_mark: |
 | Langchain | Framework | :x: | :white_check_mark: |
 | LlamaIndex | Framework | :white_check_mark: | :white_check_mark: |

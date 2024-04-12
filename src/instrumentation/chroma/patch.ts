@@ -20,7 +20,6 @@ import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
 import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
 import {
   Exception,
-  Span,
   SpanKind,
   SpanStatusCode,
   Tracer,
@@ -32,7 +31,8 @@ export function collectionPatch (
   originalMethod: (...args: any[]) => any,
   method: string,
   tracer: Tracer,
-  version: string
+  langtraceVersion: string,
+  version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     const originalContext = this
@@ -43,8 +43,8 @@ export function collectionPatch (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': SERVICE_PROVIDERS.CHROMA,
       'langtrace.service.type': 'vectordb',
-      'langtrace.service.version': version,
-      'langtrace.version': '1.0.0',
+      'langtrace.service.version': version ?? 'latest',
+      'langtrace.version': langtraceVersion,
       'db.system': 'chromadb',
       'db.operation': api.OPERATION,
       ...customAttributes
@@ -62,12 +62,11 @@ export function collectionPatch (
       attributes['db.chromadb.embedding_model'] = this.embeddingFunction.model
     }
 
+    const span = tracer.startSpan(api.METHOD, { kind: SpanKind.CLIENT, attributes })
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) as Span),
+      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
       async () => {
-        const span = tracer.startSpan(api.METHOD, { kind: SpanKind.CLIENT })
-        span.setAttributes(attributes)
-
         try {
           // NOTE: Not tracing the response data as it can contain sensitive information
           const response = await originalMethod.apply(originalContext, args)
