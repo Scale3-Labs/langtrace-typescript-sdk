@@ -253,8 +253,8 @@ async function * handleStreamResponse (
     span.setAttributes({
       'llm.model': model,
       'llm.token.counts': JSON.stringify({
-        prompt_tokens: promptTokens,
-        completion_tokens: completionTokens,
+        input_tokens: promptTokens,
+        output_tokens: completionTokens,
         total_tokens: completionTokens + promptTokens,
         ...customAttributes
       }),
