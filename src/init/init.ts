@@ -29,7 +29,7 @@ import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrum
 
 export const init: LangTraceInit = ({
   api_key = undefined,
-  batch = true,
+  batch = false,
   write_to_langtrace_cloud = true,
   custom_remote_exporter = undefined,
   instrumentations = undefined,
