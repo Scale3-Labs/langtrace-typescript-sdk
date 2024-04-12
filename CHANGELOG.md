@@ -1,5 +1,16 @@
 # @langtrase/typescript-sdk
 
+## 1.4.0
+
+### Minor Changes
+
+- Add nextjs support and bug fixes
+
+## 1.3.3
+
+- Fix for function calling response tracing
+- Fix for streaming prompt calculation
+
 ## 1.3.2
 
 - Adds 'langtrace.sdk.name' to the trace attributes
