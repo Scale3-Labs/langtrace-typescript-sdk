@@ -53,7 +53,7 @@ export function messagesCreate (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
-      'langtrace.service.version': version ?? '',
+      'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
       'llm.api': APIS.MESSAGES_CREATE.ENDPOINT,
@@ -81,14 +81,13 @@ export function messagesCreate (
     }
 
     if (!(args[0].stream as boolean) || args[0].stream === false) {
+      const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes })
       return await context.with(
         trace.setSpan(
           context.active(),
-          trace.getSpan(context.active()) as Span
+          trace.getSpan(context.active()) ?? span
         ),
         async () => {
-          const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT })
-          span.setAttributes(attributes)
           try {
             const resp = await originalMethod.apply(this, args)
             span.setAttributes({ 'llm.responses': JSON.stringify(resp.content) })
@@ -118,14 +117,13 @@ export function messagesCreate (
         }
       )
     } else {
+      const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes })
       return await context.with(
         trace.setSpan(
           context.active(),
-          trace.getSpan(context.active()) as Span
+          trace.getSpan(context.active()) ?? span
         ),
         async () => {
-          const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT })
-          span.setAttributes(attributes)
           const resp = await originalMethod.apply(this, args)
           return handleStreamResponse(span, resp)
         }

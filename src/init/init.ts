@@ -15,74 +15,85 @@
  */
 
 import { LangTraceExporter } from '@langtrace-extensions/langtraceexporter/langtrace_exporter'
-import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
-import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
-import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex/instrumentation'
-import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
-import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
-import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api'
 import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
+import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
+import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex/instrumentation'
+import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
+import { LangtraceSampler } from '@langtrace-extensions/langtracesampler/langtrace_sampler'
 import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
 import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_exporter'
+import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
+import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
 
 export const init: LangTraceInit = ({
   api_key = undefined,
-  batch = true,
+  batch = false,
   write_to_langtrace_cloud = true,
-  debug_log_to_console = false,
   custom_remote_exporter = undefined,
+  instrumentations = undefined,
   api_host = LANGTRACE_REMOTE_URL
 }: LangtraceInitOptions = {}) => {
   // Set up OpenTelemetry tracing
-  const provider = new NodeTracerProvider()
+  const provider = new NodeTracerProvider({ sampler: new LangtraceSampler() })
 
   const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud, api_host)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
 
-  const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
   const batchProcessorConsole = new BatchSpanProcessor(consoleExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
 
-  const logLevel = debug_log_to_console ? DiagLogLevel.INFO : DiagLogLevel.NONE
-  diag.setLogger(new DiagConsoleLogger(), logLevel)
-
-  if (write_to_langtrace_cloud && !batch && custom_remote_exporter === undefined) {
-    throw new Error('Batching is required when writing to the LangTrace cloud')
-  }
-  if (custom_remote_exporter !== undefined) {
+  if (write_to_langtrace_cloud) {
+    provider.addSpanProcessor(batchProcessorRemote)
+  } else if (custom_remote_exporter !== undefined) {
     if (batch) {
       provider.addSpanProcessor(new BatchSpanProcessor(custom_remote_exporter))
     } else {
       provider.addSpanProcessor(new SimpleSpanProcessor(custom_remote_exporter))
     }
-  } else if (!write_to_langtrace_cloud) {
+  } else {
     if (batch) {
       provider.addSpanProcessor(batchProcessorConsole)
     } else {
       provider.addSpanProcessor(simpleProcessorConsole)
     }
-  } else {
-    if (batch) {
-      provider.addSpanProcessor(batchProcessorRemote)
-    } else {
-      provider.addSpanProcessor(simpleProcessorRemote)
-    }
   }
 
   provider.register()
 
-  // Register any automatic instrumentation and your custom OpenAI instrumentation
-  registerInstrumentations({
-    instrumentations: [
-      pineconeInstrumentation,
-      chromaInstrumentation,
-      llamaIndexInstrumentation,
-      openAIInstrumentation,
-      anthropicInstrumentation
-    ],
-    tracerProvider: provider
-  })
+  if (instrumentations === undefined) {
+    registerInstrumentations({
+      instrumentations: [
+        pineconeInstrumentation,
+        chromaInstrumentation,
+        llamaIndexInstrumentation,
+        openAIInstrumentation,
+        anthropicInstrumentation
+      ],
+      tracerProvider: provider
+    })
+    return
+  }
+  if (instrumentations?.openai !== undefined) {
+    openAIInstrumentation.manualPatch(instrumentations.openai)
+  }
+
+  if (instrumentations?.anthropic !== undefined) {
+    anthropicInstrumentation.manualPatch(instrumentations.anthropic)
+  }
+
+  if (instrumentations?.chromadb !== undefined) {
+    chromaInstrumentation.manualPatch(instrumentations.chromadb)
+  }
+
+  if (instrumentations?.llamaindex !== undefined) {
+    llamaIndexInstrumentation.manualPatch(instrumentations.llamaindex)
+  }
+
+  if (instrumentations?.pinecone !== undefined) {
+    pineconeInstrumentation.manualPatch(instrumentations.pinecone)
+  }
+  registerInstrumentations({ tracerProvider: provider })
 }

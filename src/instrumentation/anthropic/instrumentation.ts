@@ -51,7 +51,7 @@ class AnthropicInstrumentation extends InstrumentationBase<any> {
 
   private _patch (anthropic: any, moduleVersion?: string): void {
     this._wrap(
-      anthropic.Messages.prototype,
+      anthropic.Anthropic.Messages.prototype,
       'create',
       (originalMethod: (...args: any[]) => any) =>
         messagesCreate(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion)
