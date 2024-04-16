@@ -1,6 +1,6 @@
-import { basic } from '@langtrace-examples/llamaindex/basic'
+import { basicAgent } from '@langtrace-examples/cohere/basic'
 
 // Server
 // void runSimpleServer()
 // LamaIndex
-void basic()
+void basicAgent()

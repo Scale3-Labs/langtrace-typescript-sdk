@@ -95,7 +95,6 @@ export function chatCompletionCreate (
   return async function (this: any, ...args: any[]) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const originalContext = this
-
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     // Determine the service provider
     let serviceProvider = SERVICE_PROVIDERS.OPENAI

@@ -36,6 +36,7 @@
     "@pinecone-database/pinecone": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "chromadb": "^1.8.1",
+    "cohere-ai": "^7.9.3",
     "dotenv": "^16.4.5",
     "eslint": "^8.34.0",
     "eslint-config-standard-with-typescript": "^23.0.0",

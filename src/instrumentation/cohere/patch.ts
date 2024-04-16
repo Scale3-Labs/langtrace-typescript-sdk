@@ -1,0 +1,100 @@
+/*
+ * Copyright (c) 2024 Scale3 Labs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
+import { APIS } from '@langtrace-constants/instrumentation/cohere'
+import { LLMSpanAttributes } from '@langtrase/trace-attributes'
+import {
+  SpanKind,
+  SpanStatusCode,
+  Tracer,
+  context,
+  trace
+} from '@opentelemetry/api'
+import { ICohereClient, IChatRequest, IRequestOptions, ChatFn, INonStreamedChatResponse } from '@langtrace-instrumentation/cohere/types'
+
+export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
+  return async function (this: ICohereClient, request: IChatRequest, requestOptions?: IRequestOptions): Promise<INonStreamedChatResponse> {
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
+    const attributes: Partial<LLMSpanAttributes> = {
+      'langtrace.sdk.name': sdkName,
+      'langtrace.service.name': this._options.clientName ?? 'cohere',
+      'langtrace.service.type': 'llm',
+      'langtrace.version': langtraceVersion,
+      'langtrace.service.version': moduleVersion,
+      'url.full': 'https://api.cohere.ai',
+      'llm.api': APIS.CHAT.API,
+      'llm.model': request.model ?? 'command-r',
+      'http.max.retries': requestOptions?.maxRetries,
+      'llm.temperature': request.temperature,
+      'llm.frequency_penalty': request.frequencyPenalty?.toString(),
+      'llm.presence_penalty': request.presencePenalty?.toString(),
+      'llm.top_p': request.p,
+      'llm.top_k': request.k,
+      'llm.seed': request.seed?.toString(),
+      'llm.documents': request.documents !== undefined ? JSON.stringify(request.documents) : undefined,
+      'llm.tools': request.tools !== undefined ? JSON.stringify(request.tools) : undefined,
+      'llm.tool_results': request.tools !== undefined ? JSON.stringify(request.tools) : undefined,
+      'llm.connectors': request.connectors !== undefined ? JSON.stringify(request.connectors) : undefined,
+      'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
+      ...customAttributes
+    }
+    const span = tracer.startSpan(APIS.CHAT.METHOD, { kind: SpanKind.CLIENT, attributes })
+    try {
+      return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
+        const prompts: Array<{ role: string, content: string }> = []
+        if (request.preamble !== undefined && request.preamble !== '') {
+          prompts.push({ role: 'CHATBOT', content: request.preamble }, { role: 'USER', content: request.message })
+        }
+        if (request.chatHistory !== undefined) {
+          prompts.push(...request.chatHistory.map((chat) => { return { role: chat.role, content: chat.message } }))
+        }
+        attributes['llm.prompts'] = JSON.stringify(prompts)
+        const response = await original.apply(this, [request, requestOptions])
+        if (response.meta?.billedUnits?.inputTokens !== undefined) {
+          attributes['llm.max_input_tokens'] = response.meta?.tokens?.inputTokens?.toString()
+        }
+        if (response.meta?.billedUnits?.outputTokens !== undefined) {
+          attributes['llm.max_output_tokens'] = response.meta?.tokens?.outputTokens?.toString()
+        }
+        const totalTokens = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
+        attributes['llm.token.counts'] = JSON.stringify({
+          input_tokens: response.meta?.billedUnits?.inputTokens,
+          output_tokens: response.meta?.billedUnits?.outputTokens,
+          total_tokens: totalTokens
+        })
+        if (response.chatHistory !== undefined) {
+          attributes['llm.responses'] = JSON.stringify(response.chatHistory.map((chat) => { return { message: { role: chat.role, content: chat.message } } }))
+        } else {
+          attributes['llm.responses'] = JSON.stringify({ message: { role: 'CHATBOT', content: response.text } })
+        }
+        attributes['llm.response_id'] = response.response_id
+        attributes['llm.tool_calls'] = JSON.stringify(response.toolCalls)
+        attributes['llm.generation_id'] = response.generationId
+        attributes['llm.is_search_required'] = response.isSearchRequired
+        span.setAttributes(attributes)
+        span.setStatus({ code: SpanStatusCode.OK })
+        span.end()
+        return response
+      })
+    } catch (e: unknown) {
+      span.setStatus({ code: SpanStatusCode.ERROR, message: (e as Error).message })
+      throw e
+    } finally {
+      span.end()
+    }
+  }
+}

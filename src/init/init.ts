@@ -26,6 +26,7 @@ import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
 import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_exporter'
 import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
 import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
+import { cohereInstrumentation } from '@langtrace-instrumentation/cohere/instrumentation'
 
 export const init: LangTraceInit = ({
   api_key = undefined,
@@ -67,6 +68,7 @@ export const init: LangTraceInit = ({
     registerInstrumentations({
       instrumentations: [
         pineconeInstrumentation,
+        cohereInstrumentation,
         chromaInstrumentation,
         llamaIndexInstrumentation,
         openAIInstrumentation,
