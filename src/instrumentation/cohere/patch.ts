@@ -26,7 +26,10 @@ import {
   context,
   trace
 } from '@opentelemetry/api'
-import { ICohereClient, IChatRequest, IRequestOptions, ChatFn, INonStreamedChatResponse, ChatStreamFn } from '@langtrace-instrumentation/cohere/types'
+import {
+  ICohereClient, IChatRequest, IRequestOptions, ChatFn, INonStreamedChatResponse, ChatStreamFn, IEmbedRequest, IEmbedResponse,
+  EmbedFn
+} from '@langtrace-instrumentation/cohere/types'
 
 export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: ICohereClient, request: IChatRequest, requestOptions?: IRequestOptions): Promise<INonStreamedChatResponse> {
@@ -144,6 +147,49 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       const response = await original.apply(this, [request, requestOptions])
       return handleStream(response, attributes, span)
     })
+  }
+}
+
+export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
+  return async function (this: ICohereClient, request: IEmbedRequest, requestOptions?: IRequestOptions): Promise<IEmbedResponse> {
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
+    const attributes: Partial<LLMSpanAttributes> = {
+      'langtrace.sdk.name': sdkName,
+      'langtrace.service.name': this._options.clientName ?? 'cohere',
+      'langtrace.service.type': 'llm',
+      'langtrace.version': langtraceVersion,
+      'langtrace.service.version': moduleVersion,
+      'url.full': 'https://api.cohere.ai',
+      'llm.api': APIS.EMBED.API,
+      'llm.model': request.model ?? 'embed-english-v2.0',
+      'http.max.retries': requestOptions?.maxRetries,
+      'llm.embedding_input_type': request.inputType,
+      'llm.encoding.formats': JSON.stringify(request.embeddingTypes),
+      'llm.embedding_inputs': JSON.stringify(request.texts),
+      'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
+      ...customAttributes
+    }
+    const span = tracer.startSpan(APIS.EMBED.METHOD, { kind: SpanKind.CLIENT, attributes })
+    try {
+      return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
+        const response = await original.apply(this, [request, requestOptions])
+        attributes['llm.embedding_dataset_id'] = response.id
+        attributes['llm.max_input_tokens'] = response.meta?.billedUnits?.inputTokens?.toString()
+        attributes['llm.token.counts'] = JSON.stringify({
+          input_tokens: response.meta?.billedUnits?.inputTokens,
+          output_tokens: response.meta?.billedUnits?.outputTokens,
+          total_tokens: Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
+        })
+        span.setAttributes(attributes)
+        span.setStatus({ code: SpanStatusCode.OK })
+        return response
+      })
+    } catch (e: unknown) {
+      span.setStatus({ code: SpanStatusCode.ERROR, message: (e as Error).message })
+      throw e
+    } finally {
+      span.end()
+    }
   }
 }
 

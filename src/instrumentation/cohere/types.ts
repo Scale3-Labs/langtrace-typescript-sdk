@@ -1,7 +1,9 @@
+import { ApiMeta } from 'cohere-ai/api'
 
 // Functions
 export type ChatFn = (request: IChatRequest, requestOptions?: IRequestOptions) => Promise<INonStreamedChatResponse>
 export type ChatStreamFn = (request: IChatRequest, requestOptions?: IRequestOptions) => Promise<any>
+export type EmbedFn = (request: IEmbedRequest, requestOptions?: IRequestOptions) => Promise<IEmbedResponse>
 
 // Interfaces
 export interface IOptions {
@@ -62,6 +64,7 @@ export interface IChatRequest {
   maxTokens?: number
   maxInputTokens?: number
 }
+
 interface IApiMeta {
   billedUnits?: {
     inputTokens?: number
@@ -89,4 +92,29 @@ export interface INonStreamedChatResponse {
   meta?: IApiMeta
   toolCalls?: IToolCall[]
   chatHistory?: IChatMessage[]
+}
+
+type EmbeddingType = 'float' | 'int8' | 'uint8' | 'binary' | 'ubinary'
+type EmbedInputType = 'search_document' | 'search_query' | 'classification' | 'clustering'
+type EmbedRequestTruncate = 'NONE' | 'START' | 'END'
+export interface IEmbedRequest {
+  texts: string[]
+  model?: string
+  inputType?: EmbedInputType
+  embeddingTypes?: EmbeddingType[]
+  truncate?: EmbedRequestTruncate
+}
+export interface IEmbedResponse {
+  id: string
+  embeddings: number[][] | EmbedByTypeResponseEmbeddings
+  texts: string[]
+  meta?: ApiMeta
+  responseType: 'embeddings_floats' | 'embeddings_by_type'
+}
+interface EmbedByTypeResponseEmbeddings {
+  float?: number[][]
+  int8?: number[][]
+  uint8?: number[][]
+  binary?: number[][]
+  ubinary?: number[][]
 }

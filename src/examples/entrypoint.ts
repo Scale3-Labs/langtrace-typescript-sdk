@@ -1,6 +1,10 @@
-import { basicStream } from '@langtrace-examples/cohere/basic'
 
 // Server
 // void runSimpleServer()
 // LamaIndex
-void basicStream()
+// void basicStream()
+
+import { basicEmbed } from '@langtrace-examples/cohere/basic'
+
+void basicEmbed()
+// void embeddingsCreate()

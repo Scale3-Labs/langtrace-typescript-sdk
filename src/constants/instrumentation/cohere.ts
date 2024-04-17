@@ -3,5 +3,6 @@ export const APIS = {
     METHOD: 'cohere.chat',
     API: '/v1/chat'
   },
-  CHAT_STREAM: { METHOD: 'cohere.chatStream' }
+  CHAT_STREAM: { METHOD: 'cohere.chatStream' },
+  EMBED: { METHOD: 'cohere.embed', API: '/v1/embed' }
 }

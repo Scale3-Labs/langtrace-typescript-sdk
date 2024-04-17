@@ -79,3 +79,15 @@ export const basicStream = async (): Promise<void> => {
     }
   }
 }
+
+export const basicEmbed = async (): Promise<void> => {
+  const embed = await c.embed({
+    texts: ['hello', 'goodbye'],
+    model: 'embed-english-v3.0',
+    inputType: 'classification',
+    embeddingTypes: ['float', 'int8']
+  })
+  console.info(embed)
+
+  console.info('Received embed', embed)
+}
