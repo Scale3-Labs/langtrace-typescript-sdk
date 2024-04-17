@@ -1,8 +1,7 @@
-import { Cohere } from 'cohere-ai'
 
 // Functions
 export type ChatFn = (request: IChatRequest, requestOptions?: IRequestOptions) => Promise<INonStreamedChatResponse>
-export type ChatStreamFn = (request: IChatRequest, requestOptions?: IRequestOptions) => Promise<Cohere.StreamedChatResponse>
+export type ChatStreamFn = (request: IChatRequest, requestOptions?: IRequestOptions) => Promise<any>
 
 // Interfaces
 export interface IOptions {

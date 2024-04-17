@@ -18,8 +18,8 @@ import { diag } from '@opentelemetry/api'
 import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation'
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
-import { ChatFn } from '@langtrace-instrumentation/cohere/types'
-import { chatPatch } from '@langtrace-instrumentation/cohere/patch'
+import { ChatFn, ChatStreamFn } from '@langtrace-instrumentation/cohere/types'
+import { chatPatch, chatStreamPatch } from '@langtrace-instrumentation/cohere/patch'
 
 class CohereInstrumentation extends InstrumentationBase<any> {
   constructor () {
@@ -56,6 +56,9 @@ class CohereInstrumentation extends InstrumentationBase<any> {
       cohere.CohereClient.prototype.chat.name,
       (original: ChatFn) => chatPatch(original, this.tracer, this.instrumentationVersion, name, moduleVersion)
     )
+    this._wrap(cohere.CohereClient.prototype,
+      cohere.CohereClient.prototype.chatStream.name,
+      (original: ChatStreamFn) => chatStreamPatch(original, this.tracer, this.instrumentationVersion, name, moduleVersion))
   }
 
   private _unpatch (cohere: any): void {

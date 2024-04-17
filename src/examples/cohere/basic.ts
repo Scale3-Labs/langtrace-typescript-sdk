@@ -43,31 +43,39 @@ export const basicAgent = async (): Promise<void> => {
   ]
 
   const preamble = `
-You help people answer their questions and other requests interactively. 
+You help people answer their questions and other requests interactively.
 You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. 
 You should focus on serving the user's needs as best you can, which will be wide-ranging.
 Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.
 `
 
-  const response = await c.chat({
-    message: 'Can you provide a sales summary for 29th September 2023',
+  const stream = await c.chatStream({
+    message: 'Can you provide a sales summary for 29th September 2023. And tell me a story in 5 parts!',
     tools,
     preamble,
     model: 'command-r'
   }
   )
-  console.info('Received response', response)
+  const responses = []
+  for await (const chat of stream) {
+    responses.push(chat)
+    if (chat.eventType === 'text-generation') {
+      process.stdout.write(chat.text)
+    }
+  }
+  console.info('Received response', responses[responses.length - 1])
 }
 
-// const basicStream = async (): Promise<void> => {
-//   const stream = await c.chatStream({
-//     model: 'command',
-
-//     message: 'Tell me a story in 5 parts!'
-//   })
-//   for await (const chat of stream) {
-//     if (chat.eventType === 'text-generation') {
-//       process.stdout.write(chat.text)
-//     }
-//   }
-// }
+export const basicStream = async (): Promise<void> => {
+  const stream = await c.chatStream({
+    model: 'command',
+    message: 'Tell me a two letter word!'
+  })
+  const responses = []
+  for await (const chat of stream) {
+    responses.push(chat)
+    if (chat.eventType === 'text-generation') {
+      process.stdout.write(chat.text)
+    }
+  }
+}
