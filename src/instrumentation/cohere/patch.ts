@@ -147,7 +147,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
   }
 }
 
-async function * handleStream (stream: any, attributes: Partial<LLMSpanAttributes>, span: Span): any {
+async function * handleStream (stream: any, attributes: Partial<LLMSpanAttributes>, span: Span): AsyncGenerator<any, void> {
   try {
     span.addEvent(Event.STREAM_START)
     for await (const chat of stream) {
