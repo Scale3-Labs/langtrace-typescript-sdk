@@ -4,7 +4,10 @@
 // LamaIndex
 // void basicStream()
 
-import { basicEmbed } from '@langtrace-examples/cohere/basic'
+import { basicAgent } from '@langtrace-examples/cohere/basic'
 
-void basicEmbed()
+// void basicEmbed()
+// void basicRerank()
+void basicAgent()
+// void functionCalling()
 // void embeddingsCreate()

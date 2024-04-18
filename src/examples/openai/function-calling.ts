@@ -10,6 +10,7 @@ interface StudentCustomFunction {
   name: string
   description: string
   parameters: {
+    required?: string[]
     type: string
     properties: {
       name: { type: string, description: string }
@@ -27,6 +28,7 @@ const studentCustomFunctions: StudentCustomFunction[] = [
     description: 'Get the student information from the body of the input text',
     parameters: {
       type: 'object',
+      required: ['name'],
       properties: {
         name: {
           type: 'string',

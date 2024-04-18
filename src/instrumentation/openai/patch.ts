@@ -131,7 +131,24 @@ export function chatCompletionCreate (
     }
 
     if (args[0]?.functions !== undefined) {
-      attributes['llm.function.prompts'] = JSON.stringify(args[0]?.functions)
+      const mappedFunctions = args[0]?.functions.map((func: any) => {
+        const obj = {
+          name: func.name,
+          description: func.description,
+          tool_type: 'function',
+          parameterDefinitions: structuredClone(func.parameters.properties)
+        }
+        Object.keys(obj.parameterDefinitions as Record<string, any> ?? {}).forEach((key) => {
+          const params = obj.parameterDefinitions
+          if (func.parameters.required !== undefined) {
+            if (params?.[key] !== undefined) {
+              params[key].required = func.parameters.required?.includes(key)
+            }
+          }
+        })
+        return obj
+      })
+      attributes['llm.tools'] = JSON.stringify(mappedFunctions)
     }
 
     if (!(args[0].stream as boolean) || args[0].stream === false) {
@@ -306,7 +323,7 @@ export function embeddingsCreate (
     }
 
     if (args[0]?.encoding_format !== undefined) {
-      attributes['llm.encoding.format'] = args[0]?.encoding_format
+      attributes['llm.encoding.formats'] = JSON.stringify([args[0]?.encoding_format])
     }
 
     if (args[0]?.dimensions !== undefined) {

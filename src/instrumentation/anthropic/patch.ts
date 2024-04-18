@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /*
  * Copyright (c) 2024 Scale3 Labs
  *
