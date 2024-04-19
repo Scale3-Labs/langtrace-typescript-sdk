@@ -277,7 +277,7 @@ async function * handleStreamResponse (
         ...customAttributes
       }),
       'llm.responses': JSON.stringify([
-        { message: { role: 'assistant', content: result.join('') } }
+        { message: { role: 'assistant', content: result.join('') } } // [{message: <>, type: 'image-generation'}]
       ])
     })
     span.addEvent(Event.STREAM_END)

@@ -4,6 +4,7 @@ import { ApiMeta } from 'cohere-ai/api'
 export type ChatFn = (request: IChatRequest, requestOptions?: IRequestOptions) => Promise<INonStreamedChatResponse>
 export type ChatStreamFn = (request: IChatRequest, requestOptions?: IRequestOptions) => Promise<any>
 export type EmbedFn = (request: IEmbedRequest, requestOptions?: IRequestOptions) => Promise<IEmbedResponse>
+export type RerankFn = (request: IRerankRequest, requestOptions?: IRequestOptions) => Promise<IRerankResponse>
 
 // Interfaces
 export interface IOptions {
@@ -117,4 +118,30 @@ interface EmbedByTypeResponseEmbeddings {
   uint8?: number[][]
   binary?: number[][]
   ubinary?: number[][]
+}
+
+interface RerankDocument {
+  text: string
+}
+
+export interface IRerankRequest {
+  model?: string
+  query: string
+  documents: RerankDocument[] | string[]
+  topN?: number
+  rankFields?: string[]
+  returnDocuments?: boolean
+  maxChunksPerDoc?: number
+}
+
+interface RerankResponseResultsItem {
+  document?: RerankDocument[]
+  index: number
+  relevanceScore: number
+}
+
+export interface IRerankResponse {
+  id?: string
+  results: RerankResponseResultsItem[]
+  meta: ApiMeta
 }

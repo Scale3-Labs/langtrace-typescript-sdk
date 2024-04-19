@@ -28,7 +28,10 @@ import {
 } from '@opentelemetry/api'
 import {
   ICohereClient, IChatRequest, IRequestOptions, ChatFn, INonStreamedChatResponse, ChatStreamFn, IEmbedRequest, IEmbedResponse,
-  EmbedFn
+  EmbedFn,
+  RerankFn,
+  IRerankResponse,
+  IRerankRequest
 } from '@langtrace-instrumentation/cohere/types'
 
 export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
@@ -52,7 +55,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
       'llm.seed': request.seed?.toString(),
       'llm.documents': request.documents !== undefined ? JSON.stringify(request.documents) : undefined,
       'llm.tools': request.tools !== undefined ? JSON.stringify(request.tools.map(t => { return { ...t, tool_type: t.parameterDefinitions !== undefined ? 'function' : undefined } })) : undefined,
-      'llm.tool_results': request.tools !== undefined ? JSON.stringify(request.tools) : undefined,
+      'llm.tool_results': request.tools !== undefined ? JSON.stringify(request.toolResults) : undefined,
       'llm.connectors': request.connectors !== undefined ? JSON.stringify(request.connectors) : undefined,
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
@@ -62,7 +65,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
       return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
         const prompts: Array<{ role: string, content: string }> = []
         if (request.preamble !== undefined && request.preamble !== '') {
-          prompts.push({ role: 'CHATBOT', content: request.preamble }, { role: 'USER', content: request.message })
+          prompts.push({ role: 'SYSTEM', content: request.preamble }, { role: 'USER', content: request.message })
         }
         if (request.chatHistory !== undefined) {
           prompts.push(...request.chatHistory.map((chat) => { return { role: chat.role, content: chat.message } }))
@@ -86,7 +89,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
         if (response.chatHistory !== undefined) {
           attributes['llm.responses'] = JSON.stringify(response.chatHistory.map((chat) => { return { message: { role: chat.role, content: chat.message } } }))
         } else {
-          attributes['llm.responses'] = JSON.stringify({ message: { role: 'CHATBOT', content: response.text } })
+          attributes['llm.responses'] = JSON.stringify(response)
         }
         attributes['llm.response_id'] = response.response_id
         attributes['llm.tool_calls'] = response.toolCalls !== undefined ? JSON.stringify(response.toolCalls) : undefined
@@ -127,7 +130,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       'llm.stream': true,
       'llm.documents': request.documents !== undefined ? JSON.stringify(request.documents) : undefined,
       'llm.tools': request.tools !== undefined ? JSON.stringify(request.tools.map(t => { return { ...t, tool_type: t.parameterDefinitions !== undefined ? 'function' : undefined } })) : undefined,
-      'llm.tool_results': request.tools !== undefined ? JSON.stringify(request.tools) : undefined,
+      'llm.tool_results': request.tools !== undefined ? JSON.stringify(request.toolResults) : undefined,
       'llm.connectors': request.connectors !== undefined ? JSON.stringify(request.connectors) : undefined,
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
@@ -226,5 +229,42 @@ async function * handleStream (stream: any, attributes: Partial<LLMSpanAttribute
     throw error
   } finally {
     span.end()
+  }
+}
+
+export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
+  return async function (this: ICohereClient, request: IRerankRequest, requestOptions?: IRequestOptions): Promise<IRerankResponse> {
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
+    const attributes: LLMSpanAttributes = {
+      'langtrace.sdk.name': sdkName,
+      'langtrace.service.name': this._options.clientName ?? 'cohere',
+      'langtrace.service.type': 'llm',
+      'llm.prompts': JSON.stringify({ message: { role: 'USER', content: request.query } }),
+      'langtrace.version': langtraceVersion,
+      'langtrace.service.version': moduleVersion,
+      'url.full': 'https://api.cohere.ai',
+      'llm.api': APIS.RERANK.API,
+      'llm.model': request.model,
+      'http.max.retries': requestOptions?.maxRetries,
+      'llm.documents': JSON.stringify(request.documents),
+      'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
+      ...customAttributes
+    }
+    const span = tracer.startSpan(APIS.RERANK.METHOD, { kind: SpanKind.CLIENT, attributes })
+    try {
+      return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
+        const response = await original.apply(this, [request, requestOptions])
+        attributes['llm.responses'] = JSON.stringify(response.results)
+        attributes['llm.response_id'] = response.id
+        span.setAttributes(attributes)
+        span.setStatus({ code: SpanStatusCode.OK })
+        return response
+      })
+    } catch (e: unknown) {
+      span.setStatus({ code: SpanStatusCode.ERROR, message: (e as Error).message })
+      throw e
+    } finally {
+      span.end()
+    }
   }
 }

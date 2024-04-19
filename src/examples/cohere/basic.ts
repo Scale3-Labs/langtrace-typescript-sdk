@@ -1,5 +1,6 @@
 import { init } from '@langtrace-init/init'
 import * as cohere from 'cohere-ai'
+import { Tool } from 'cohere-ai/api'
 
 init({ write_to_langtrace_cloud: false })
 const c = new cohere.CohereClient({ token: 'bGFkbVRVgNGI0T4Y24AVo6F6sR8KsMej4vYHOmdz' })
@@ -17,11 +18,11 @@ export const basicChat = async (): Promise<void> => {
   console.info('Received prediction', prediction)
 }
 export const basicAgent = async (): Promise<void> => {
-  const tools = [
+  const tools: Tool[] = [
     {
       name: 'query_daily_sales_report',
       description: 'Connects to a database to retrieve overall sales volumes and sales information for a given day.',
-      parameter_definitions: {
+      parameterDefinitions: {
         day: {
           description: 'Retrieves sales data for this day, formatted as YYYY-MM-DD.',
           type: 'str',
@@ -32,7 +33,7 @@ export const basicAgent = async (): Promise<void> => {
     {
       name: 'query_product_catalog',
       description: 'Connects to a a product catalog with information about all the products being sold, including categories, prices, and stock levels.',
-      parameter_definitions: {
+      parameterDefinitions: {
         category: {
           description: 'Retrieves product information data for all products in this category.',
           type: 'str',
@@ -44,26 +45,21 @@ export const basicAgent = async (): Promise<void> => {
 
   const preamble = `
 You help people answer their questions and other requests interactively.
-You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer. 
+You will be asked a very wide array of requests on all kinds of topics. You will be equipped with a wide range of search engines or similar tools to help you, which you use to research your answer.
 You should focus on serving the user's needs as best you can, which will be wide-ranging.
 Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.
 `
 
-  const stream = await c.chatStream({
+  await c.chat({
     message: 'Can you provide a sales summary for 29th September 2023. And tell me a story in 5 parts!',
     tools,
+    toolResults: [
+
+    ],
     preamble,
     model: 'command-r'
   }
   )
-  const responses = []
-  for await (const chat of stream) {
-    responses.push(chat)
-    if (chat.eventType === 'text-generation') {
-      process.stdout.write(chat.text)
-    }
-  }
-  console.info('Received response', responses[responses.length - 1])
 }
 
 export const basicStream = async (): Promise<void> => {
@@ -90,4 +86,19 @@ export const basicEmbed = async (): Promise<void> => {
   console.info(embed)
 
   console.info('Received embed', embed)
+}
+
+export const basicRerank = async (): Promise<void> => {
+  const rerank = await c.rerank({
+    documents: [
+      { text: 'Carson City is the capital city of the American state of Nevada.' },
+      { text: 'The Commonwealth of the Northern Mariana Islands is a group of islands in the Pacific Ocean. Its capital is Saipan.' },
+      { text: 'Washington, D.C. (also known as simply Washington or D.C., and officially as the District of Columbia) is the capital of the United States. It is a federal district.' },
+      { text: 'Capital punishment (the death penalty) has existed in the United States since beforethe United States was a country. As of 2017, capital punishment is legal in 30 of the 50 states.' }
+    ],
+    query: 'What is the capital of the United States?',
+    topN: 3
+  })
+
+  console.info('Received rerank', rerank)
 }
