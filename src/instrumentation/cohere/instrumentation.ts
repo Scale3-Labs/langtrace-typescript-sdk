@@ -15,7 +15,7 @@
  */
 
 import { diag } from '@opentelemetry/api'
-import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation'
+import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
 import { ChatFn, ChatStreamFn, EmbedFn, RerankFn } from '@langtrace-instrumentation/cohere/types'
@@ -26,9 +26,9 @@ class CohereInstrumentation extends InstrumentationBase<any> {
     super(name, version)
   }
 
-  public manualPatch (chroma: any): void {
-    diag.debug('Manually instrumenting ChromaDB')
-    this._patch(chroma)
+  public manualPatch (cohere: any): void {
+    diag.debug('Manually instrumenting cohere')
+    this._patch(cohere)
   }
 
   init (): Array<InstrumentationModuleDefinition<any>> {
@@ -51,6 +51,9 @@ class CohereInstrumentation extends InstrumentationBase<any> {
   }
 
   private _patch (cohere: any, moduleVersion?: string): void {
+    if (isWrapped(cohere.CohereClient.prototype)) {
+      this._unpatch(cohere)
+    }
     this._wrap(
       cohere.CohereClient.prototype,
       cohere.CohereClient.prototype.chat.name,
@@ -71,6 +74,9 @@ class CohereInstrumentation extends InstrumentationBase<any> {
 
   private _unpatch (cohere: any): void {
     this._unwrap(cohere.CohereClient.prototype, cohere.CohereClient.prototype.chat.name as string)
+    this._unwrap(cohere.CohereClient.prototype, cohere.CohereClient.prototype.chatStream.name as string)
+    this._unwrap(cohere.CohereClient.prototype, cohere.CohereClient.prototype.embed.name as string)
+    this._unwrap(cohere.CohereClient.prototype, cohere.CohereClient.prototype.rerank.name as string)
   }
 }
 
