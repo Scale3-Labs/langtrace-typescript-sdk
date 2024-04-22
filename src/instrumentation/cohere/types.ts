@@ -25,7 +25,6 @@ interface IChatMessage {
   message: string
 }
 interface IChatConnector {
-
   id: string
   userAccessToken?: string
   continueOnFailure?: boolean

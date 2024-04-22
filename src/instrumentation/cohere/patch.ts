@@ -58,6 +58,8 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
       'llm.tool_results': request.tools !== undefined ? JSON.stringify(request.toolResults) : undefined,
       'llm.connectors': request.connectors !== undefined ? JSON.stringify(request.connectors) : undefined,
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
+      'llm.max_input_tokens': request.maxInputTokens?.toString(),
+      'llm.max_tokens': request.maxTokens?.toString(),
       ...customAttributes
     }
     const span = tracer.startSpan(APIS.CHAT.METHOD, { kind: SpanKind.CLIENT, attributes })
@@ -65,21 +67,14 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
       return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
         const prompts: Array<{ role: string, content: string }> = []
         if (request.preamble !== undefined && request.preamble !== '') {
-          prompts.push({ role: 'SYSTEM', content: request.preamble }, { role: 'USER', content: request.message })
+          prompts.push({ role: 'SYSTEM', content: request.preamble })
         }
         if (request.chatHistory !== undefined) {
           prompts.push(...request.chatHistory.map((chat) => { return { role: chat.role, content: chat.message } }))
-        } else {
-          prompts.push({ role: 'USER', content: request.message })
         }
+        prompts.push({ role: 'USER', content: request.message })
         attributes['llm.prompts'] = JSON.stringify(prompts)
         const response = await original.apply(this, [request, requestOptions])
-        if (response.meta?.billedUnits?.inputTokens !== undefined) {
-          attributes['llm.max_input_tokens'] = response.meta?.tokens?.inputTokens?.toString()
-        }
-        if (response.meta?.billedUnits?.outputTokens !== undefined) {
-          attributes['llm.max_output_tokens'] = response.meta?.tokens?.outputTokens?.toString()
-        }
         const totalTokens = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['llm.token.counts'] = JSON.stringify({
           input_tokens: response.meta?.billedUnits?.inputTokens,
@@ -133,19 +128,20 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       'llm.tool_results': request.tools !== undefined ? JSON.stringify(request.toolResults) : undefined,
       'llm.connectors': request.connectors !== undefined ? JSON.stringify(request.connectors) : undefined,
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
+      'llm.max_input_tokens': request.maxInputTokens?.toString(),
+      'llm.max_tokens': request.maxTokens?.toString(),
       ...customAttributes
     }
     const span = tracer.startSpan(APIS.CHAT_STREAM.METHOD, { kind: SpanKind.CLIENT, attributes })
     return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
       const prompts: Array<{ role: string, content: string }> = []
       if (request.preamble !== undefined && request.preamble !== '') {
-        prompts.push({ role: 'CHATBOT', content: request.preamble }, { role: 'USER', content: request.message })
+        prompts.push({ role: 'SYSTEM', content: request.preamble })
       }
       if (request.chatHistory !== undefined) {
         prompts.push(...request.chatHistory.map((chat) => { return { role: chat.role, content: chat.message } }))
-      } else {
-        prompts.push({ role: 'USER', content: request.message })
       }
+      prompts.push({ role: 'USER', content: request.message })
       attributes['llm.prompts'] = JSON.stringify(prompts)
       const response = await original.apply(this, [request, requestOptions])
       return handleStream(response, attributes, span)
@@ -176,8 +172,6 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
     try {
       return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
         const response = await original.apply(this, [request, requestOptions])
-        attributes['llm.embedding_dataset_id'] = response.id
-        attributes['llm.max_input_tokens'] = response.meta?.billedUnits?.inputTokens?.toString()
         attributes['llm.token.counts'] = JSON.stringify({
           input_tokens: response.meta?.billedUnits?.inputTokens,
           output_tokens: response.meta?.billedUnits?.outputTokens,
@@ -247,6 +241,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
       'llm.model': request.model,
       'http.max.retries': requestOptions?.maxRetries,
       'llm.documents': JSON.stringify(request.documents),
+      'llm.top_k': request.topN,
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
@@ -254,8 +249,14 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
     try {
       return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
         const response = await original.apply(this, [request, requestOptions])
+        const totalTokens = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['llm.responses'] = JSON.stringify(response.results)
         attributes['llm.response_id'] = response.id
+        attributes['llm.token.counts'] = JSON.stringify({
+          input_tokens: response.meta?.billedUnits?.inputTokens,
+          output_tokens: response.meta?.billedUnits?.outputTokens,
+          total_tokens: totalTokens
+        })
         span.setAttributes(attributes)
         span.setStatus({ code: SpanStatusCode.OK })
         return response
