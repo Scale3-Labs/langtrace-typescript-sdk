@@ -70,7 +70,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
       return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
         const prompts: Array<{ role: string, content: string }> = []
         if (request.preamble !== undefined && request.preamble !== '') {
-          prompts.push({ role: 'system', content: request.preamble })
+          prompts.push({ role: 'SYSTEM', content: request.preamble })
         }
         if (request.chatHistory !== undefined) {
           prompts.push(...request.chatHistory.map((chat) => { return { role: chat.role, content: chat.message } }))
@@ -87,7 +87,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
         if (response.chatHistory !== undefined) {
           attributes['llm.responses'] = JSON.stringify(response.chatHistory.map((chat) => { return { role: chat.role, content: chat.message } }))
         } else {
-          attributes['llm.responses'] = JSON.stringify([{ role: 'assistant', content: response.text }])
+          attributes['llm.responses'] = JSON.stringify([{ role: 'CHATBOT', content: response.text }])
         }
         attributes['llm.response_id'] = response.response_id
         attributes['llm.tool_calls'] = response.toolCalls !== undefined ? JSON.stringify(response.toolCalls) : undefined
@@ -139,7 +139,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
     return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
       const prompts: Array<{ role: string, content: string }> = []
       if (request.preamble !== undefined && request.preamble !== '') {
-        prompts.push({ role: 'system', content: request.preamble })
+        prompts.push({ role: 'SYSTEM', content: request.preamble })
       }
       if (request.chatHistory !== undefined) {
         prompts.push(...request.chatHistory.map((chat) => { return { role: chat.role, content: chat.message } }))
@@ -242,7 +242,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': this._options.clientName ?? 'cohere',
       'langtrace.service.type': 'llm',
-      'llm.prompts': JSON.stringify({ role: 'user', content: request.query }),
+      'llm.prompts': JSON.stringify({ role: 'USER', content: request.query }),
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
@@ -259,7 +259,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
       return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
         const response = await original.apply(this, [request, requestOptions])
         const totalTokens = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
-        attributes['llm.responses'] = JSON.stringify(response.results.map((result: any) => { return { content: JSON.stringify(result), role: 'assistant' } }))
+        attributes['llm.responses'] = JSON.stringify(response.results.map((result: any) => { return { content: JSON.stringify(result), role: 'CHATBOT' } }))
         attributes['llm.response_id'] = response.id
         attributes['llm.token.counts'] = JSON.stringify({
           input_tokens: response.meta?.billedUnits?.inputTokens,
@@ -291,7 +291,7 @@ async function * handleStream (stream: any, attributes: Partial<LLMSpanAttribute
         if (chat.response.chatHistory !== undefined) {
           attributes['llm.responses'] = JSON.stringify(chat.response.chatHistory.map((chat: any) => { return { role: chat.role, content: chat.message } }))
         } else {
-          attributes['llm.responses'] = JSON.stringify({ message: { role: 'assistant', content: chat.response.text } })
+          attributes['llm.responses'] = JSON.stringify({ message: { role: 'CHATBOT', content: chat.response.text } })
         }
         const totalTokens = Number(chat.response.meta?.billedUnits?.inputTokens ?? 0) + Number(chat.response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['llm.token.counts'] = JSON.stringify({
