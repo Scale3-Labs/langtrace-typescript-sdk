@@ -31,7 +31,10 @@ import {
   EmbedFn,
   RerankFn,
   IRerankResponse,
-  IRerankRequest
+  IRerankRequest,
+  EmbedJobsCreateFn,
+  ICreateEmbedJobRequest,
+  ICreateEmbedJobResponse
 } from '@langtrace-instrumentation/cohere/types'
 
 export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
@@ -169,6 +172,48 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
       ...customAttributes
     }
     const span = tracer.startSpan(APIS.EMBED.METHOD, { kind: SpanKind.CLIENT, attributes })
+    try {
+      return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
+        const response = await original.apply(this, [request, requestOptions])
+        attributes['llm.token.counts'] = JSON.stringify({
+          input_tokens: response.meta?.billedUnits?.inputTokens,
+          output_tokens: response.meta?.billedUnits?.outputTokens,
+          total_tokens: Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
+        })
+        span.setAttributes(attributes)
+        span.setStatus({ code: SpanStatusCode.OK })
+        return response
+      })
+    } catch (e: unknown) {
+      span.setStatus({ code: SpanStatusCode.ERROR, message: (e as Error).message })
+      throw e
+    } finally {
+      span.end()
+    }
+  }
+}
+
+export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
+  return async function (this: ICohereClient, request: ICreateEmbedJobRequest, requestOptions?: IRequestOptions): Promise<ICreateEmbedJobResponse> {
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
+    const attributes: Partial<LLMSpanAttributes> = {
+      'langtrace.sdk.name': sdkName,
+      'langtrace.service.name': this._options.clientName ?? 'cohere',
+      'langtrace.service.type': 'llm',
+      'langtrace.version': langtraceVersion,
+      'langtrace.service.version': moduleVersion,
+      'url.full': 'https://api.cohere.ai',
+      'llm.api': APIS.EMBED_JOBS.API,
+      'llm.model': request.model,
+      'http.max.retries': requestOptions?.maxRetries,
+      'llm.embedding_input_type': request.inputType,
+      'llm.encoding.formats': JSON.stringify(request.embeddingTypes),
+      'llm.embedding_job_name': request.name,
+      'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
+      'llm.embedding_dataset_id': request.datasetId,
+      ...customAttributes
+    }
+    const span = tracer.startSpan(APIS.EMBED_JOBS.METHOD, { kind: SpanKind.CLIENT, attributes })
     try {
       return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
         const response = await original.apply(this, [request, requestOptions])

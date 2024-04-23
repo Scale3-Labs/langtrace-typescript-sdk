@@ -4,6 +4,7 @@ import { ApiMeta } from 'cohere-ai/api'
 export type ChatFn = (request: IChatRequest, requestOptions?: IRequestOptions) => Promise<INonStreamedChatResponse>
 export type ChatStreamFn = (request: IChatRequest, requestOptions?: IRequestOptions) => Promise<any>
 export type EmbedFn = (request: IEmbedRequest, requestOptions?: IRequestOptions) => Promise<IEmbedResponse>
+export type EmbedJobsCreateFn = (request: ICreateEmbedJobRequest, requestOptions?: IRequestOptions) => Promise<ICreateEmbedJobResponse>
 export type RerankFn = (request: IRerankRequest, requestOptions?: IRequestOptions) => Promise<IRerankResponse>
 
 // Interfaces
@@ -104,6 +105,19 @@ export interface IEmbedRequest {
   embeddingTypes?: EmbeddingType[]
   truncate?: EmbedRequestTruncate
 }
+export interface ICreateEmbedJobRequest {
+  model: string
+  datasetId: string
+  inputType: EmbedInputType
+  name?: string
+  embeddingTypes?: EmbeddingType[]
+  truncate?: Omit<EmbedRequestTruncate, 'NONE'>
+}
+export interface ICreateEmbedJobResponse {
+  jobId: string
+  meta?: ApiMeta
+}
+
 export interface IEmbedResponse {
   id: string
   embeddings: number[][] | EmbedByTypeResponseEmbeddings

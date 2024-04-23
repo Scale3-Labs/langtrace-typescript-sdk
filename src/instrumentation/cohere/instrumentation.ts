@@ -18,8 +18,8 @@ import { diag } from '@opentelemetry/api'
 import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
-import { ChatFn, ChatStreamFn, EmbedFn, RerankFn } from '@langtrace-instrumentation/cohere/types'
-import { chatPatch, chatStreamPatch, embedPatch, rerankPatch } from '@langtrace-instrumentation/cohere/patch'
+import { ChatFn, ChatStreamFn, EmbedFn, EmbedJobsCreateFn, RerankFn } from '@langtrace-instrumentation/cohere/types'
+import { chatPatch, chatStreamPatch, embedJobsCreatePatch, embedPatch, rerankPatch } from '@langtrace-instrumentation/cohere/patch'
 
 class CohereInstrumentation extends InstrumentationBase<any> {
   constructor () {
@@ -70,6 +70,10 @@ class CohereInstrumentation extends InstrumentationBase<any> {
     this._wrap(cohere.CohereClient.prototype,
       cohere.CohereClient.prototype.rerank.name,
       (original: RerankFn) => rerankPatch(original, this.tracer, this.instrumentationVersion, name, moduleVersion))
+    console.info(cohere.CohereClient.prototype.embedJobs)
+    this._wrap(cohere.CohereClient.prototype,
+      'embedJobs.create',
+      (original: EmbedJobsCreateFn) => embedJobsCreatePatch(original, this.tracer, this.instrumentationVersion, name, moduleVersion))
   }
 
   private _unpatch (cohere: any): void {
@@ -77,6 +81,7 @@ class CohereInstrumentation extends InstrumentationBase<any> {
     this._unwrap(cohere.CohereClient.prototype, cohere.CohereClient.prototype.chatStream.name as string)
     this._unwrap(cohere.CohereClient.prototype, cohere.CohereClient.prototype.embed.name as string)
     this._unwrap(cohere.CohereClient.prototype, cohere.CohereClient.prototype.rerank.name as string)
+    this._unwrap(cohere.CohereClient.prototype, cohere.CohereClient.prototype.embedJobsCreate.name as string)
   }
 }
 

@@ -1,10 +1,10 @@
 import { init } from '@langtrace-init/init'
 import * as cohere from 'cohere-ai'
 import { Tool } from 'cohere-ai/api'
+import fs from 'fs'
 
 init({ write_to_langtrace_cloud: false })
-const c = new cohere.CohereClient({ token: 'bGFkbVRVgNGI0T4Y24AVo6F6sR8KsMej4vYHOmdz' })
-
+const c = new cohere.CohereClient()
 export const basicChat = async (): Promise<void> => {
   const prediction = await c.chat({
     chatHistory: [
@@ -86,6 +86,35 @@ export const basicEmbed = async (): Promise<void> => {
   console.info(embed)
 
   console.info('Received embed', embed)
+}
+
+export const basicEmbedJobsCreate = async (): Promise<void> => {
+  const f = fs.createReadStream('src/examples/cohere/data.csv')
+  const s = await c.datasets.list()
+  // await c.datasets.delete(s.datasets![0]!.id)
+  console.info('Received datasets', s.datasets)
+  if (s.datasets === undefined) {
+    const resp = await c.datasets.create(f, undefined, { name: 'dataset-123', type: 'embed-input' })
+    if (resp.id !== undefined) {
+      const embed = await c.embedJobs.create({
+        datasetId: resp.id,
+        name: 'Embedding job',
+        model: 'embed-english-v3.0',
+        inputType: 'classification',
+        embeddingTypes: ['float', 'int8']
+      })
+      console.info('Received embed', embed)
+    }
+  } else {
+    const embed = await c.embedJobs.create({
+      datasetId: s.datasets[0]!.id,
+      name: 'Embedding job',
+      model: 'embed-english-v3.0',
+      inputType: 'classification',
+      embeddingTypes: ['float', 'int8']
+    })
+    console.info('Received embed', embed)
+  }
 }
 
 export const basicRerank = async (): Promise<void> => {
