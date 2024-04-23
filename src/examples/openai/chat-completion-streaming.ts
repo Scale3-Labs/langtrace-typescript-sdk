@@ -6,7 +6,7 @@ dotenv.config()
 
 const openai = new OpenAI()
 
-init({ batch: true })
+init({ write_to_langtrace_cloud: false })
 
 export async function chatCompletionStreaming (): Promise<void> {
   const stream = await openai.chat.completions.create({

@@ -43,13 +43,17 @@ export function messagesCreate (
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
 
     // Get the prompt and deep copy it
-    const prompts = args[0]?.messages !== undefined ? [...args[0].messages] : []
+    let prompts: Array<{ role: string, content: string }> = []
 
     // Get the system message if any from args and attach it to the prompt with system role
     if (args[0]?.system !== undefined) {
       prompts.push({ role: 'system', content: args[0]?.system })
     }
-
+    // Check if there are messages and concatenate them to the prompts array.
+    if (args[0]?.messages !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      prompts = prompts.concat(args[0].messages.map((msg: { role: string, content: string }) => ({ role: msg.role, content: msg.content })))
+    }
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
@@ -62,6 +66,7 @@ export function messagesCreate (
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
       'llm.prompts': JSON.stringify(prompts),
+      'llm.max_tokens': args[0]?.max_tokens,
       ...customAttributes
     }
 

@@ -14,7 +14,8 @@ export async function chatCompletion (): Promise<void> {
     const response = await openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
-        { role: 'user', content: 'Say this is a test 3 times' }
+        { role: 'system', content: 'Talk like a pirate' },
+        { role: 'user', content: 'Tell me a story in 3 sentences or less.' }
       ],
       stream: false
     })

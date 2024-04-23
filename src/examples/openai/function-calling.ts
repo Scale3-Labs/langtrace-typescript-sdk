@@ -1,11 +1,10 @@
 import { init } from '@langtrace-init/init'
-import { withLangTraceRootSpan } from '@langtrace-utils/instrumentation'
 // Initialize dotenv
 import dotenv from 'dotenv'
 import OpenAI from 'openai'
 dotenv.config()
 
-init()
+init({ write_to_langtrace_cloud: false })
 interface StudentCustomFunction {
   name: string
   description: string
@@ -57,28 +56,28 @@ const studentCustomFunctions: StudentCustomFunction[] = [
 
 export async function functionCalling (): Promise<void> {
   const openai = new OpenAI()
-  await withLangTraceRootSpan(async () => {
-    try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'user',
-            content:
+  // await withLangTraceRootSpan(async () => {
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'user',
+          content:
               // eslint-disable-next-line no-multi-str
               "David Nguyen \
               is a sophomore majoring in computer science at Stanford University. He is Asian American and has a 3.8 GPA. David is known for his programming skills and is an active member of the university's Robotics Club. \
               He hopes to pursue a career in artificial intelligence after graduating."
-          }
-        ],
-        functions: studentCustomFunctions,
-        function_call: 'auto',
-        stream: false
-      })
+        }
+      ],
+      functions: studentCustomFunctions,
+      function_call: 'auto',
+      stream: false
+    })
 
-      console.info(response)
-    } catch (error) {
-      console.info(error)
-    }
-  })
+    console.info(response)
+  } catch (error) {
+    console.info(error)
+  }
+  // })
 }

@@ -54,7 +54,7 @@ export function imagesGenerate (
       'llm.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.prompts': JSON.stringify([args[0]?.prompt]),
+      'llm.prompts': JSON.stringify([{ role: 'user', content: args[0]?.prompt }]),
       ...customAttributes
     }
 
@@ -71,6 +71,8 @@ export function imagesGenerate (
               role: 'assistant'
             }
           }))
+
+          span.setAttributes(attributes)
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -119,6 +121,7 @@ export function chatCompletionCreate (
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
       'llm.prompts': JSON.stringify(args[0]?.messages),
+      'llm.stream': args[0]?.stream,
       ...customAttributes
     }
 
@@ -133,7 +136,15 @@ export function chatCompletionCreate (
     if (args[0]?.user !== undefined) {
       attributes['llm.user'] = args[0]?.user
     }
-
+    if (args[0]?.functions !== undefined) {
+      const functionsToTools = args[0].functions.map((func: any) => {
+        return {
+          function: func,
+          type: 'function'
+        }
+      })
+      attributes['llm.tools'] = JSON.stringify(functionsToTools)
+    }
     if (args[0]?.tools !== undefined) {
       attributes['llm.tools'] = JSON.stringify(args[0]?.tools)
     }
@@ -148,13 +159,36 @@ export function chatCompletionCreate (
           try {
             const resp = await originalMethod.apply(this, args)
             const responses = resp?.choices?.map((choice: any) => {
+              console.info('here', choice.message.function_call)
               const result = {
                 role: choice?.message?.role,
-                content: choice?.message?.content
+                content: choice?.message?.content !== undefined && choice?.message?.content !== null
+                  ? choice?.message?.content
+                  : choice?.message?.function_call !== undefined
+                    ? JSON.stringify(choice?.message?.function_call)
+                    : JSON.stringify(choice?.message?.tool_calls)
               }
               return result
             })
             attributes['llm.responses'] = JSON.stringify(responses)
+            span.setAttributes({
+              'llm.responses': JSON.stringify(responses),
+              'llm.model': resp.model
+            })
+
+            if (resp?.system_fingerprint !== undefined) {
+              span.setAttributes({ 'llm.system.fingerprint': resp?.system_fingerprint })
+            }
+            span.setAttributes({
+              'llm.token.counts': JSON.stringify({
+                input_tokens: (typeof resp?.usage?.prompt_tokens !== 'undefined') ? resp.usage.prompt_tokens : 0,
+                output_tokens: (typeof resp?.usage?.completion_tokens !== 'undefined') ? resp.usage.completion_tokens : 0,
+                total_tokens: (typeof resp?.usage?.total_tokens !== 'undefined') ? resp.usage.total_tokens : 0
+              })
+            })
+            span.setStatus({ code: SpanStatusCode.OK })
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return resp
           } catch (error: any) {
             span.recordException(error as Exception)
             span.setStatus({
@@ -271,12 +305,13 @@ export function embeddingsCreate (
     if (originalContext?._client?.baseURL?.includes('azure') === true) {
       serviceProvider = SERVICE_PROVIDERS.AZURE
     }
-    const attributes: Partial<LLMSpanAttributes> = {
+    const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
+      'llm.prompts': '',
       'url.full': originalContext?._client?.baseURL,
       'llm.api': APIS.EMBEDDINGS_CREATE.ENDPOINT,
       'llm.model': args[0]?.model,
@@ -285,10 +320,6 @@ export function embeddingsCreate (
       'llm.embedding_inputs': JSON.stringify([args[0]?.input]),
       'llm.encoding.formats': JSON.stringify([args[0]?.encoding_format]),
       ...customAttributes
-    }
-
-    if (args[0]?.encoding_format !== undefined) {
-      attributes['llm.encoding.formats'] = JSON.stringify([args[0]?.encoding_format])
     }
 
     if (args[0]?.dimensions !== undefined) {

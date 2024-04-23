@@ -1,8 +1,10 @@
-import { basicEmbedJobsCreate } from '@langtrace-examples/cohere/basic'
 
+// import { chatCompletionStreaming } from '@langtrace-examples/openai/chat-completion-streaming'
+import { chatCompletion } from '@langtrace-examples/openai/chat-completion'
 // void basic()
 // void basicChat()
-void basicEmbedJobsCreate()
+void chatCompletion()
+// void chatCompletionStreaming()
 // void basicRerank()
 // void basicAgent()
 // void functionCalling()
