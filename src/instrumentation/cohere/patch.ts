@@ -70,7 +70,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
       return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
         const prompts: Array<{ role: string, content: string }> = []
         if (request.preamble !== undefined && request.preamble !== '') {
-          prompts.push({ role: 'SYSTEM', content: request.preamble })
+          prompts.push({ role: 'system', content: request.preamble })
         }
         if (request.chatHistory !== undefined) {
           prompts.push(...request.chatHistory.map((chat) => { return { role: chat.role, content: chat.message } }))
@@ -85,9 +85,9 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
           total_tokens: totalTokens
         })
         if (response.chatHistory !== undefined) {
-          attributes['llm.responses'] = JSON.stringify(response.chatHistory.map((chat) => { return { message: { role: chat.role, content: chat.message } } }))
+          attributes['llm.responses'] = JSON.stringify(response.chatHistory.map((chat) => { return { role: chat.role, content: chat.message } }))
         } else {
-          attributes['llm.responses'] = JSON.stringify(response)
+          attributes['llm.responses'] = JSON.stringify([{ role: 'assistant', content: response.text }])
         }
         attributes['llm.response_id'] = response.response_id
         attributes['llm.tool_calls'] = response.toolCalls !== undefined ? JSON.stringify(response.toolCalls) : undefined
@@ -139,7 +139,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
     return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
       const prompts: Array<{ role: string, content: string }> = []
       if (request.preamble !== undefined && request.preamble !== '') {
-        prompts.push({ role: 'SYSTEM', content: request.preamble })
+        prompts.push({ role: 'system', content: request.preamble })
       }
       if (request.chatHistory !== undefined) {
         prompts.push(...request.chatHistory.map((chat) => { return { role: chat.role, content: chat.message } }))
@@ -235,6 +235,50 @@ export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer
   }
 }
 
+export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
+  return async function (this: ICohereClient, request: IRerankRequest, requestOptions?: IRequestOptions): Promise<IRerankResponse> {
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
+    const attributes: LLMSpanAttributes = {
+      'langtrace.sdk.name': sdkName,
+      'langtrace.service.name': this._options.clientName ?? 'cohere',
+      'langtrace.service.type': 'llm',
+      'llm.prompts': JSON.stringify({ role: 'user', content: request.query }),
+      'langtrace.version': langtraceVersion,
+      'langtrace.service.version': moduleVersion,
+      'url.full': 'https://api.cohere.ai',
+      'llm.api': APIS.RERANK.API,
+      'llm.model': request.model,
+      'http.max.retries': requestOptions?.maxRetries,
+      'llm.documents': JSON.stringify(request.documents),
+      'llm.top_k': request.topN,
+      'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
+      ...customAttributes
+    }
+    const span = tracer.startSpan(APIS.RERANK.METHOD, { kind: SpanKind.CLIENT, attributes })
+    try {
+      return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
+        const response = await original.apply(this, [request, requestOptions])
+        const totalTokens = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
+        attributes['llm.responses'] = JSON.stringify(response.results.map((result: any) => { return { content: JSON.stringify(result), role: 'assistant' } }))
+        attributes['llm.response_id'] = response.id
+        attributes['llm.token.counts'] = JSON.stringify({
+          input_tokens: response.meta?.billedUnits?.inputTokens,
+          output_tokens: response.meta?.billedUnits?.outputTokens,
+          total_tokens: totalTokens
+        })
+        span.setAttributes(attributes)
+        span.setStatus({ code: SpanStatusCode.OK })
+        return response
+      })
+    } catch (e: unknown) {
+      span.setStatus({ code: SpanStatusCode.ERROR, message: (e as Error).message })
+      throw e
+    } finally {
+      span.end()
+    }
+  }
+}
+
 async function * handleStream (stream: any, attributes: Partial<LLMSpanAttributes>, span: Span): AsyncGenerator<any, void> {
   try {
     span.addEvent(Event.STREAM_START)
@@ -245,9 +289,9 @@ async function * handleStream (stream: any, attributes: Partial<LLMSpanAttribute
       if (chat.eventType === 'stream-end') {
         span.addEvent(Event.STREAM_END)
         if (chat.response.chatHistory !== undefined) {
-          attributes['llm.responses'] = JSON.stringify(chat.response.chatHistory.map((chat: any) => { return { message: { role: chat.role, content: chat.message } } }))
+          attributes['llm.responses'] = JSON.stringify(chat.response.chatHistory.map((chat: any) => { return { role: chat.role, content: chat.message } }))
         } else {
-          attributes['llm.responses'] = JSON.stringify({ message: { role: 'CHATBOT', content: chat.response.text } })
+          attributes['llm.responses'] = JSON.stringify({ message: { role: 'assistant', content: chat.response.text } })
         }
         const totalTokens = Number(chat.response.meta?.billedUnits?.inputTokens ?? 0) + Number(chat.response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['llm.token.counts'] = JSON.stringify({
@@ -268,49 +312,5 @@ async function * handleStream (stream: any, attributes: Partial<LLMSpanAttribute
     throw error
   } finally {
     span.end()
-  }
-}
-
-export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
-  return async function (this: ICohereClient, request: IRerankRequest, requestOptions?: IRequestOptions): Promise<IRerankResponse> {
-    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
-    const attributes: LLMSpanAttributes = {
-      'langtrace.sdk.name': sdkName,
-      'langtrace.service.name': this._options.clientName ?? 'cohere',
-      'langtrace.service.type': 'llm',
-      'llm.prompts': JSON.stringify({ message: { role: 'USER', content: request.query } }),
-      'langtrace.version': langtraceVersion,
-      'langtrace.service.version': moduleVersion,
-      'url.full': 'https://api.cohere.ai',
-      'llm.api': APIS.RERANK.API,
-      'llm.model': request.model,
-      'http.max.retries': requestOptions?.maxRetries,
-      'llm.documents': JSON.stringify(request.documents),
-      'llm.top_k': request.topN,
-      'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
-      ...customAttributes
-    }
-    const span = tracer.startSpan(APIS.RERANK.METHOD, { kind: SpanKind.CLIENT, attributes })
-    try {
-      return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
-        const response = await original.apply(this, [request, requestOptions])
-        const totalTokens = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
-        attributes['llm.responses'] = JSON.stringify(response.results)
-        attributes['llm.response_id'] = response.id
-        attributes['llm.token.counts'] = JSON.stringify({
-          input_tokens: response.meta?.billedUnits?.inputTokens,
-          output_tokens: response.meta?.billedUnits?.outputTokens,
-          total_tokens: totalTokens
-        })
-        span.setAttributes(attributes)
-        span.setStatus({ code: SpanStatusCode.OK })
-        return response
-      })
-    } catch (e: unknown) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: (e as Error).message })
-      throw e
-    } finally {
-      span.end()
-    }
   }
 }

@@ -70,9 +70,9 @@ class CohereInstrumentation extends InstrumentationBase<any> {
     this._wrap(cohere.CohereClient.prototype,
       cohere.CohereClient.prototype.rerank.name,
       (original: RerankFn) => rerankPatch(original, this.tracer, this.instrumentationVersion, name, moduleVersion))
-    console.info(cohere.CohereClient.prototype.embedJobs)
-    this._wrap(cohere.CohereClient.prototype,
-      'embedJobs.create',
+
+    this._wrap(cohere.CohereClient.prototype.embedJobs,
+      'create',
       (original: EmbedJobsCreateFn) => embedJobsCreatePatch(original, this.tracer, this.instrumentationVersion, name, moduleVersion))
   }
 

@@ -1,9 +1,3 @@
-
-// Server
-// void runSimpleServer()
-// LamaIndex
-// void basicStream()
-
 import { basicEmbedJobsCreate } from '@langtrace-examples/cohere/basic'
 
 // void basic()

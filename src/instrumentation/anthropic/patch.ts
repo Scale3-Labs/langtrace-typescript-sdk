@@ -43,11 +43,11 @@ export function messagesCreate (
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
 
     // Get the prompt and deep copy it
-    const prompt = JSON.parse(JSON.stringify(args[0]?.messages))
+    const prompts = args[0]?.messages !== undefined ? [...args[0].messages] : []
 
     // Get the system message if any from args and attach it to the prompt with system role
     if (args[0]?.system !== undefined) {
-      prompt.push({ role: 'system', content: args[0]?.system })
+      prompts.push({ role: 'system', content: args[0]?.system })
     }
 
     const attributes: LLMSpanAttributes = {
@@ -61,7 +61,7 @@ export function messagesCreate (
       'llm.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.prompts': JSON.stringify(prompt),
+      'llm.prompts': JSON.stringify(prompts),
       ...customAttributes
     }
 
@@ -91,7 +91,11 @@ export function messagesCreate (
         async () => {
           try {
             const resp = await originalMethod.apply(this, args)
-            span.setAttributes({ 'llm.responses': JSON.stringify(resp.content) })
+            span.setAttributes({
+              'llm.responses': JSON.stringify(resp.content.map((c: any) => {
+                return { content: c.text, role: 'assistant' }
+              }))
+            })
 
             if (resp?.system_fingerprint !== undefined) {
               span.setAttributes({ 'llm.system.fingerprint': resp?.system_fingerprint })
@@ -157,7 +161,7 @@ async function * handleStreamResponse (span: Span, stream: any): any {
         output_tokens,
         total_tokens: input_tokens + output_tokens
       }),
-      'llm.responses': JSON.stringify([{ text: result.join('') }])
+      'llm.responses': JSON.stringify([{ content: result.join(''), role: 'assistant' }])
     })
     span.addEvent(Event.STREAM_END)
   } catch (error: any) {

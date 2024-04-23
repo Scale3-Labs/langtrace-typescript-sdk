@@ -65,7 +65,12 @@ export function imagesGenerate (
       async () => {
         try {
           const response = await originalMethod.apply(originalContext, args)
-          attributes['llm.responses'] = JSON.stringify(response?.data)
+          attributes['llm.responses'] = JSON.stringify(response?.data?.map((data: any) => {
+            return {
+              content: JSON.stringify(data),
+              role: 'assistant'
+            }
+          }))
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -103,7 +108,6 @@ export function chatCompletionCreate (
     } else if (originalContext?._client?.baseURL?.includes('perplexity') === true) {
       serviceProvider = SERVICE_PROVIDERS.PPLX
     }
-
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
@@ -130,25 +134,8 @@ export function chatCompletionCreate (
       attributes['llm.user'] = args[0]?.user
     }
 
-    if (args[0]?.functions !== undefined) {
-      const mappedFunctions = args[0]?.functions.map((func: any) => {
-        const obj = {
-          name: func.name,
-          description: func.description,
-          tool_type: 'function',
-          parameterDefinitions: structuredClone(func.parameters.properties)
-        }
-        Object.keys(obj.parameterDefinitions as Record<string, any> ?? {}).forEach((key) => {
-          const params = obj.parameterDefinitions
-          if (func.parameters.required !== undefined) {
-            if (params?.[key] !== undefined) {
-              params[key].required = func.parameters.required?.includes(key)
-            }
-          }
-        })
-        return obj
-      })
-      attributes['llm.tools'] = JSON.stringify(mappedFunctions)
+    if (args[0]?.tools !== undefined) {
+      attributes['llm.tools'] = JSON.stringify(args[0]?.tools)
     }
 
     if (!(args[0].stream as boolean) || args[0].stream === false) {
@@ -161,32 +148,13 @@ export function chatCompletionCreate (
           try {
             const resp = await originalMethod.apply(this, args)
             const responses = resp?.choices?.map((choice: any) => {
-              const result: Record<string, any> = {}
-              result.message = choice?.message
-              if (choice?.content_filter_results !== undefined) {
-                result.content_filter_results =
-                  choice?.content_filter_results
+              const result = {
+                role: choice?.message?.role,
+                content: choice?.message?.content
               }
               return result
             })
-            span.setAttributes({
-              'llm.responses': JSON.stringify(responses),
-              'llm.model': resp.model
-            })
-
-            if (resp?.system_fingerprint !== undefined) {
-              span.setAttributes({ 'llm.system.fingerprint': resp?.system_fingerprint })
-            }
-            span.setAttributes({
-              'llm.token.counts': JSON.stringify({
-                input_tokens: (typeof resp?.usage?.prompt_tokens !== 'undefined') ? resp.usage.prompt_tokens : 0,
-                output_tokens: (typeof resp?.usage?.completion_tokens !== 'undefined') ? resp.usage.completion_tokens : 0,
-                total_tokens: (typeof resp?.usage?.total_tokens !== 'undefined') ? resp.usage.total_tokens : 0
-              })
-            })
-            span.setStatus({ code: SpanStatusCode.OK })
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return resp
+            attributes['llm.responses'] = JSON.stringify(responses)
           } catch (error: any) {
             span.recordException(error as Exception)
             span.setStatus({
@@ -230,8 +198,7 @@ export function chatCompletionCreate (
           return handleStreamResponse(
             span,
             resp,
-            promptTokens,
-            args[0]?.functions as boolean ?? false
+            promptTokens
           )
         }
       )
@@ -242,8 +209,7 @@ export function chatCompletionCreate (
 async function * handleStreamResponse (
   span: Span,
   stream: any,
-  promptTokens: number,
-  functionCall = false
+  promptTokens: number
 ): any {
   let completionTokens = 0
   const result: string[] = []
@@ -277,7 +243,7 @@ async function * handleStreamResponse (
         ...customAttributes
       }),
       'llm.responses': JSON.stringify([
-        { message: { role: 'assistant', content: result.join('') } } // [{message: <>, type: 'image-generation'}]
+        { role: 'assistant', content: result.join('') } // [{message: <>, type: 'image-generation'}]
       ])
     })
     span.addEvent(Event.STREAM_END)
@@ -305,8 +271,7 @@ export function embeddingsCreate (
     if (originalContext?._client?.baseURL?.includes('azure') === true) {
       serviceProvider = SERVICE_PROVIDERS.AZURE
     }
-
-    const attributes: LLMSpanAttributes = {
+    const attributes: Partial<LLMSpanAttributes> = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
@@ -317,8 +282,8 @@ export function embeddingsCreate (
       'llm.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.stream': args[0]?.stream,
-      'llm.prompts': JSON.stringify(args[0]?.prompts),
+      'llm.embedding_inputs': JSON.stringify([args[0]?.input]),
+      'llm.encoding.formats': JSON.stringify([args[0]?.encoding_format]),
       ...customAttributes
     }
 

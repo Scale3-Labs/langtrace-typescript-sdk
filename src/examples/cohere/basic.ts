@@ -89,11 +89,9 @@ export const basicEmbed = async (): Promise<void> => {
 }
 
 export const basicEmbedJobsCreate = async (): Promise<void> => {
-  const f = fs.createReadStream('src/examples/cohere/data.csv')
   const s = await c.datasets.list()
-  // await c.datasets.delete(s.datasets![0]!.id)
-  console.info('Received datasets', s.datasets)
   if (s.datasets === undefined) {
+    const f = fs.createReadStream('src/examples/cohere/data.csv')
     const resp = await c.datasets.create(f, undefined, { name: 'dataset-123', type: 'embed-input' })
     if (resp.id !== undefined) {
       const embed = await c.embedJobs.create({
