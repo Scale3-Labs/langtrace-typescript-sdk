@@ -49,13 +49,26 @@ You will be asked a very wide array of requests on all kinds of topics. You will
 You should focus on serving the user's needs as best you can, which will be wide-ranging.
 Unless the user asks for a different style of answer, you should answer in full sentences, using proper grammar and spelling.
 `
-
+  // const toolResults =  [
+  //   {
+  //     outputs: [
+  //       {
+  //         sales_summary: {
+  //           total_sales: 123456,
+  //           total_customers: 1234,
+  //           total_orders: 12345
+  //         }
+  //       }
+  //     ],
+  //     call: {
+  //       name: 'query_daily_sales_report',
+  //       parameters: { day: '2023-09-29' }
+  //     }
+  //   }
+  // ],
   await c.chat({
     message: 'Can you provide a sales summary for 29th September 2023. And tell me a story in 5 parts!',
     tools,
-    toolResults: [
-
-    ],
     preamble,
     model: 'command-r'
   }

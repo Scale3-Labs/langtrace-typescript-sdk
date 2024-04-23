@@ -80,8 +80,8 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
         const response = await original.apply(this, [request, requestOptions])
         const totalTokens = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['llm.token.counts'] = JSON.stringify({
-          input_tokens: response.meta?.billedUnits?.inputTokens,
-          output_tokens: response.meta?.billedUnits?.outputTokens,
+          input_tokens: response.meta?.billedUnits?.inputTokens ?? 0,
+          output_tokens: response.meta?.billedUnits?.outputTokens ?? 0,
           total_tokens: totalTokens
         })
         if (response.chatHistory !== undefined) {
@@ -176,8 +176,8 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
       return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
         const response = await original.apply(this, [request, requestOptions])
         attributes['llm.token.counts'] = JSON.stringify({
-          input_tokens: response.meta?.billedUnits?.inputTokens,
-          output_tokens: response.meta?.billedUnits?.outputTokens,
+          input_tokens: response.meta?.billedUnits?.inputTokens ?? 0,
+          output_tokens: response.meta?.billedUnits?.outputTokens ?? 0,
           total_tokens: Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
         })
         span.setAttributes(attributes)
@@ -218,8 +218,8 @@ export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer
       return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
         const response = await original.apply(this, [request, requestOptions])
         attributes['llm.token.counts'] = JSON.stringify({
-          input_tokens: response.meta?.billedUnits?.inputTokens,
-          output_tokens: response.meta?.billedUnits?.outputTokens,
+          input_tokens: response.meta?.billedUnits?.inputTokens ?? 0,
+          output_tokens: response.meta?.billedUnits?.outputTokens ?? 0,
           total_tokens: Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
         })
         span.setAttributes(attributes)
@@ -262,8 +262,8 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
         attributes['llm.responses'] = JSON.stringify(response.results.map((result: any) => { return { content: JSON.stringify(result), role: 'CHATBOT' } }))
         attributes['llm.response_id'] = response.id
         attributes['llm.token.counts'] = JSON.stringify({
-          input_tokens: response.meta?.billedUnits?.inputTokens,
-          output_tokens: response.meta?.billedUnits?.outputTokens,
+          input_tokens: response.meta?.billedUnits?.inputTokens ?? 0,
+          output_tokens: response.meta?.billedUnits?.outputTokens ?? 0,
           total_tokens: totalTokens
         })
         span.setAttributes(attributes)
@@ -295,8 +295,8 @@ async function * handleStream (stream: any, attributes: Partial<LLMSpanAttribute
         }
         const totalTokens = Number(chat.response.meta?.billedUnits?.inputTokens ?? 0) + Number(chat.response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['llm.token.counts'] = JSON.stringify({
-          input_tokens: chat.response.meta?.billedUnits?.inputTokens,
-          output_tokens: chat.response.meta?.billedUnits?.outputTokens,
+          input_tokens: chat.response.meta?.billedUnits?.inputTokens ?? 0,
+          output_tokens: chat.response.meta?.billedUnits?.outputTokens ?? 0,
           total_tokens: totalTokens
         })
         attributes['llm.tool_calls'] = chat.response.toolCalls !== undefined ? JSON.stringify(chat.response.toolCalls) : undefined
