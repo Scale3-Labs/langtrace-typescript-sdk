@@ -4,7 +4,7 @@
 
 ### Major Changes
 
-- Add cohere support and instrument additional paramaters for multiple vendors to get a richer cardinality
+- Add cohere support and instrument additional parameters for multiple vendors to get a richer cardinality
 
 ## 1.4.0
 
