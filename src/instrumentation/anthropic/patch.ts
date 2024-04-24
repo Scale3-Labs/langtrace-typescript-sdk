@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /*
  * Copyright (c) 2024 Scale3 Labs
  *
@@ -42,13 +43,17 @@ export function messagesCreate (
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
 
     // Get the prompt and deep copy it
-    const prompt = JSON.parse(JSON.stringify(args[0]?.messages))
+    let prompts: Array<{ role: string, content: string }> = []
 
     // Get the system message if any from args and attach it to the prompt with system role
     if (args[0]?.system !== undefined) {
-      prompt.push({ role: 'system', content: args[0]?.system })
+      prompts.push({ role: 'system', content: args[0]?.system })
     }
-
+    // Check if there are messages and concatenate them to the prompts array.
+    if (args[0]?.messages !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      prompts = prompts.concat(args[0].messages.map((msg: { role: string, content: string }) => ({ role: msg.role, content: msg.content })))
+    }
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
@@ -60,7 +65,8 @@ export function messagesCreate (
       'llm.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.prompts': JSON.stringify(prompt),
+      'llm.prompts': JSON.stringify(prompts),
+      'llm.max_tokens': args[0]?.max_tokens,
       ...customAttributes
     }
 
@@ -90,7 +96,11 @@ export function messagesCreate (
         async () => {
           try {
             const resp = await originalMethod.apply(this, args)
-            span.setAttributes({ 'llm.responses': JSON.stringify(resp.content) })
+            span.setAttributes({
+              'llm.responses': JSON.stringify(resp.content.map((c: any) => {
+                return { content: c.text, role: 'assistant' }
+              }))
+            })
 
             if (resp?.system_fingerprint !== undefined) {
               span.setAttributes({ 'llm.system.fingerprint': resp?.system_fingerprint })
@@ -156,7 +166,7 @@ async function * handleStreamResponse (span: Span, stream: any): any {
         output_tokens,
         total_tokens: input_tokens + output_tokens
       }),
-      'llm.responses': JSON.stringify([{ text: result.join('') }])
+      'llm.responses': JSON.stringify([{ content: result.join(''), role: 'assistant' }])
     })
     span.addEvent(Event.STREAM_END)
   } catch (error: any) {

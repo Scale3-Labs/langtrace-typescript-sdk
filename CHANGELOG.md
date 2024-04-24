@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 2.0.0
+
+### Major Changes
+
+- Add cohere support and instrument additional parameters for multiple vendors to get a richer cardinality
+
 ## 1.4.0
 
 ### Minor Changes
