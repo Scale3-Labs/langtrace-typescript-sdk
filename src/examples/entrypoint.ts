@@ -1,8 +1,8 @@
 
 // import { chatCompletionStreaming } from '@langtrace-examples/openai/chat-completion-streaming'
-import { basicRerank } from '@langtrace-examples/cohere/basic'
+import { basicChat } from '@langtrace-examples/cohere/basic'
 // void basic()
-void basicRerank()
+void basicChat()
 
 // void chatCompletionStreaming()
 // void basicRerank()

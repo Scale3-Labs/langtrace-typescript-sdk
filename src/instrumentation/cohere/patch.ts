@@ -40,7 +40,7 @@ import {
 export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: ICohereClient, request: IChatRequest, requestOptions?: IRequestOptions): Promise<INonStreamedChatResponse> {
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
-    const attributes: Partial<LLMSpanAttributes> = {
+    const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': this._options.clientName ?? 'cohere',
       'langtrace.service.type': 'llm',
@@ -82,7 +82,8 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
         attributes['llm.token.counts'] = JSON.stringify({
           input_tokens: response.meta?.billedUnits?.inputTokens ?? 0,
           output_tokens: response.meta?.billedUnits?.outputTokens ?? 0,
-          total_tokens: totalTokens
+          total_tokens: totalTokens,
+          search_units: response.meta?.billedUnits?.searchUnits ?? 0
         })
         if (response.chatHistory !== undefined) {
           attributes['llm.responses'] = JSON.stringify(response.chatHistory.map((chat) => { return { role: chat.role, content: chat.message } }))
@@ -109,7 +110,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
 export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: ICohereClient, request: IChatRequest, requestOptions?: IRequestOptions): Promise<any> {
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
-    const attributes: Partial<LLMSpanAttributes> = {
+    const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': this._options.clientName ?? 'cohere',
       'langtrace.service.type': 'llm',
@@ -155,7 +156,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
 export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: ICohereClient, request: IEmbedRequest, requestOptions?: IRequestOptions): Promise<IEmbedResponse> {
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
-    const attributes: Partial<LLMSpanAttributes> = {
+    const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': this._options.clientName ?? 'cohere',
       'langtrace.service.type': 'llm',
@@ -178,7 +179,8 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
         attributes['llm.token.counts'] = JSON.stringify({
           input_tokens: response.meta?.billedUnits?.inputTokens ?? 0,
           output_tokens: response.meta?.billedUnits?.outputTokens ?? 0,
-          total_tokens: Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
+          total_tokens: Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0),
+          search_units: response.meta?.billedUnits?.searchUnits ?? 0
         })
         span.setAttributes(attributes)
         span.setStatus({ code: SpanStatusCode.OK })
@@ -220,7 +222,8 @@ export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer
         attributes['llm.token.counts'] = JSON.stringify({
           input_tokens: response.meta?.billedUnits?.inputTokens ?? 0,
           output_tokens: response.meta?.billedUnits?.outputTokens ?? 0,
-          total_tokens: Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
+          total_tokens: Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0),
+          search_units: response.meta?.billedUnits?.searchUnits ?? 0
         })
         span.setAttributes(attributes)
         span.setStatus({ code: SpanStatusCode.OK })
@@ -242,7 +245,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': this._options.clientName ?? 'cohere',
       'langtrace.service.type': 'llm',
-      'llm.prompts': JSON.stringify({ role: 'USER', content: request.query }),
+      'llm.retrieval.query': request.query,
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
@@ -259,11 +262,12 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
       return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
         const response = await original.apply(this, [request, requestOptions])
         const totalTokens = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
-        attributes['llm.responses'] = JSON.stringify(response.results.map((result: any) => { return { content: JSON.stringify(result), role: 'CHATBOT' } }))
+        attributes['llm.retrieval.results'] = JSON.stringify(response.results)
         attributes['llm.response_id'] = response.id
         attributes['llm.token.counts'] = JSON.stringify({
           input_tokens: response.meta?.billedUnits?.inputTokens ?? 0,
           output_tokens: response.meta?.billedUnits?.outputTokens ?? 0,
+          search_units: response.meta?.billedUnits?.searchUnits ?? 0,
           total_tokens: totalTokens
         })
         span.setAttributes(attributes)
@@ -279,7 +283,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
   }
 }
 
-async function * handleStream (stream: any, attributes: Partial<LLMSpanAttributes>, span: Span): AsyncGenerator<any, void> {
+async function * handleStream (stream: any, attributes: LLMSpanAttributes, span: Span): AsyncGenerator<any, void> {
   try {
     span.addEvent(Event.STREAM_START)
     for await (const chat of stream) {
@@ -297,7 +301,8 @@ async function * handleStream (stream: any, attributes: Partial<LLMSpanAttribute
         attributes['llm.token.counts'] = JSON.stringify({
           input_tokens: chat.response.meta?.billedUnits?.inputTokens ?? 0,
           output_tokens: chat.response.meta?.billedUnits?.outputTokens ?? 0,
-          total_tokens: totalTokens
+          total_tokens: totalTokens,
+          search_units: chat.response.meta?.billedUnits?.searchUnits ?? 0
         })
         attributes['llm.tool_calls'] = chat.response.toolCalls !== undefined ? JSON.stringify(chat.response.toolCalls) : undefined
         attributes['llm.response_id'] = chat.response.response_id
