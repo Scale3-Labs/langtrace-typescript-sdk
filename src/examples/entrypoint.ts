@@ -1,6 +1,3 @@
-import { basic } from '@langtrace-examples/llamaindex/basic'
 
-// Server
-// void runSimpleServer()
-// LamaIndex
-void basic()
+import { basicChat } from '@langtrace-examples/cohere/basic'
+void basicChat()

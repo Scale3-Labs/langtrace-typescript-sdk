@@ -54,7 +54,7 @@ export function imagesGenerate (
       'llm.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.prompts': JSON.stringify([args[0]?.prompt]),
+      'llm.prompts': JSON.stringify([{ role: 'user', content: args[0]?.prompt }]),
       ...customAttributes
     }
 
@@ -65,7 +65,14 @@ export function imagesGenerate (
       async () => {
         try {
           const response = await originalMethod.apply(originalContext, args)
-          attributes['llm.responses'] = JSON.stringify(response?.data)
+          attributes['llm.responses'] = JSON.stringify(response?.data?.map((data: any) => {
+            return {
+              content: JSON.stringify(data),
+              role: 'assistant'
+            }
+          }))
+
+          span.setAttributes(attributes)
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -95,7 +102,6 @@ export function chatCompletionCreate (
   return async function (this: any, ...args: any[]) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const originalContext = this
-
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     // Determine the service provider
     let serviceProvider = SERVICE_PROVIDERS.OPENAI
@@ -104,7 +110,6 @@ export function chatCompletionCreate (
     } else if (originalContext?._client?.baseURL?.includes('perplexity') === true) {
       serviceProvider = SERVICE_PROVIDERS.PPLX
     }
-
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
@@ -116,6 +121,7 @@ export function chatCompletionCreate (
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
       'llm.prompts': JSON.stringify(args[0]?.messages),
+      'llm.stream': args[0]?.stream,
       ...customAttributes
     }
 
@@ -130,9 +136,17 @@ export function chatCompletionCreate (
     if (args[0]?.user !== undefined) {
       attributes['llm.user'] = args[0]?.user
     }
-
     if (args[0]?.functions !== undefined) {
-      attributes['llm.function.prompts'] = JSON.stringify(args[0]?.functions)
+      const functionsToTools = args[0].functions.map((func: any) => {
+        return {
+          function: func,
+          type: 'function'
+        }
+      })
+      attributes['llm.tools'] = JSON.stringify(functionsToTools)
+    }
+    if (args[0]?.tools !== undefined) {
+      attributes['llm.tools'] = JSON.stringify(args[0]?.tools)
     }
 
     if (!(args[0].stream as boolean) || args[0].stream === false) {
@@ -145,14 +159,18 @@ export function chatCompletionCreate (
           try {
             const resp = await originalMethod.apply(this, args)
             const responses = resp?.choices?.map((choice: any) => {
-              const result: Record<string, any> = {}
-              result.message = choice?.message
-              if (choice?.content_filter_results !== undefined) {
-                result.content_filter_results =
-                  choice?.content_filter_results
+              console.info('here', choice.message.function_call)
+              const result = {
+                role: choice?.message?.role,
+                content: choice?.message?.content !== undefined && choice?.message?.content !== null
+                  ? choice?.message?.content
+                  : choice?.message?.function_call !== undefined
+                    ? JSON.stringify(choice?.message?.function_call)
+                    : JSON.stringify(choice?.message?.tool_calls)
               }
               return result
             })
+            attributes['llm.responses'] = JSON.stringify(responses)
             span.setAttributes({
               'llm.responses': JSON.stringify(responses),
               'llm.model': resp.model
@@ -214,8 +232,7 @@ export function chatCompletionCreate (
           return handleStreamResponse(
             span,
             resp,
-            promptTokens,
-            args[0]?.functions as boolean ?? false
+            promptTokens
           )
         }
       )
@@ -226,8 +243,7 @@ export function chatCompletionCreate (
 async function * handleStreamResponse (
   span: Span,
   stream: any,
-  promptTokens: number,
-  functionCall = false
+  promptTokens: number
 ): any {
   let completionTokens = 0
   const result: string[] = []
@@ -261,7 +277,7 @@ async function * handleStreamResponse (
         ...customAttributes
       }),
       'llm.responses': JSON.stringify([
-        { message: { role: 'assistant', content: result.join('') } }
+        { role: 'assistant', content: result.join('') } // [{message: <>, type: 'image-generation'}]
       ])
     })
     span.addEvent(Event.STREAM_END)
@@ -289,7 +305,6 @@ export function embeddingsCreate (
     if (originalContext?._client?.baseURL?.includes('azure') === true) {
       serviceProvider = SERVICE_PROVIDERS.AZURE
     }
-
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
@@ -301,13 +316,9 @@ export function embeddingsCreate (
       'llm.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.stream': args[0]?.stream,
-      'llm.prompts': JSON.stringify(args[0]?.prompts),
+      'llm.embedding_inputs': JSON.stringify([args[0]?.input]),
+      'llm.encoding.formats': JSON.stringify([args[0]?.encoding_format]),
       ...customAttributes
-    }
-
-    if (args[0]?.encoding_format !== undefined) {
-      attributes['llm.encoding.format'] = args[0]?.encoding_format
     }
 
     if (args[0]?.dimensions !== undefined) {

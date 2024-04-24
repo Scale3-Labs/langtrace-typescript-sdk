@@ -32,6 +32,7 @@ export async function basic (): Promise<void> {
   await withLangTraceRootSpan(async () => {
     const message = await anthropic.messages.create({
       max_tokens: 1024,
+      temperature: 0.5,
       system: 'respond like a cat',
       messages: [{ role: 'user', content: 'Hello, Claude' }],
       model: 'claude-3-opus-20240229',
