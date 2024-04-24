@@ -1,5 +1,3 @@
-import { ApiMeta } from 'cohere-ai/api'
-
 // Functions
 export type ChatFn = (request: IChatRequest, requestOptions?: IRequestOptions) => Promise<INonStreamedChatResponse>
 export type ChatStreamFn = (request: IChatRequest, requestOptions?: IRequestOptions) => Promise<any>
@@ -8,6 +6,26 @@ export type EmbedJobsCreateFn = (request: ICreateEmbedJobRequest, requestOptions
 export type RerankFn = (request: IRerankRequest, requestOptions?: IRequestOptions) => Promise<IRerankResponse>
 
 // Interfaces
+interface ApiMeta {
+  apiVersion?: {
+    version: string
+    isDeprecated?: boolean
+    isExperimental?: boolean
+  }
+  billedUnits?: {
+    inputTokens?: number
+    outputTokens?: number
+    searchUnits?: number
+    classifications?: number
+  }
+
+  tokens?: {
+    inputTokens?: number
+    outputTokens?: number
+  }
+  warnings?: string[]
+}
+
 export interface IOptions {
   token?: string | undefined
   clientName?: string | undefined
