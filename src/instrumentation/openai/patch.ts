@@ -311,7 +311,6 @@ export function embeddingsCreate (
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
-      'llm.prompts': '',
       'url.full': originalContext?._client?.baseURL,
       'llm.api': APIS.EMBEDDINGS_CREATE.ENDPOINT,
       'llm.model': args[0]?.model,
