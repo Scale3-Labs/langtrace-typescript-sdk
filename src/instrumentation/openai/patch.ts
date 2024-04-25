@@ -159,7 +159,6 @@ export function chatCompletionCreate (
           try {
             const resp = await originalMethod.apply(this, args)
             const responses = resp?.choices?.map((choice: any) => {
-              console.info('here', choice.message.function_call)
               const result = {
                 role: choice?.message?.role,
                 content: choice?.message?.content !== undefined && choice?.message?.content !== null
