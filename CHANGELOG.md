@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 2.0.2
+
+### Patch Changes
+
+- Remove accidently included console log
+
 ## 2.0.1
 
 ### Major Changes
