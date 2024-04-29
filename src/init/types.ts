@@ -23,7 +23,9 @@ export interface LangtraceInitOptions {
   api_host?: string
   instrumentations?: {
     openai?: any
+    cohere?: any
     anthropic?: any
+    groq?: any
     pinecone?: any
     llamaindex?: any
     chromadb?: any
