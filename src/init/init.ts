@@ -27,6 +27,7 @@ import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_ex
 import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
 import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
 import { cohereInstrumentation } from '@langtrace-instrumentation/cohere/instrumentation'
+import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrumentation'
 
 export const init: LangTraceInit = ({
   api_key = undefined,
@@ -72,7 +73,8 @@ export const init: LangTraceInit = ({
         chromaInstrumentation,
         llamaIndexInstrumentation,
         openAIInstrumentation,
-        anthropicInstrumentation
+        anthropicInstrumentation,
+        qdrantInstrumentation
       ],
       tracerProvider: provider
     })
