@@ -4,6 +4,7 @@ init({ write_to_langtrace_cloud: false })
 const groq = new Groq()
 export const chatCompletion = async (): Promise<void> => {
   const chatCompletion = await groq.chat.completions.create({
+
     messages: [{ role: 'user', content: 'Explain the importance of low latency LLMs' }],
     model: 'mixtral-8x7b-32768'
   }, { timeout: 1000 })

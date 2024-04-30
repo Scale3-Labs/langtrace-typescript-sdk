@@ -22,12 +22,12 @@ export interface IRequestOptions<Req = any> {
 type HTTPMethod = 'get' | 'post' | 'put' | 'patch' | 'delete'
 
 export interface IChatCompletionResponse {
-  choices: {
+  choices: Array<{
     finish_reason: string
     index: number
     logprobs: any
     message: Message
-  }
+  }>
   id?: string
   created?: number
   model?: string
@@ -56,6 +56,15 @@ export interface ClientOptions {
   defaultHeaders?: Record<string, string | null | undefined>
   defaultQuery?: Record<string, string | undefined>
   dangerouslyAllowBrowser?: boolean
+}
+
+export interface IGroqClient {
+  _client: {
+    baseURL: string
+    maxRetries: number
+    timeout: number
+  }
+
 }
 
 export interface IChatCompletionCreateParamsNonStreaming {
