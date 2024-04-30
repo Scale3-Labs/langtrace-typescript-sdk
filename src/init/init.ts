@@ -27,6 +27,7 @@ import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_ex
 import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
 import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
 import { cohereInstrumentation } from '@langtrace-instrumentation/cohere/instrumentation'
+import { groqInstrumentation } from '@langtrace-instrumentation/groq/instrumentation'
 
 export const init: LangTraceInit = ({
   api_key = undefined,
@@ -72,6 +73,7 @@ export const init: LangTraceInit = ({
         chromaInstrumentation,
         llamaIndexInstrumentation,
         openAIInstrumentation,
+        groqInstrumentation,
         anthropicInstrumentation
       ],
       tracerProvider: provider
@@ -96,6 +98,12 @@ export const init: LangTraceInit = ({
 
   if (instrumentations?.pinecone !== undefined) {
     pineconeInstrumentation.manualPatch(instrumentations.pinecone)
+  }
+  if (instrumentations?.cohere !== undefined) {
+    cohereInstrumentation.manualPatch(instrumentations.cohere)
+  }
+  if (instrumentations?.groq !== undefined) {
+    groqInstrumentation.manualPatch(instrumentations.groq)
   }
   registerInstrumentations({ tracerProvider: provider })
 }

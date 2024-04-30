@@ -1,3 +1,3 @@
 
-import { basicChat } from '@langtrace-examples/cohere/basic'
-void basicChat()
+import { chatCompletion } from '@langtrace-examples/groq/basic'
+void chatCompletion()
