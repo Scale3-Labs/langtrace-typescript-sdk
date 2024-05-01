@@ -1,6 +1,7 @@
+
 // Functions
 export type ChatFn = (body: IChatCompletionCreateParamsNonStreaming, requestOptions?: IRequestOptions) => Promise<IChatCompletionResponse>
-
+export type ChatStreamFn = (body: IChatCompletionCreateParamsStreaming, requestOptions?: IRequestOptions) => Promise<AsyncIterable<IChatCompletionResponseStreamed>>
 export interface IRequestOptions<Req = any> {
   method?: HTTPMethod
   path?: string
@@ -21,6 +22,48 @@ export interface IRequestOptions<Req = any> {
 
 type HTTPMethod = 'get' | 'post' | 'put' | 'patch' | 'delete'
 
+interface ChoiceDelta {
+  content?: string | null
+  function_call?: {
+    arguments?: string
+    name?: string
+  }
+  role?: 'system' | 'user' | 'assistant' | 'tool'
+  tool_calls?: Array<{
+    index: number
+    id?: string
+    function?: ToolCallFunction
+    type?: 'function'
+  }>
+}
+export interface IChatCompletionResponseStreamed {
+  id: string
+  choices: Array<
+  {
+    delta: ChoiceDelta
+    finish_reason: 'stop' | 'length' | 'tool_calls' | 'content_filter' | 'function_call' | null
+    index: number
+    logprobs?: any | null
+  }>
+
+  created: number
+  model: string
+  object: 'chat.completion.chunk'
+  system_fingerprint?: string
+  x_groq?: {
+    id?: string
+    usage?: {
+      completion_time?: number
+      completion_tokens?: number
+      prompt_time?: number
+      prompt_tokens?: number
+      queue_time?: number
+      total_time?: number
+      total_tokens?: number
+    }
+    error?: string
+  }
+}
 export interface IChatCompletionResponse {
   choices: Array<{
     finish_reason: string
@@ -66,8 +109,14 @@ export interface IGroqClient {
   }
 
 }
+export interface IChatCompletionCreateParamsStreaming extends IChatCompletionCreateParams {
+  stream: true
+}
 
-export interface IChatCompletionCreateParamsNonStreaming {
+export interface IChatCompletionCreateParamsNonStreaming extends IChatCompletionCreateParams {
+  stream?: false
+}
+interface IChatCompletionCreateParams {
   messages: Message[]
   model: string
   frequency_penalty?: number

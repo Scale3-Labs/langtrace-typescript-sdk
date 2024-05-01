@@ -295,7 +295,7 @@ async function * handleStream (stream: any, attributes: LLMSpanAttributes, span:
         if (chat.response.chatHistory !== undefined) {
           attributes['llm.responses'] = JSON.stringify(chat.response.chatHistory.map((chat: any) => { return { role: chat.role, content: chat.message } }))
         } else {
-          attributes['llm.responses'] = JSON.stringify({ message: { role: 'CHATBOT', content: chat.response.text } })
+          attributes['llm.responses'] = JSON.stringify({ role: 'CHATBOT', content: chat.response.text })
         }
         const totalTokens = Number(chat.response.meta?.billedUnits?.inputTokens ?? 0) + Number(chat.response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['llm.token.counts'] = JSON.stringify({

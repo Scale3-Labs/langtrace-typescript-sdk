@@ -19,7 +19,7 @@ import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNo
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
 import { chatPatch } from '@langtrace-instrumentation/groq/patch'
-import { ChatFn } from '@langtrace-instrumentation/groq/types'
+import { ChatFn, ChatStreamFn } from '@langtrace-instrumentation/groq/types'
 
 class GroqInstrumentation extends InstrumentationBase<any> {
   constructor () {
@@ -57,7 +57,7 @@ class GroqInstrumentation extends InstrumentationBase<any> {
     this._wrap(
       groq.Groq.Chat.Completions.prototype,
       groq.Groq.Chat.Completions.prototype.create.name,
-      (original: ChatFn) => chatPatch(original, this.tracer, this.instrumentationVersion, name, moduleVersion)
+      (original: ChatFn | ChatStreamFn) => chatPatch(original, this.tracer, this.instrumentationVersion, name, moduleVersion)
     )
   }
 
