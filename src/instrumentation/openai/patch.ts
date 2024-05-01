@@ -215,16 +215,7 @@ export function chatCompletionCreate (
           // iterate over messages and calculate tokens
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           const promptContent: string = args[0].messages.map((message: any) => message?.content).join(' ')
-          let promptTokens = calculatePromptTokens(promptContent, model as string)
-
-          // calculate tokens for function prompts (args[0]?.functions)
-          if (args[0]?.functions !== undefined) {
-            // iterate over function prompts and calculate tokens
-            const functionPromptsNames: string[] = args[0].functions.map((func: any) => func?.name)
-            const functionPromptDescriptions: string[] = args[0].functions.map((func: any) => func?.description)
-            const functionPromptContent: string = functionPromptsNames.join(' ') + ' ' + functionPromptDescriptions.join(' ')
-            promptTokens += calculatePromptTokens(functionPromptContent, model as string)
-          }
+          const promptTokens = calculatePromptTokens(promptContent, model as string)
 
           const resp = await originalMethod.apply(this, args)
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -255,7 +246,7 @@ async function * handleStreamResponse (
         model = chunk.model
       }
       // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-      const content = chunk.choices[0]?.delta?.content ? chunk.choices[0]?.delta?.content : chunk.choices[0]?.delta?.function_call?.arguments ? chunk.choices[0]?.delta?.function_call?.arguments : ''
+      const content = chunk.choices[0]?.delta?.content
       const tokenCount = estimateTokens(content as string)
       completionTokens += tokenCount
       result.push(content as string)

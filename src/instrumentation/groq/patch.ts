@@ -1,10 +1,22 @@
-import { SpanKind, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api'
-import { ChatFn, IChatCompletionCreateParamsNonStreaming, IChatCompletionResponse, IGroqClient, IRequestOptions } from '@langtrace-instrumentation/groq/types'
+import { Span, SpanKind, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api'
+import {
+  ChatFn, ChatStreamFn, IChatCompletionCreateParamsNonStreaming, IChatCompletionCreateParamsStreaming, IChatCompletionResponse, IChatCompletionResponseStreamed, IGroqClient, IRequestOptions
+} from '@langtrace-instrumentation/groq/types'
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { APIS } from '@langtrace-constants/instrumentation/groq'
-import { LLMSpanAttributes } from '@langtrase/trace-attributes'
+import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
 
-export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
+export const chatPatch = (original: ChatStreamFn | ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
+  return async function (this: IGroqClient, body: IChatCompletionCreateParamsStreaming | IChatCompletionCreateParamsNonStreaming,
+    options?: IRequestOptions): Promise<IChatCompletionResponse | AsyncIterable<IChatCompletionResponseStreamed>> {
+    if (body.stream === true) {
+      return await chatStreamPatch(original as ChatStreamFn, tracer, langtraceVersion, sdkName, moduleVersion).apply(this, [body, options])
+    }
+    return await chatPatchNonStreamed(original as ChatFn, tracer, langtraceVersion, sdkName, moduleVersion).apply(this, [body, options])
+  }
+}
+
+export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: IGroqClient, body: IChatCompletionCreateParamsNonStreaming, options?: IRequestOptions): Promise<IChatCompletionResponse> {
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const attributes: LLMSpanAttributes = {
@@ -18,7 +30,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
       'llm.model': body.model,
       'http.max.retries': options?.maxRetries ?? this._client.maxRetries,
       'http.timeout': options?.timeout ?? this._client.timeout,
-      'llm.stream': options?.stream ?? false,
+      'llm.stream': body?.stream ?? false,
       'llm.temperature': body.temperature,
       'llm.top_p': body.top_p,
       'llm.top_logprobs': body.top_logprobs,
@@ -66,5 +78,71 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
           span.end()
         }
       })
+  }
+}
+
+export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
+  return async function (this: IGroqClient, body: IChatCompletionCreateParamsStreaming, options?: IRequestOptions) {
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
+    const attributes: LLMSpanAttributes = {
+      'langtrace.sdk.name': sdkName,
+      'langtrace.service.name': 'groq',
+      'langtrace.service.type': 'llm',
+      'langtrace.service.version': moduleVersion,
+      'langtrace.version': langtraceVersion,
+      'url.full': this?._client?.baseURL,
+      'llm.api': APIS.CHAT_COMPLETION.METHOD,
+      'llm.model': body.model,
+      'http.max.retries': options?.maxRetries ?? this._client.maxRetries,
+      'http.timeout': options?.timeout ?? this._client.timeout,
+      'llm.stream': body?.stream ?? false,
+      'llm.temperature': body.temperature,
+      'llm.top_p': body.top_p,
+      'llm.top_logprobs': body.top_logprobs,
+      'llm.user': body.user,
+      'llm.frequency_penalty': body?.frequency_penalty?.toString(),
+      'llm.presence_penalty': body?.presence_penalty?.toString(),
+      'llm.max_tokens': body?.max_tokens?.toString(),
+      'llm.tools': JSON.stringify(body.tools),
+      ...customAttributes
+    }
+    const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes })
+    return await context.with(
+      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
+      async () => {
+        const resp = await original.apply(this, [body, options])
+        return handleStream(resp, attributes, span)
+      })
+  }
+}
+
+async function * handleStream (stream: AsyncIterable<IChatCompletionResponseStreamed>, attributes: LLMSpanAttributes, span: Span): AsyncIterable<IChatCompletionResponseStreamed> {
+  const responseReconstructed: string[] = []
+  try {
+    span.addEvent(Event.STREAM_START)
+    for await (const chunk of stream) {
+      span.addEvent(Event.STREAM_OUTPUT, { response: chunk.choices[0].delta.content ?? '' })
+      responseReconstructed.push(chunk.choices[0].delta.content ?? '')
+
+      if (chunk.choices[0].finish_reason === 'stop') {
+        const totalTokens = Number(chunk.x_groq?.usage?.completion_tokens ?? 0)
+        const inputTokens = chunk.x_groq?.usage?.prompt_tokens ?? 0
+        attributes['llm.token.counts'] = JSON.stringify({
+          input_tokens: inputTokens,
+          output_tokens: totalTokens - inputTokens,
+          total_tokens: totalTokens
+        })
+      }
+      yield chunk
+    }
+    span.addEvent(Event.STREAM_END)
+    attributes['llm.responses'] = JSON.stringify([{ role: 'assistant', content: responseReconstructed.join('') }])
+    span.setAttributes(attributes)
+    span.setStatus({ code: SpanStatusCode.OK })
+  } catch (error: unknown) {
+    span.setStatus({ code: SpanStatusCode.ERROR, message: (error as Error).message })
+    throw error
+  } finally {
+    span.end()
   }
 }
