@@ -11,7 +11,7 @@ class QdrantInstrumentation extends InstrumentationBase<any> {
   }
 
   public manualPatch (qdrant: any): void {
-    diag.debug('Manually instrumenting pinecone')
+    diag.debug('Manually instrumenting Qdrant')
     this._patch(qdrant)
   }
 
@@ -46,7 +46,7 @@ class QdrantInstrumentation extends InstrumentationBase<any> {
         qdrant.QdrantClient.prototype,
         APIS[api].OPERATION,
         (originalMethod: (...args: any[]) => any) =>
-          genericCollectionPatch(originalMethod, api, this.tracer, this.instrumentationVersion, moduleVersion)
+          genericCollectionPatch(originalMethod, api, this.tracer, this.instrumentationVersion, name, moduleVersion)
       )
     })
   }

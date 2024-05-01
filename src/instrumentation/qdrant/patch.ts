@@ -9,6 +9,7 @@ export function genericCollectionPatch (
   method: string,
   tracer: Tracer,
   langtraceVersion: string,
+  sdkName: string,
   version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]): Promise<any> {
@@ -17,7 +18,7 @@ export function genericCollectionPatch (
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
 
     const attributes: DatabaseSpanAttributes = {
-      'langtrace.sdk.name': '@langtrase/typescript-sdk',
+      'langtrace.sdk.name': sdkName,
       'langtrace.service.name': SERVICE_PROVIDERS.QDRANT,
       'langtrace.service.type': 'vectordb',
       'langtrace.service.version': version,
