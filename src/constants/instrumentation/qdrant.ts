@@ -20,10 +20,6 @@ export const APIS: Record<
 string,
 { METHOD: string, OPERATION: string }
 > = {
-  // ADD: {
-  //   METHOD: QdrantDBMethods.ADD,
-  //   OPERATION: 'add'
-  // },
   GET_COLLECTION: {
     METHOD: QdrantDBMethods.GET_COLLECTION,
     OPERATION: 'getCollection'
@@ -32,14 +28,6 @@ string,
     METHOD: QdrantDBMethods.GET_COLLECTIONS,
     OPERATION: 'getCollections'
   },
-  // QUERY: {
-  //   METHOD: QdrantDBMethods.QUERY,
-  //   OPERATION: 'query'
-  // },
-  // QUERY_BATCH: {
-  //   METHOD: QdrantDBMethods.QUERY_BATCH,
-  //   OPERATION: 'query_batch'
-  // },
   DELETE: {
     METHOD: QdrantDBMethods.DELETE,
     OPERATION: 'delete'
