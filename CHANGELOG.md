@@ -1,5 +1,12 @@
 # @langtrase/typescript-sdk
 
+## 2.1.0
+
+### Minor Changes
+
+- Add groq and qdrant support
+- Add disabling vendors option
+
 ## 2.0.2
 
 ### Patch Changes
