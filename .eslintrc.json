@@ -83,15 +83,7 @@
             "allowEmptyReject": true
          }
       ],
-      "no-console": [
-         "error",
-         {
-            "allow": [
-               "warn",
-               "info"
-            ]
-         }
-      ],
+      "no-console": "warn",
       "max-len": [
          "error",
          {
