@@ -8,7 +8,7 @@ dotenv.config()
 
 const pc = new Pinecone()
 const openai = new OpenAI()
-init({ batch: false, write_to_langtrace_cloud: false })
+init({ batch: false, write_to_langtrace_cloud: false, disable_instrumentations: { all_except: ['openai', 'pinecone'] } })
 
 export async function basic (): Promise<void> {
   await withLangTraceRootSpan(async () => {

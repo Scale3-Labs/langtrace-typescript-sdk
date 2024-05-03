@@ -21,10 +21,7 @@ import dotenv from 'dotenv'
 import Anthropic from '@anthropic-ai/sdk'
 dotenv.config()
 
-init({
-  batch: false,
-  write_to_langtrace_cloud: false
-})
+init({ batch: false, write_to_langtrace_cloud: false, disable_instrumentations: { all_except: ['anthropic'] } })
 
 const anthropic = new Anthropic()
 

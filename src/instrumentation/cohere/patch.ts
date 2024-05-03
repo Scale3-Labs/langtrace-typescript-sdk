@@ -57,7 +57,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
       'llm.top_k': request.k,
       'llm.seed': request.seed?.toString(),
       'llm.documents': request.documents !== undefined ? JSON.stringify(request.documents) : undefined,
-      'llm.tools': request.tools !== undefined ? JSON.stringify(request.tools.map(t => { return { ...t, tool_type: t.parameterDefinitions !== undefined ? 'function' : undefined } })) : undefined,
+      'llm.tools': request.tools !== undefined ? JSON.stringify(request.tools) : undefined,
       'llm.tool_results': request.tools !== undefined ? JSON.stringify(request.toolResults) : undefined,
       'llm.connectors': request.connectors !== undefined ? JSON.stringify(request.connectors) : undefined,
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
@@ -128,7 +128,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       'llm.seed': request.seed?.toString(),
       'llm.stream': true,
       'llm.documents': request.documents !== undefined ? JSON.stringify(request.documents) : undefined,
-      'llm.tools': request.tools !== undefined ? JSON.stringify(request.tools.map(t => { return { ...t, tool_type: t.parameterDefinitions !== undefined ? 'function' : undefined } })) : undefined,
+      'llm.tools': request.tools !== undefined ? JSON.stringify(request.tools) : undefined,
       'llm.tool_results': request.tools !== undefined ? JSON.stringify(request.toolResults) : undefined,
       'llm.connectors': request.connectors !== undefined ? JSON.stringify(request.connectors) : undefined,
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
@@ -295,7 +295,7 @@ async function * handleStream (stream: any, attributes: LLMSpanAttributes, span:
         if (chat.response.chatHistory !== undefined) {
           attributes['llm.responses'] = JSON.stringify(chat.response.chatHistory.map((chat: any) => { return { role: chat.role, content: chat.message } }))
         } else {
-          attributes['llm.responses'] = JSON.stringify({ message: { role: 'CHATBOT', content: chat.response.text } })
+          attributes['llm.responses'] = JSON.stringify({ role: 'CHATBOT', content: chat.response.text })
         }
         const totalTokens = Number(chat.response.meta?.billedUnits?.inputTokens ?? 0) + Number(chat.response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['llm.token.counts'] = JSON.stringify({
