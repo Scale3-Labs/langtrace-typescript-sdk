@@ -30,6 +30,28 @@ import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrum
 import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
 import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrumentation'
 
+/**
+ * Initializes the LangTrace system with custom configurations.
+ *
+ * @param api_key API key for Langtrace.
+ * @param batch Whether to batch spans before exporting.
+ *      This helps in reducing the number of requests made to the server.
+ * @param write_to_langtrace_cloud Whether to write spans to Langtrace cloud.
+ *      Enables direct storage of spans in the cloud for accessibility and analysis.
+ * @param custom_remote_exporter Custom remote exporter to use.
+ *      This allows for customization of the span export process to meet specific needs.
+ * @param instrumentations Instrumentations to enable.
+ *      This is used for next.js applications as automatic instrumentation is not supported.
+ * @param api_host API host to send spans to.
+ *      Specifies the destination server for the span data.
+ * @param disable_instrumentations Instrumentations to disable.
+ *      Allows for selective disabling of instrumentations to refine data collection:
+ *      - { all_except: ['instrumentation1', 'instrumentation2'] }
+ *        will disable all instrumentations except 'instrumentation1' and 'instrumentation2'.
+ *      - { only: ['instrumentation3'] }
+ *        will disable all other instrumentations except 'instrumentation3'.
+ *      If both 'all_except' and 'only' are specified, an error will be thrown.
+ */
 export const init: LangTraceInit = ({
   api_key = undefined,
   batch = false,
@@ -96,14 +118,14 @@ const getInstrumentations = (disable_instrumentations: { all_except?: string[], 
   }
   const instrumentations = Object.fromEntries(Object.entries(allInstrumentations)
     .filter(([key, instrumentation]) => {
-      if (disable_instrumentations.only !== undefined) {
-        if (disable_instrumentations.only.includes(key as InstrumentationType)) {
+      if (disable_instrumentations.all_except !== undefined) {
+        if (!disable_instrumentations.all_except.includes(key as InstrumentationType)) {
           instrumentation.disable()
           return false
         }
       }
-      if (disable_instrumentations.all_except !== undefined) {
-        if (!disable_instrumentations.all_except.includes(key as InstrumentationType)) {
+      if (disable_instrumentations.only !== undefined) {
+        if (disable_instrumentations.only.includes(key as InstrumentationType)) {
           instrumentation.disable()
           return false
         }
