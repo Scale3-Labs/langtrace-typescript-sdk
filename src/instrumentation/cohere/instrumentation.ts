@@ -77,11 +77,11 @@ class CohereInstrumentation extends InstrumentationBase<any> {
   }
 
   private _unpatch (cohere: any): void {
-    this._unwrap(cohere.CohereClient.prototype, cohere.CohereClient.prototype.chat.name as string)
-    this._unwrap(cohere.CohereClient.prototype, cohere.CohereClient.prototype.chatStream.name as string)
-    this._unwrap(cohere.CohereClient.prototype, cohere.CohereClient.prototype.embed.name as string)
-    this._unwrap(cohere.CohereClient.prototype, cohere.CohereClient.prototype.rerank.name as string)
-    this._unwrap(cohere.CohereClient.prototype, cohere.CohereClient.prototype.embedJobsCreate.name as string)
+    this._unwrap(cohere.CohereClient.prototype, 'chat')
+    this._unwrap(cohere.CohereClient.prototype, 'chatStream')
+    this._unwrap(cohere.CohereClient.prototype, 'embed')
+    this._unwrap(cohere.CohereClient.prototype, 'rerank')
+    this._unwrap(cohere.CohereClient.prototype.embedJobs, 'create')
   }
 }
 

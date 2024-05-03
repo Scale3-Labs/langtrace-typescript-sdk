@@ -1,3 +1,3 @@
 
-import { chatCompletion } from '@langtrace-examples/groq/basic'
-void chatCompletion()
+import { basic } from '@langtrace-examples/chroma/basic'
+void basic()

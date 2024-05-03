@@ -62,7 +62,7 @@ class GroqInstrumentation extends InstrumentationBase<any> {
   }
 
   private _unpatch (groq: any): void {
-    this._unwrap(groq.Groq.Chat.Completions.prototype, groq.Groq.Chat.Completions.prototype.create.name as string)
+    this._unwrap(groq.Groq.Chat.Completions.prototype, 'create')
   }
 }
 

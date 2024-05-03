@@ -19,22 +19,18 @@ import { withLangTraceRootSpan } from '@langtrace-utils/instrumentation'
 import { ChromaClient, OpenAIEmbeddingFunction } from 'chromadb'
 import dotenv from 'dotenv'
 dotenv.config()
-init({ batch: false, write_to_langtrace_cloud: false })
+init({ batch: false, write_to_langtrace_cloud: false, disable_instrumentations: { all_except: ['chromadb'] } })
 
 export async function basic (): Promise<void> {
   await withLangTraceRootSpan(async () => {
     const client = new ChromaClient()
     const embedder = new OpenAIEmbeddingFunction({ openai_api_key: process.env.OPENAI_API_KEY as string })
     console.info('Creating collection')
-    await client.createCollection({
+    const collection = await client.getOrCreateCollection({
       name: 'test_collection',
       embeddingFunction: embedder
     })
 
-    const collection = await client.getCollection({
-      name: 'test_collection',
-      embeddingFunction: embedder
-    })
     console.info('Adding documents')
     await collection.add({
       ids: ['id1', 'id2'],

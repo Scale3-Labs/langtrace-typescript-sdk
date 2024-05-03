@@ -53,7 +53,7 @@ class QdrantInstrumentation extends InstrumentationBase<any> {
 
   private _unpatch (qdrant: any): void {
     Object.keys(APIS).forEach((api) => {
-      this._unwrap(qdrant.Index.prototype, APIS[api].OPERATION)
+      this._unwrap(qdrant.QdrantClient.prototype, APIS[api].OPERATION)
     })
   }
 }
