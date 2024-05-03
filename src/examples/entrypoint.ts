@@ -1,3 +1,3 @@
 
-import { basic } from '@langtrace-examples/chroma/basic'
+import { basic } from '@langtrace-examples/llamaindex/basic'
 void basic()

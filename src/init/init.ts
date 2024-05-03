@@ -31,7 +31,7 @@ import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/ins
 import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrumentation'
 
 /**
- * Initializes the LangTrace system with custom configurations.
+ * Initializes the LangTrace sdk with custom options.
  *
  * @param api_key API key for Langtrace.
  * @param batch Whether to batch spans before exporting.
@@ -52,6 +52,7 @@ import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrum
  *        will disable all other instrumentations except 'instrumentation3'.
  *      If both 'all_except' and 'only' are specified, an error will be thrown.
  */
+
 export const init: LangTraceInit = ({
   api_key = undefined,
   batch = false,
