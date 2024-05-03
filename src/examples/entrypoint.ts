@@ -1,3 +1,3 @@
 
-import { basicChat } from '@langtrace-examples/cohere/basic'
-void basicChat()
+import { basic } from '@langtrace-examples/llamaindex/basic'
+void basic()

@@ -40,6 +40,7 @@ class OpenAIInstrumentation extends InstrumentationBase<any> {
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching OpenAI SDK version ${moduleVersion}`)
         this._patch(moduleExports, moduleVersion as string)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return moduleExports
       },
       (moduleExports, moduleVersion) => {

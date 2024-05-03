@@ -24,6 +24,16 @@
       "sourceType": "module",
       "project": "./tsconfig.json"
    },
+   "overrides": [
+      {
+         "files": [
+            "src/examples/**/*"
+         ],
+         "rules": {
+            "no-console": "off"
+         }
+      }
+   ],
    "rules": {
       "object-curly-newline": [
          "error",
@@ -75,7 +85,7 @@
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
       "no-underscore-dangle": "off",
-      "@typescript-eslint/no-unused-vars": "error",
+      "@typescript-eslint/no-unused-vars": "warn",
       "unused-imports/no-unused-imports": "error",
       "prefer-promise-reject-errors": [
          "error",
@@ -83,15 +93,7 @@
             "allowEmptyReject": true
          }
       ],
-      "no-console": [
-         "error",
-         {
-            "allow": [
-               "warn",
-               "info"
-            ]
-         }
-      ],
+      "no-console": "error",
       "max-len": [
          "error",
          {

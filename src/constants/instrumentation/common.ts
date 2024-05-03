@@ -33,5 +33,6 @@ export const SERVICE_PROVIDERS = {
   PINECONE: 'Pinecone',
   LLAMAINDEX: 'LlamaIndex',
   CHROMA: 'Chroma',
-  PPLX: 'Perplexity'
+  PPLX: 'Perplexity',
+  QDRANT: 'Qdrant'
 }
