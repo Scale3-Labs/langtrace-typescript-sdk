@@ -13,7 +13,6 @@ export function genericCollectionPatch (
   version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]): Promise<any> {
-    const originalContext = this
     const api = APIS[method]
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
 
@@ -34,7 +33,7 @@ export function genericCollectionPatch (
       trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
       async () => {
         try {
-          const response = await originalMethod.apply(originalContext, args)
+          const response = await originalMethod.apply(this, args)
 
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()

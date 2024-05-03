@@ -179,34 +179,22 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
       const cls = (llama)[key]
       if (cls.prototype !== undefined) {
         if (cls.prototype.query !== undefined) {
-          if (isWrapped(cls.prototype)) {
-            this._unwrap(cls.prototype, 'query')
-          }
+          this._unwrap(cls.prototype, 'query')
         }
         if (cls.prototype.retrieve !== undefined) {
-          if (isWrapped(cls.prototype)) {
-            this._unwrap(cls.prototype, 'retrieve')
-          }
+          this._unwrap(cls.prototype, 'retrieve')
         }
         if (cls.prototype.chat !== undefined) {
-          if (isWrapped(cls.prototype)) {
-            this._unwrap(cls.prototype, 'chat')
-          }
+          this._unwrap(cls.prototype, 'chat')
         }
         if (cls.prototype.call !== undefined) {
-          if (isWrapped(cls.prototype)) {
-            this._unwrap(cls.prototype, 'call')
-          }
+          this._unwrap(cls.prototype, 'call')
         }
         if (cls.prototype.extract !== undefined) {
-          if (isWrapped(cls.prototype)) {
-            this._unwrap(cls.prototype, 'extract')
-          }
+          this._unwrap(cls.prototype, 'extract')
         }
         if (cls.prototype.loadData !== undefined) {
-          if (isWrapped(cls.prototype)) {
-            this._unwrap(cls.prototype, 'loadData')
-          }
+          this._unwrap(cls.prototype, 'loadData')
         }
       }
     }

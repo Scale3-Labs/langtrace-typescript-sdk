@@ -35,7 +35,6 @@ export function collectionPatch (
   version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
-    const originalContext = this
     const api = APIS[method]
     // Extract custom attributes from the current context
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
@@ -69,10 +68,11 @@ export function collectionPatch (
       async () => {
         try {
           // NOTE: Not tracing the response data as it can contain sensitive information
-          const response = await originalMethod.apply(originalContext, args)
+          const response = await originalMethod.apply(this, args)
 
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return response
         } catch (error: any) {
           span.recordException(error as Exception)

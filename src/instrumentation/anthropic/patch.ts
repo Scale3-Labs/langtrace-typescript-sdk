@@ -36,8 +36,6 @@ export function messagesCreate (
   version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
-    const originalContext = this
-
     // Determine the service provider
     const serviceProvider = SERVICE_PROVIDERS.ANTHROPIC
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
@@ -60,11 +58,11 @@ export function messagesCreate (
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
-      'url.full': originalContext?._client?.baseURL,
+      'url.full': this?._client?.baseURL,
       'llm.api': APIS.MESSAGES_CREATE.ENDPOINT,
       'llm.model': args[0]?.model,
-      'http.max.retries': originalContext?._client?.maxRetries,
-      'http.timeout': originalContext?._client?.timeout,
+      'http.max.retries': this?._client?.maxRetries,
+      'http.timeout': this?._client?.timeout,
       'llm.prompts': JSON.stringify(prompts),
       'llm.max_tokens': args[0]?.max_tokens,
       ...customAttributes

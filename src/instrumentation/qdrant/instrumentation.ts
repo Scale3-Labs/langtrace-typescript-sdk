@@ -22,6 +22,7 @@ class QdrantInstrumentation extends InstrumentationBase<any> {
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching Qdrant SDK version ${moduleVersion}`)
         this._patch(moduleExports, moduleVersion as string)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return moduleExports
       },
       (moduleExports, moduleVersion) => {
@@ -53,7 +54,7 @@ class QdrantInstrumentation extends InstrumentationBase<any> {
 
   private _unpatch (qdrant: any): void {
     Object.keys(APIS).forEach((api) => {
-      this._unwrap(qdrant.Index.prototype, APIS[api].OPERATION)
+      this._unwrap(qdrant.QdrantClient.prototype, APIS[api].OPERATION)
     })
   }
 }

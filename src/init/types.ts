@@ -15,20 +15,19 @@
  */
 
 import { SpanExporter } from '@opentelemetry/sdk-trace-base'
+
+export type InstrumentationType = 'openai' | 'cohere' | 'anthropic' | 'groq' | 'pinecone' | 'llamaindex' | 'chromadb' | 'qdrant'
+
 export interface LangtraceInitOptions {
   api_key?: string
   batch?: boolean
   write_to_langtrace_cloud?: boolean
   custom_remote_exporter?: SpanExporter
   api_host?: string
-  instrumentations?: {
-    openai?: any
-    cohere?: any
-    anthropic?: any
-    groq?: any
-    pinecone?: any
-    llamaindex?: any
-    chromadb?: any
+  disable_instrumentations?: {
+    all_except?: InstrumentationType[]
+    only?: InstrumentationType[]
   }
+  instrumentations?: Record<InstrumentationType, any>
 }
 export type LangTraceInit = (options?: LangtraceInitOptions) => void

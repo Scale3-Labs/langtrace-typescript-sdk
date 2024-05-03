@@ -38,6 +38,7 @@ class GroqInstrumentation extends InstrumentationBase<any> {
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching groq SDK version ${moduleVersion}`)
         this._patch(moduleExports, moduleVersion as string)
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return moduleExports
       },
       (moduleExports, moduleVersion) => {
@@ -62,7 +63,7 @@ class GroqInstrumentation extends InstrumentationBase<any> {
   }
 
   private _unpatch (groq: any): void {
-    this._unwrap(groq.Groq.Chat.Completions.prototype, groq.Groq.Chat.Completions.prototype.create.name as string)
+    this._unwrap(groq.Groq.Chat.Completions.prototype, 'create')
   }
 }
 
