@@ -47,7 +47,8 @@ export function genericPatch (
       ...customAttributes
     }
     const span = tracer.startSpan(method, { kind: SpanKind.CLIENT, attributes })
-    const f = await context.with(
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return await context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
       async () => {
         try {
@@ -67,6 +68,5 @@ export function genericPatch (
         }
       }
     )
-    return f
   }
 }

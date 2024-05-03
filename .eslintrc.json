@@ -24,6 +24,16 @@
       "sourceType": "module",
       "project": "./tsconfig.json"
    },
+   "overrides": [
+      {
+         "files": [
+            "src/examples/**/*"
+         ],
+         "rules": {
+            "no-console": "off"
+         }
+      }
+   ],
    "rules": {
       "object-curly-newline": [
          "error",
@@ -83,7 +93,7 @@
             "allowEmptyReject": true
          }
       ],
-      "no-console": "warn",
+      "no-console": "error",
       "max-len": [
          "error",
          {
