@@ -246,7 +246,7 @@ async function * handleStreamResponse (
         model = chunk.model
       }
       // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-      const content = chunk.choices[0]?.delta?.content
+      const content = chunk.choices[0]?.delta?.content || ''
       const tokenCount = estimateTokens(content as string)
       completionTokens += tokenCount
       result.push(content as string)
