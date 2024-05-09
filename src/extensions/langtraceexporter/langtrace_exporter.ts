@@ -73,7 +73,6 @@ export class LangTraceExporter implements SpanExporter {
       'User-Agent': 'LangTraceExporter',
       'x-api-key': this.apiKey!
     }
-
     await axios.post(`${this.api_host}/api/trace`, data, { headers }).then((response) => {
       resultCallback({ code: response.status === 200 ? 0 : 1 })
     })
