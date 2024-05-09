@@ -1,5 +1,12 @@
 # @langtrase/typescript-sdk
 
+## 2.1.1
+
+### Patch Changes
+
+- - Fix batch option ignored bug.
+  - Includes bugfix from @cnjsstong
+
 ## 2.1.0
 
 ### Minor Changes
@@ -68,10 +75,10 @@
 
 ### Major Changes
 
-- - Fix bugs causing failure if api key is missing despite `write_to_remote_url` being off
-  - Rename environment variables to better clarify usage
-  - README.md updates
-  - Fix linting in project
+- Fix bugs causing failure if api key is missing despite `write_to_remote_url` being off
+- Rename environment variables to better clarify usage
+- README.md updates
+- Fix linting in project
 
 ### Minor Changes
 

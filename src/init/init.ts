@@ -63,14 +63,18 @@ export const init: LangTraceInit = ({
   const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud, api_host)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
-
+  const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
   const batchProcessorConsole = new BatchSpanProcessor(consoleExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
   if (api_key !== undefined) {
     process.env.LANGTRACE_API_KEY = api_key
   }
   if (write_to_langtrace_cloud) {
-    provider.addSpanProcessor(batchProcessorRemote)
+    if (batch) {
+      provider.addSpanProcessor(batchProcessorRemote)
+    } else {
+      provider.addSpanProcessor(simpleProcessorRemote)
+    }
   } else if (custom_remote_exporter !== undefined) {
     if (batch) {
       provider.addSpanProcessor(new BatchSpanProcessor(custom_remote_exporter))
