@@ -45,12 +45,9 @@ import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrum
  * @param api_host API host to send spans to.
  *      Specifies the destination server for the span data.
  * @param disable_instrumentations Instrumentations to disable.
- *      Allows for selective disabling of instrumentations to refine data collection:
- *      - { all_except: ['instrumentation1', 'instrumentation2'] }
- *        will disable all instrumentations except 'instrumentation1' and 'instrumentation2'.
- *      - { only: ['instrumentation3'] }
- *        will disable all other instrumentations except 'instrumentation3'.
- *      If both 'all_except' and 'only' are specified, an error will be thrown.
+ *  - all_except: will disable all instrumentations except the ones specified.
+ *  - only: will disable only the instrumentations specified.
+ *  - If both 'all_except' and 'only' are specified, an error will be thrown.
  */
 
 export const init: LangTraceInit = ({
@@ -69,7 +66,9 @@ export const init: LangTraceInit = ({
 
   const batchProcessorConsole = new BatchSpanProcessor(consoleExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
-
+  if (api_key !== undefined) {
+    process.env.LANGTRACE_API_KEY = api_key
+  }
   if (write_to_langtrace_cloud) {
     provider.addSpanProcessor(batchProcessorRemote)
   } else if (custom_remote_exporter !== undefined) {
