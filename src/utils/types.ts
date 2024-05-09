@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2024 Scale3 Labs
  *
@@ -14,11 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+export interface LangtracePrompt {
+  id: string
+  value: string
+  variables: string[]
+  model: string
+  modelSettings: Record<string, unknown>
+  version: number
+  live: boolean
+  tags: string[]
+  note: string
+  promptsetId: string
+  createdAt: string
+  updatedAt: string
+}
 
-// Import the necessary modules
-import { init } from '@langtrace-init/init'
-import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
-import { withLangTraceRootSpan, withAdditionalAttributes } from '@langtrace-utils/instrumentation'
-import { getPromptFromRegistry } from '@langtrace-utils/langtrace'
-import { LangtracePrompt } from '@langtrace-utils/types'
-export { init, withLangTraceRootSpan, LangTraceInit, LangtraceInitOptions, withAdditionalAttributes, getPromptFromRegistry, LangtracePrompt }
+export class LangTraceApiError extends Error {
+  constructor (public message: string, public status: number) {
+    super(message)
+    this.message = message
+    this.status = status
+  }
+}
