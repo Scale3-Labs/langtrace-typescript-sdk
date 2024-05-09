@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 2.2.0
+
+### Minor Changes
+
+- Add fetching prompt from registry functionality
+
 ## 2.1.1
 
 ### Patch Changes
