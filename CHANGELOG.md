@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 2.2.1
+
+### Patch Changes
+
+- Update package json license to apache 2.0
+
 ## 2.2.0
 
 ### Minor Changes

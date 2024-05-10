@@ -1,6 +1,6 @@
 {
   "name": "@langtrase/typescript-sdk",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "A typescript SDK for Langtrace",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,7 +19,7 @@
     "changeset_version": "changeset version"
   },
   "author": "Scale3 Labs",
-  "license": "AGPL-3.0-or-later",
+  "license": "Apache-2.0",
   "dependencies": {
     "@langtrase/trace-attributes": "^3.0.8",
     "@opentelemetry/api": "^1.7.0",
