@@ -21,20 +21,19 @@ import axios from 'axios'
 
 export class LangTraceExporter implements SpanExporter {
   private readonly apiKey?: string
-  private readonly write_to_langtrace_cloud?: boolean
   private readonly api_host?: string
 
   /**
    *
    * @param apiKey Your API key. If not set, the value will be read from the LANGTRACE_API_KEY environment variable
-   * @param write_to_langtrace_cloud If true, spans will be sent to the langtrace cloud
+   * @param api_host The host of the LangTrace API. Default is https://langtrace.ai/api/trace. If set a POST request will be made to this URL with an array of ReadableSpan objects.
+   * See https://github.com/open-telemetry/opentelemetry-js/blob/3c8c29ac8fdd71cd1ef78d2b35c65ced81db16f4/packages/opentelemetry-sdk-trace-base/src/export/ReadableSpan.ts#L29
    */
-  constructor (apiKey?: string, write_to_langtrace_cloud?: boolean, api_host?: string) {
+  constructor (apiKey?: string, api_host?: string) {
     this.apiKey = apiKey ?? process.env.LANGTRACE_API_KEY
-    this.write_to_langtrace_cloud = write_to_langtrace_cloud
-    this.api_host = api_host ?? LANGTRACE_REMOTE_URL
+    this.api_host = api_host ?? `${LANGTRACE_REMOTE_URL}/api/trace`
 
-    if (this.write_to_langtrace_cloud === true && this.apiKey === undefined) {
+    if (this.apiKey === undefined) {
       throw new Error('No LangTrace API key provided')
     }
   }
@@ -62,18 +61,13 @@ export class LangTraceExporter implements SpanExporter {
       ended: span.ended
     }))
 
-    if (this.write_to_langtrace_cloud === false) {
-      resultCallback({ code: 0 })
-      return
-    }
-
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
       'User-Agent': 'LangTraceExporter',
       'x-api-key': this.apiKey!
     }
-    await axios.post(`${this.api_host}/api/trace`, data, { headers }).then((response) => {
+    await axios.post(`${this.api_host}`, data, { headers }).then((response) => {
       resultCallback({ code: response.status === 200 ? 0 : 1 })
     })
       .catch((error) => {

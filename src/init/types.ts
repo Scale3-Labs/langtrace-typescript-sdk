@@ -21,7 +21,7 @@ export type InstrumentationType = 'openai' | 'cohere' | 'anthropic' | 'groq' | '
 export interface LangtraceInitOptions {
   api_key?: string
   batch?: boolean
-  write_to_langtrace_cloud?: boolean
+  write_spans_to_console?: boolean
   custom_remote_exporter?: SpanExporter
   api_host?: string
   disable_instrumentations?: {

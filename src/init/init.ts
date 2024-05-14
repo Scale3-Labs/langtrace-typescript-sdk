@@ -53,23 +53,25 @@ import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrum
 export const init: LangTraceInit = ({
   api_key = undefined,
   batch = false,
-  write_to_langtrace_cloud = true,
+  write_spans_to_console = false,
   custom_remote_exporter = undefined,
   instrumentations = undefined,
   api_host = LANGTRACE_REMOTE_URL,
   disable_instrumentations = {}
 }: LangtraceInitOptions = {}) => {
   const provider = new NodeTracerProvider({ sampler: new LangtraceSampler() })
-  const remoteWriteExporter = new LangTraceExporter(api_key, write_to_langtrace_cloud, api_host)
+  const remoteWriteExporter = new LangTraceExporter(api_key, api_host)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
-  const batchProcessorConsole = new BatchSpanProcessor(consoleExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
+
   if (api_key !== undefined) {
     process.env.LANGTRACE_API_KEY = api_key
   }
-  if (write_to_langtrace_cloud) {
+  if (write_spans_to_console) {
+    provider.addSpanProcessor(simpleProcessorConsole)
+  } else if (api_host !== undefined && custom_remote_exporter === undefined) {
     if (batch) {
       provider.addSpanProcessor(batchProcessorRemote)
     } else {
@@ -80,12 +82,6 @@ export const init: LangTraceInit = ({
       provider.addSpanProcessor(new BatchSpanProcessor(custom_remote_exporter))
     } else {
       provider.addSpanProcessor(new SimpleSpanProcessor(custom_remote_exporter))
-    }
-  } else {
-    if (batch) {
-      provider.addSpanProcessor(batchProcessorConsole)
-    } else {
-      provider.addSpanProcessor(simpleProcessorConsole)
     }
   }
 
