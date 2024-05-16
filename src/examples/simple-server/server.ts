@@ -35,7 +35,7 @@ const server = http.createServer(async (req, res) => {
       })
     }, { 'user.feedback.rating': -1, 'user.id': '1234' })
 
-    await withAdditionalAttributes(async () => await openai.chat.completions.create({
+    await openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
         { role: 'user', content: 'Say this is a test 3 times' },
@@ -45,10 +45,9 @@ const server = http.createServer(async (req, res) => {
         },
         { role: 'user', content: 'Say this is a mock 2 times' }
       ]
-    }), { 'user.feedback.rating': 1, 'user.id': '1234' })
+    })
+    res.end('Hello World\n')
   })
-  // console.log(completion.choices[0]);
-  res.end('Hello World\n')
 })
 export const runSimpleServer = (): void => {
   server.listen(port, hostname, () => {

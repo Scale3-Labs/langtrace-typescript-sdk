@@ -36,6 +36,7 @@ import {
   ICreateEmbedJobRequest,
   ICreateEmbedJobResponse
 } from '@langtrace-instrumentation/cohere/types'
+import { attachMetadataChunkToStreamedResponse, attachMetadataToResponse } from '@langtrace-utils/instrumentation'
 
 export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: ICohereClient, request: IChatRequest, requestOptions?: IRequestOptions): Promise<INonStreamedChatResponse> {
@@ -77,7 +78,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
         }
         prompts.push({ role: 'USER', content: request.message })
         attributes['llm.prompts'] = JSON.stringify(prompts)
-        const response = await original.apply(this, [request, requestOptions])
+        const response = attachMetadataToResponse(await original.apply(this, [request, requestOptions]), span)
         const totalTokens = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['llm.token.counts'] = JSON.stringify({
           input_tokens: response.meta?.billedUnits?.inputTokens ?? 0,
@@ -175,7 +176,7 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
     const span = tracer.startSpan(APIS.EMBED.METHOD, { kind: SpanKind.CLIENT, attributes })
     try {
       return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
-        const response = await original.apply(this, [request, requestOptions])
+        const response = attachMetadataToResponse(await original.apply(this, [request, requestOptions]), span)
         attributes['llm.token.counts'] = JSON.stringify({
           input_tokens: response.meta?.billedUnits?.inputTokens ?? 0,
           output_tokens: response.meta?.billedUnits?.outputTokens ?? 0,
@@ -218,7 +219,7 @@ export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer
     const span = tracer.startSpan(APIS.EMBED_JOBS.METHOD, { kind: SpanKind.CLIENT, attributes })
     try {
       return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
-        const response = await original.apply(this, [request, requestOptions])
+        const response = attachMetadataToResponse(await original.apply(this, [request, requestOptions]), span)
         attributes['llm.token.counts'] = JSON.stringify({
           input_tokens: response.meta?.billedUnits?.inputTokens ?? 0,
           output_tokens: response.meta?.billedUnits?.outputTokens ?? 0,
@@ -260,7 +261,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
     const span = tracer.startSpan(APIS.RERANK.METHOD, { kind: SpanKind.CLIENT, attributes })
     try {
       return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
-        const response = await original.apply(this, [request, requestOptions])
+        const response = attachMetadataToResponse(await original.apply(this, [request, requestOptions]), span)
         const totalTokens = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['llm.retrieval.results'] = JSON.stringify(response.results)
         attributes['llm.response_id'] = response.id
@@ -310,6 +311,7 @@ async function * handleStream (stream: any, attributes: LLMSpanAttributes, span:
       }
       yield chat
     }
+    yield attachMetadataChunkToStreamedResponse(span)
     span.setAttributes(attributes)
     span.setStatus({ code: SpanStatusCode.OK })
   } catch (error: unknown) {

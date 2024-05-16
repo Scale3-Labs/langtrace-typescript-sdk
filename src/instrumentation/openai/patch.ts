@@ -17,6 +17,7 @@
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
 import { APIS } from '@langtrace-constants/instrumentation/openai'
+import { attachMetadataChunkToStreamedResponse, attachMetadataToResponse } from '@langtrace-utils/instrumentation'
 import { calculatePromptTokens, estimateTokens } from '@langtrace-utils/llm'
 import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
 import {
@@ -64,7 +65,7 @@ export function imagesGenerate (
       trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
       async () => {
         try {
-          const response = await originalMethod.apply(originalContext, args)
+          const response = attachMetadataToResponse(await originalMethod.apply(originalContext, args), span)
           attributes['llm.responses'] = JSON.stringify(response?.data?.map((data: any) => {
             return {
               content: JSON.stringify(data),
@@ -157,7 +158,7 @@ export function chatCompletionCreate (
         trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
         async () => {
           try {
-            const resp = await originalMethod.apply(this, args)
+            const resp = attachMetadataToResponse(await originalMethod.apply(this, args), span)
             const responses = resp?.choices?.map((choice: any) => {
               const result = {
                 role: choice?.message?.role,
@@ -222,6 +223,7 @@ export function chatCompletionCreate (
           return handleStreamResponse(
             span,
             resp,
+            attributes,
             promptTokens
           )
         }
@@ -233,6 +235,7 @@ export function chatCompletionCreate (
 async function * handleStreamResponse (
   span: Span,
   stream: any,
+  attributes: LLMSpanAttributes,
   promptTokens: number
 ): any {
   let completionTokens = 0
@@ -244,6 +247,7 @@ async function * handleStreamResponse (
     for await (const chunk of stream) {
       if (model === '') {
         model = chunk.model
+        attributes['llm.model'] = model
       }
       // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
       const content = chunk.choices[0]?.delta?.content || ''
@@ -256,7 +260,7 @@ async function * handleStreamResponse (
       })
       yield chunk
     }
-
+    yield attachMetadataChunkToStreamedResponse(span)
     span.setStatus({ code: SpanStatusCode.OK })
     span.setAttributes({
       'llm.model': model,
@@ -325,7 +329,7 @@ export function embeddingsCreate (
       trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
       async () => {
         try {
-          const resp = await originalMethod.apply(originalContext, args)
+          const resp = attachMetadataToResponse(await originalMethod.apply(originalContext, args), span)
 
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
