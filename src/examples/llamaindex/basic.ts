@@ -15,7 +15,7 @@ import {
 } from 'llamaindex'
 dotenv.config()
 
-init({ batch: false, write_to_langtrace_cloud: false, disable_instrumentations: { all_except: ['llamaindex', 'openai'] } })
+init({ batch: false, write_spans_to_console: false, disable_instrumentations: { all_except: ['llamaindex', 'openai'] } })
 
 export async function basic (): Promise<void> {
   await withLangTraceRootSpan(async () => {

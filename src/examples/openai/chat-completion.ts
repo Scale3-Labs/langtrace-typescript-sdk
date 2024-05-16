@@ -5,7 +5,7 @@ import dotenv from 'dotenv'
 import OpenAI from 'openai'
 dotenv.config()
 
-init({ write_to_langtrace_cloud: false, batch: false })
+init({ write_spans_to_console: false, batch: false })
 
 export async function chatCompletion (): Promise<void> {
   const openai = new OpenAI()

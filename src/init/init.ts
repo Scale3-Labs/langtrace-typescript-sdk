@@ -36,7 +36,7 @@ import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrum
  * @param api_key API key for Langtrace.
  * @param batch Whether to batch spans before exporting.
  *      This helps in reducing the number of requests made to the server.
- * @param write_to_langtrace_cloud Whether to write spans to Langtrace cloud.
+ * @param write_spans_to_console Whether to write spans to Langtrace cloud.
  *      Enables direct storage of spans in the cloud for accessibility and analysis.
  * @param custom_remote_exporter Custom remote exporter to use.
  *      This allows for customization of the span export process to meet specific needs.

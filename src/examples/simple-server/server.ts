@@ -5,7 +5,7 @@ import * as http from 'http'
 import OpenAI from 'openai'
 
 dotenv.config()
-init({ api_key: 'dbda4e119945be3e8e542225655484d1807b3b50268262da958c8a45efed3bc4', write_to_langtrace_cloud: false, batch: false })
+init({ api_key: 'dbda4e119945be3e8e542225655484d1807b3b50268262da958c8a45efed3bc4', write_spans_to_console: false, batch: false })
 
 const hostname = '127.0.0.1'
 const port = 3000
