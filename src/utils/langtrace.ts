@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_exporter'
-import { LangTraceApiError, LangTraceEvaluation, LangtraceMetadata, LangtracePrompt } from '@langtrace-utils/types'
+import { EvaluationAPIData, LangTraceApiError, LangTraceEvaluation, LangtracePrompt } from '@langtrace-utils/types'
 import axios from 'axios'
 
 /**
@@ -53,18 +53,19 @@ export const getPromptFromRegistry = async (promptRegistryId: string, options?: 
  *
  * @param userId id of the user giving feedback
  * @param score score of the feedback
- * @param response response from calling the vendors function.
- * E.g response from calling openai.chat.completions.create
+ * @param traceId traceId of the llm interaction. This is available when the inteaction is wrapped in withLangtraceRootSpan
+ * @param spanId spanId of the llm interaction. This is available when the inteaction is wrapped in withLangtraceRootSpan
+ *
  */
-export const sendUserFeedback = async (userId: string, userScore: -1 | 1, langtraceMetadata: LangtraceMetadata): Promise<void> => {
+export const sendUserFeedback = async ({ userId, userScore, traceId, spanId }: EvaluationAPIData): Promise<void> => {
   try {
-    const evaluation = await getEvaluation(langtraceMetadata.spanId)
+    const evaluation = await getEvaluation(spanId)
     if (evaluation !== undefined) {
       // make a put request to update the evaluation
-      await axios.put(`${LANGTRACE_REMOTE_URL}/api/evaluation`, { ...langtraceMetadata, userId, userScore }, { headers: { 'x-api-key': process.env.LANGTRACE_API_KEY } })
+      await axios.put(`${LANGTRACE_REMOTE_URL}/api/evaluation`, { userId, userScore, spanId, traceId }, { headers: { 'x-api-key': process.env.LANGTRACE_API_KEY } })
     } else {
     // make a post request to create a new evaluation
-      await axios.post(`${LANGTRACE_REMOTE_URL}/api/evaluation`, { ...langtraceMetadata, userId, userScore }, { headers: { 'x-api-key': process.env.LANGTRACE_API_KEY } })
+      await axios.post(`${LANGTRACE_REMOTE_URL}/api/evaluation`, { userId, userScore, spanId, traceId }, { headers: { 'x-api-key': process.env.LANGTRACE_API_KEY } })
     }
   } catch (err: any) {
     if (axios.isAxiosError(err)) {

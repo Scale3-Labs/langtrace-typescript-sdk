@@ -24,7 +24,7 @@ init({
 })
 
 export async function basic (): Promise<void> {
-  await withLangTraceRootSpan(async () => {
+  await withLangTraceRootSpan(async (spanId, traceId) => {
     // Load essay from abramov.txt in Node
     const path = 'node_modules/llamaindex/examples/abramov.txt'
 
