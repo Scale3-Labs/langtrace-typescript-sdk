@@ -54,7 +54,7 @@ npm i @langtrase/typescript-sdk
 
 ``` typescript
 import * as Langtrace from '@langtrase/typescript-sdk' // Must precede any llm module imports
-Langtrace.init({ write_to_langtrace_cloud: false})
+Langtrace.init({ write_spans_to_console: true})
 ```
 
 ## Langtrace self hosted custom exporter
@@ -99,7 +99,30 @@ export async function withLangTraceRootSpan<T> (
  * @returns result of the function
  */
 export async function withAdditionalAttributes <T> (fn: () => Promise<T>, attributes: Partial<LLMSpanAttributes>): Promise<T>
+```
 
+```typescript
+/**
+ * Fetches a prompt from the registry.
+ *
+ * @param promptRegistryId - The ID of the prompt registry.
+ * @param options - Configuration options for fetching the prompt:
+ *    - `prompt_version` - Fetches the prompt with the specified version. If not provided, the live prompt will be fetched. If there is no live prompt, an error will be thrown.
+ *    - `variables`: - Replaces the variables in the prompt with the provided values. Each key of the object should be the variable name, and the corresponding value should be the value to replace.
+ * @returns LangtracePrompt - The fetched prompt with variables replaced as specified.
+ */
+export const getPromptFromRegistry = async (promptRegistryId: string, options?: { prompt_version?: number, variables?: Record<string, string> }): Promise<LangtracePrompt>
+```
+
+``` typescript
+/**
+ *
+ * @param userId id of the user giving feedback
+ * @param score score of the feedback
+ * @param response response from calling the vendors function.
+ * E.g response from calling openai.chat.completions.create
+ */
+export const sendUserFeedback = async (userId: string, userScore: -1 | 1, langtraceMetadata: LangtraceMetadata): Promise<void>
 ```
 
 ## Supported integrations

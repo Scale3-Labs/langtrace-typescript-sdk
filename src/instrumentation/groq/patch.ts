@@ -5,6 +5,7 @@ import {
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { APIS } from '@langtrace-constants/instrumentation/groq'
 import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
+import { attachMetadataChunkToStreamedResponse } from '@langtrace-utils/instrumentation'
 
 export const chatPatch = (original: ChatStreamFn | ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: IGroqClient, body: IChatCompletionCreateParamsStreaming | IChatCompletionCreateParamsNonStreaming,
@@ -116,13 +117,13 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
   }
 }
 
-async function * handleStream (stream: AsyncIterable<IChatCompletionResponseStreamed>, attributes: LLMSpanAttributes, span: Span): AsyncIterable<IChatCompletionResponseStreamed> {
+async function * handleStream (stream: AsyncIterable<any>, attributes: LLMSpanAttributes, span: Span): AsyncIterable<any> {
   const responseReconstructed: string[] = []
   try {
     span.addEvent(Event.STREAM_START)
     for await (const chunk of stream) {
       span.addEvent(Event.STREAM_OUTPUT, { response: chunk.choices[0].delta.content ?? '' })
-      responseReconstructed.push(chunk.choices[0].delta.content ?? '')
+      responseReconstructed.push(chunk.choices[0].delta.content as string ?? '')
 
       if (chunk.choices[0].finish_reason === 'stop') {
         const totalTokens = Number(chunk.x_groq?.usage?.completion_tokens ?? 0)
@@ -135,6 +136,7 @@ async function * handleStream (stream: AsyncIterable<IChatCompletionResponseStre
       }
       yield chunk
     }
+    yield attachMetadataChunkToStreamedResponse(span)
     span.addEvent(Event.STREAM_END)
     attributes['llm.responses'] = JSON.stringify([{ role: 'assistant', content: responseReconstructed.join('') }])
     span.setAttributes(attributes)

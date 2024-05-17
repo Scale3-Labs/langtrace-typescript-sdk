@@ -4,7 +4,7 @@ import OpenAI from 'openai'
 
 dotenv.config()
 
-init({ write_to_langtrace_cloud: false })
+init({ write_spans_to_console: false })
 
 export async function embeddingsCreate (): Promise<void> {
   const openai = new OpenAI()

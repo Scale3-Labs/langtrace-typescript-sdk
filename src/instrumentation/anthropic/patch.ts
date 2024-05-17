@@ -18,6 +18,7 @@
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { APIS } from '@langtrace-constants/instrumentation/anthropic'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
+import { attachMetadataChunkToStreamedResponse, attachMetadataToResponse } from '@langtrace-utils/instrumentation'
 import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
 import {
   Exception,
@@ -93,7 +94,8 @@ export function messagesCreate (
         ),
         async () => {
           try {
-            const resp = await originalMethod.apply(this, args)
+            const resp = attachMetadataToResponse(await originalMethod.apply(this, args), span)
+
             span.setAttributes({
               'llm.responses': JSON.stringify(resp.content.map((c: any) => {
                 return { content: c.text, role: 'assistant' }
@@ -132,17 +134,16 @@ export function messagesCreate (
           trace.getSpan(context.active()) ?? span
         ),
         async () => {
-          const resp = await originalMethod.apply(this, args)
-          return handleStreamResponse(span, resp)
+          const resp: AsyncIterable<unknown> = await originalMethod.apply(this, args)
+          return handleStreamResponse(span, resp, attributes)
         }
       )
     }
   }
 }
 
-async function * handleStreamResponse (span: Span, stream: any): any {
+async function * handleStreamResponse (span: Span, stream: any, attributes: LLMSpanAttributes): any {
   const result: string[] = []
-
   span.addEvent(Event.STREAM_START)
   try {
     let input_tokens = 0
@@ -156,7 +157,7 @@ async function * handleStreamResponse (span: Span, stream: any): any {
       span.addEvent(Event.STREAM_OUTPUT, { response: JSON.stringify(content) })
       yield chunk
     }
-
+    yield attachMetadataChunkToStreamedResponse(span)
     span.setStatus({ code: SpanStatusCode.OK })
     span.setAttributes({
       'llm.token.counts': JSON.stringify({

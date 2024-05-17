@@ -4,7 +4,7 @@ import { QdrantClient } from '@qdrant/js-client-rest'
 
 const qclient = new QdrantClient({ url: 'http://127.0.0.1:6333' })
 
-init({ write_to_langtrace_cloud: false, disable_instrumentations: { all_except: ['qdrant'] } })
+init({ write_spans_to_console: false, disable_instrumentations: { all_except: ['qdrant'] } })
 
 export async function basic (): Promise<void> {
   await withLangTraceRootSpan(async () => {

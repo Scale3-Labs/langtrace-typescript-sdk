@@ -16,7 +16,8 @@
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { LLMSpanAttributes } from '@langtrase/trace-attributes'
-import { SpanKind, trace, context, SpanStatusCode } from '@opentelemetry/api'
+import { SpanKind, trace, context, SpanStatusCode, Span } from '@opentelemetry/api'
+import { LangtraceMetadata } from '@langtrace-utils/types'
 /**
  *
  * @param fn  The function to be executed within the context of the root span
@@ -65,4 +66,43 @@ export async function withAdditionalAttributes <T> (fn: () => Promise<T>, attrib
 
   // Execute the function within the context that has the custom attributes
   return await context.with(contextWithAttributes, fn)
+}
+
+/**
+ *
+ * @param response response object to which metadata is to be attached
+ * @param span span object
+ * @param attributes attributes to extract metadata from
+ * @returns response object with metadata attached
+ */
+export function attachMetadataToResponse <T> (response: T, span: Span): T & { langtrace_metadata: LangtraceMetadata } {
+  const metadata: LangtraceMetadata = {
+    spanId: span.spanContext().spanId,
+    traceId: span.spanContext().traceId
+  }
+  const res: T & { langtrace_metadata: LangtraceMetadata } = response as T & { langtrace_metadata: LangtraceMetadata }
+  res.langtrace_metadata = metadata
+  return res
+}
+/**
+ *
+ * @param span span object
+ * @param attributes attributes to extract metadata from
+ * @returns metadata object
+ */
+export function attachMetadataChunkToStreamedResponse (span: Span): { langtrace_metadata: LangtraceMetadata } {
+  const metadata: LangtraceMetadata = {
+    spanId: span.spanContext().spanId,
+    traceId: span.spanContext().traceId
+  }
+  return { langtrace_metadata: metadata }
+}
+
+/**
+ *
+ * @param  response is the response of the traced function which is either a stream chunk object or a response object from the function call
+ * @returns LangtraceMetadata
+ */
+export function extractLangtraceMetadata (response: Record<string, any>): LangtraceMetadata | undefined {
+  return response?.langtrace_metadata as LangtraceMetadata
 }
