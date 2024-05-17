@@ -16,7 +16,6 @@
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
-import { attachMetadataToResponse } from '@langtrace-utils/instrumentation'
 import { FrameworkSpanAttributes } from '@langtrase/trace-attributes'
 import {
   Exception,
@@ -53,7 +52,7 @@ export function genericPatch (
       trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
       async () => {
         try {
-          const response = attachMetadataToResponse(await originalMethod.apply(this, args), span)
+          const response = await originalMethod.apply(this, args)
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return

@@ -75,8 +75,8 @@ Langtrace.init({ custom_remote_exporter: <your_exporter>, batch:<true or false>}
 - `WithLangTraceRootSpan` - this function is designed to organize and relate different spans, in a hierarchical manner. When you're performing multiple operations that you want to monitor together as a unit, this function helps by establishing a "parent" (`LangtraceRootSpan` or whatever is passed to `name`) span. Then, any calls to the LLM APIs made within the given function (fn) will be considered "children" of this parent span. This setup is especially useful for tracking the performance or behavior of a group of operations collectively, rather than individually.
 
 ``` typescript
- *
- * @param fn  The function to be executed within the context of the root span
+ /**
+ * @param fn  The function to be executed within the context of the root span. The function should accept the spanId and traceId as arguments
  * @param name Name of the root span
  * @param spanAttributes Attributes to be added to the root span
  * @param spanKind The kind of span to be created
@@ -115,14 +115,16 @@ export const getPromptFromRegistry = async (promptRegistryId: string, options?: 
 ```
 
 ``` typescript
+
 /**
  *
  * @param userId id of the user giving feedback
  * @param score score of the feedback
- * @param response response from calling the vendors function.
- * E.g response from calling openai.chat.completions.create
+ * @param traceId traceId of the llm interaction. This is available when the inteaction is wrapped in withLangtraceRootSpan
+ * @param spanId spanId of the llm interaction. This is available when the inteaction is wrapped in withLangtraceRootSpan
+ *
  */
-export const sendUserFeedback = async (userId: string, userScore: -1 | 1, langtraceMetadata: LangtraceMetadata): Promise<void>
+export const sendUserFeedback = async ({ userId, userScore, traceId, spanId }: EvaluationAPIData): Promise<void>
 ```
 
 ## Supported integrations
