@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 3.1.0
+
+### Minor Changes
+
+- 2a74776: Fix userfeedback causing breakages
+
 ## 3.0.1
 
 ### Patch Changes
