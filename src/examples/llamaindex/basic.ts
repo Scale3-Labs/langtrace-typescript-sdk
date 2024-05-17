@@ -3,6 +3,7 @@ import { withLangTraceRootSpan } from '@langtrace-utils/instrumentation'
 import dotenv from 'dotenv'
 import fs from 'fs/promises'
 import type { BaseReader, Metadata } from 'llamaindex'
+import * as ll from 'llamaindex'
 import {
   Document,
   FILE_EXT_TO_READER,
@@ -15,7 +16,12 @@ import {
 } from 'llamaindex'
 dotenv.config()
 
-init({ batch: false, write_spans_to_console: false, disable_instrumentations: { all_except: ['llamaindex', 'openai'] } })
+init({
+  batch: false,
+  write_spans_to_console: false,
+  disable_instrumentations: { all_except: ['llamaindex', 'openai'] },
+  instrumentations: { llamaindex: ll }
+})
 
 export async function basic (): Promise<void> {
   await withLangTraceRootSpan(async () => {

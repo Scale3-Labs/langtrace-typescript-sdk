@@ -28,6 +28,6 @@ export interface LangtraceInitOptions {
     all_except?: InstrumentationType[]
     only?: InstrumentationType[]
   }
-  instrumentations?: Record<InstrumentationType, any>
+  instrumentations?: { [key in InstrumentationType]?: any }
 }
 export type LangTraceInit = (options?: LangtraceInitOptions) => void
