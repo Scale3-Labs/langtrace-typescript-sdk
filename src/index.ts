@@ -18,7 +18,10 @@
 // Import the necessary modules
 import { init } from '@langtrace-init/init'
 import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
-import { withLangTraceRootSpan, withAdditionalAttributes } from '@langtrace-utils/instrumentation'
-import { getPromptFromRegistry } from '@langtrace-utils/langtrace'
-import { LangtracePrompt } from '@langtrace-utils/types'
-export { init, withLangTraceRootSpan, LangTraceInit, LangtraceInitOptions, withAdditionalAttributes, getPromptFromRegistry, LangtracePrompt }
+import { withLangTraceRootSpan, withAdditionalAttributes, extractLangtraceMetadata } from '@langtrace-utils/instrumentation'
+import { getPromptFromRegistry, sendUserFeedback } from '@langtrace-utils/langtrace'
+import { LangtracePrompt, LangtraceMetadata } from '@langtrace-utils/types'
+
+export {
+  init, withLangTraceRootSpan, LangTraceInit, LangtraceInitOptions, withAdditionalAttributes, getPromptFromRegistry, LangtracePrompt, sendUserFeedback, LangtraceMetadata, extractLangtraceMetadata
+}

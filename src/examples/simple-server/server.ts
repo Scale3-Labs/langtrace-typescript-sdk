@@ -5,7 +5,7 @@ import * as http from 'http'
 import OpenAI from 'openai'
 
 dotenv.config()
-init({ api_key: 'dbda4e119945be3e8e542225655484d1807b3b50268262da958c8a45efed3bc4', write_to_langtrace_cloud: false, batch: false })
+init({ api_key: 'dbda4e119945be3e8e542225655484d1807b3b50268262da958c8a45efed3bc4', write_spans_to_console: false, batch: false })
 
 const hostname = '127.0.0.1'
 const port = 3000
@@ -35,7 +35,7 @@ const server = http.createServer(async (req, res) => {
       })
     }, { 'user.feedback.rating': -1, 'user.id': '1234' })
 
-    await withAdditionalAttributes(async () => await openai.chat.completions.create({
+    await openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
         { role: 'user', content: 'Say this is a test 3 times' },
@@ -45,10 +45,9 @@ const server = http.createServer(async (req, res) => {
         },
         { role: 'user', content: 'Say this is a mock 2 times' }
       ]
-    }), { 'user.feedback.rating': 1, 'user.id': '1234' })
+    })
+    res.end('Hello World\n')
   })
-  // console.log(completion.choices[0]);
-  res.end('Hello World\n')
 })
 export const runSimpleServer = (): void => {
   server.listen(port, hostname, () => {

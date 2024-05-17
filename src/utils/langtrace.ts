@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_exporter'
-import { LangTraceApiError, LangtracePrompt } from '@langtrace-utils/types'
+import { LangTraceApiError, LangTraceEvaluation, LangtraceMetadata, LangtracePrompt } from '@langtrace-utils/types'
 import axios from 'axios'
 
 /**
@@ -42,7 +42,51 @@ export const getPromptFromRegistry = async (promptRegistryId: string, options?: 
     return response.data.prompts[0] as LangtracePrompt
   } catch (err: any) {
     if (axios.isAxiosError(err)) {
-      const message = err.response?.data?.error?.length > 0 ? err.response?.data?.error as string : err.message.length > 0 ? err.message : `${err.stack?.toString()}`
+      const message = err.response?.data?.message?.length > 0 ? err.response?.data?.message as string : err.message.length > 0 ? err.message : `${err.stack?.toString()}`
+      throw new LangTraceApiError(message, err.response?.status ?? 500)
+    }
+    throw new LangTraceApiError(err.message as string ?? `Unknown error occured ${err}`, 500)
+  }
+}
+
+/**
+ *
+ * @param userId id of the user giving feedback
+ * @param score score of the feedback
+ * @param response response from calling the vendors function.
+ * E.g response from calling openai.chat.completions.create
+ */
+export const sendUserFeedback = async (userId: string, userScore: -1 | 1, langtraceMetadata: LangtraceMetadata): Promise<void> => {
+  try {
+    const evaluation = await getEvaluation(langtraceMetadata.spanId)
+    if (evaluation !== undefined) {
+      // make a put request to update the evaluation
+      await axios.put(`${LANGTRACE_REMOTE_URL}/api/evaluation`, { ...langtraceMetadata, userId, userScore }, { headers: { 'x-api-key': process.env.LANGTRACE_API_KEY } })
+    } else {
+    // make a post request to create a new evaluation
+      await axios.post(`${LANGTRACE_REMOTE_URL}/api/evaluation`, { ...langtraceMetadata, userId, userScore }, { headers: { 'x-api-key': process.env.LANGTRACE_API_KEY } })
+    }
+  } catch (err: any) {
+    if (axios.isAxiosError(err)) {
+      const message = err.response?.data?.message?.length > 0 ? err.response?.data?.message as string : err.message.length > 0 ? err.message : `${err.stack?.toString()}`
+      throw new LangTraceApiError(message, err.response?.status ?? 500)
+    }
+    throw new LangTraceApiError(err.message as string ?? `Unknown error occured ${err}`, 500)
+  }
+}
+
+/**
+ *
+ * @param spanId spanId of the evaluation to be fetched
+ * @returns LangTraceEvaluation | undefined
+ */
+const getEvaluation = async (spanId: string): Promise<LangTraceEvaluation | undefined> => {
+  try {
+    const response = await axios.get(`${LANGTRACE_REMOTE_URL}/api/evaluation?spanId=${spanId}`, { headers: { 'x-api-key': process.env.LANGTRACE_API_KEY } })
+    return response.data.evaluations[0] as LangTraceEvaluation
+  } catch (err: any) {
+    if (axios.isAxiosError(err)) {
+      const message = err.response?.data?.message?.length > 0 ? err.response?.data?.message as string : err.message.length > 0 ? err.message : `${err.stack?.toString()}`
       throw new LangTraceApiError(message, err.response?.status ?? 500)
     }
     throw new LangTraceApiError(err.message as string ?? `Unknown error occured ${err}`, 500)

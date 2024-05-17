@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2024 Scale3 Labs
  *
@@ -24,6 +25,23 @@ export interface LangtracePrompt {
   tags: string[]
   note: string
   promptsetId: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface LangtraceMetadata {
+  spanId: string
+  traceId: string
+}
+
+export interface LangTraceEvaluation {
+  id: string
+  spanId: string
+  traceId: string
+  userId: string
+  userScore: number
+  ltUserScore: number
+  ltUserId: string
   createdAt: string
   updatedAt: string
 }
