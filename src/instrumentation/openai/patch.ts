@@ -223,7 +223,6 @@ export function chatCompletionCreate (
           return handleStreamResponse(
             span,
             resp,
-            attributes,
             promptTokens
           )
         }
@@ -235,7 +234,6 @@ export function chatCompletionCreate (
 async function * handleStreamResponse (
   span: Span,
   stream: any,
-  attributes: LLMSpanAttributes,
   promptTokens: number
 ): any {
   let completionTokens = 0
@@ -247,7 +245,6 @@ async function * handleStreamResponse (
     for await (const chunk of stream) {
       if (model === '') {
         model = chunk.model
-        attributes['llm.model'] = model
       }
       // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
       const content = chunk.choices[0]?.delta?.content || ''
