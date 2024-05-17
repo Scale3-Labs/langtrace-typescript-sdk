@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 3.0.1
+
+### Patch Changes
+
+- Fix bug causing all instrumentations being required in a nextjs project
+
 ## 3.0.0
 
 ### Major Changes
