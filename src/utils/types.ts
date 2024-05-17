@@ -29,9 +29,11 @@ export interface LangtracePrompt {
   updatedAt: string
 }
 
-export interface LangtraceMetadata {
+export interface EvaluationAPIData {
   spanId: string
   traceId: string
+  userId: string
+  userScore: number
 }
 
 export interface LangTraceEvaluation {
