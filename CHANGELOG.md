@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 3.0.0
+
+### Major Changes
+
+- Renamed init options for more clarity and also added the ability to pass user feedback through the sdk
+
 ## 2.2.1
 
 ### Patch Changes
