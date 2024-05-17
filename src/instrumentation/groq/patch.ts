@@ -5,7 +5,6 @@ import {
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { APIS } from '@langtrace-constants/instrumentation/groq'
 import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
-import { attachMetadataChunkToStreamedResponse } from '@langtrace-utils/instrumentation'
 
 export const chatPatch = (original: ChatStreamFn | ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: IGroqClient, body: IChatCompletionCreateParamsStreaming | IChatCompletionCreateParamsNonStreaming,
@@ -136,7 +135,6 @@ async function * handleStream (stream: AsyncIterable<any>, attributes: LLMSpanAt
       }
       yield chunk
     }
-    yield attachMetadataChunkToStreamedResponse(span)
     span.addEvent(Event.STREAM_END)
     attributes['llm.responses'] = JSON.stringify([{ role: 'assistant', content: responseReconstructed.join('') }])
     span.setAttributes(attributes)

@@ -18,7 +18,6 @@
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { APIS } from '@langtrace-constants/instrumentation/anthropic'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
-import { attachMetadataChunkToStreamedResponse, attachMetadataToResponse } from '@langtrace-utils/instrumentation'
 import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
 import {
   Exception,
@@ -94,7 +93,7 @@ export function messagesCreate (
         ),
         async () => {
           try {
-            const resp = attachMetadataToResponse(await originalMethod.apply(this, args), span)
+            const resp = await originalMethod.apply(this, args)
 
             span.setAttributes({
               'llm.responses': JSON.stringify(resp.content.map((c: any) => {
@@ -157,7 +156,7 @@ async function * handleStreamResponse (span: Span, stream: any, attributes: LLMS
       span.addEvent(Event.STREAM_OUTPUT, { response: JSON.stringify(content) })
       yield chunk
     }
-    yield attachMetadataChunkToStreamedResponse(span)
+
     span.setStatus({ code: SpanStatusCode.OK })
     span.setAttributes({
       'llm.token.counts': JSON.stringify({

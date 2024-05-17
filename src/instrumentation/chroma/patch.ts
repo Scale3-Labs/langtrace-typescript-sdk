@@ -17,7 +17,6 @@
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { APIS } from '@langtrace-constants/instrumentation/chroma'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
-import { attachMetadataToResponse } from '@langtrace-utils/instrumentation'
 import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
 import {
   Exception,
@@ -69,7 +68,7 @@ export function collectionPatch (
       async () => {
         try {
           // NOTE: Not tracing the response data as it can contain sensitive information
-          const response = attachMetadataToResponse(await originalMethod.apply(this, args), span)
+          const response = await originalMethod.apply(this, args)
 
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
