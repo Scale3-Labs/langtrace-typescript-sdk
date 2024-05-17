@@ -54,7 +54,7 @@ npm i @langtrase/typescript-sdk
 
 ``` typescript
 import * as Langtrace from '@langtrase/typescript-sdk' // Must precede any llm module imports
-Langtrace.init({ write_to_langtrace_cloud: false})
+Langtrace.init({ write_spans_to_console: true})
 ```
 
 ## Langtrace self hosted custom exporter

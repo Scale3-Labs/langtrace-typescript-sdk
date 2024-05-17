@@ -1,6 +1,6 @@
 import { init } from '@langtrace-init/init'
 import Groq from 'groq-sdk'
-init({ write_to_langtrace_cloud: false, disable_instrumentations: { all_except: ['groq'] } })
+init({ write_spans_to_console: false, disable_instrumentations: { all_except: ['groq'] } })
 const groq = new Groq()
 export const chatCompletion = async (): Promise<void> => {
   const chatCompletion = await groq.chat.completions.create({
