@@ -5,7 +5,7 @@ import OpenAI from 'openai'
 import { ChatCompletionTool } from 'openai/resources'
 dotenv.config()
 
-init({ write_to_langtrace_cloud: false })
+init({ write_spans_to_console: false })
 
 const studentCustomFunctions: ChatCompletionTool[] = [
   {
