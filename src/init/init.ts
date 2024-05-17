@@ -60,12 +60,17 @@ export const init: LangTraceInit = ({
   disable_instrumentations = {}
 }: LangtraceInitOptions = {}) => {
   const provider = new NodeTracerProvider({ sampler: new LangtraceSampler() })
-  const remoteWriteExporter = new LangTraceExporter(api_key, api_host)
+  const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', api_host)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
 
+  if (api_host === LANGTRACE_REMOTE_URL) {
+    if (api_key === undefined && process.env.LANGTRACE_API_KEY === undefined) {
+      throw new Error('API key is required to export traces to Langtrace')
+    }
+  }
   if (api_key !== undefined) {
     process.env.LANGTRACE_API_KEY = api_key
   }

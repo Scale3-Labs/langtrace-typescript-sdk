@@ -20,20 +20,20 @@ import { ReadableSpan, SpanExporter } from '@opentelemetry/sdk-trace-base'
 import axios from 'axios'
 
 export class LangTraceExporter implements SpanExporter {
-  private readonly apiKey?: string
-  private readonly api_host?: string
+  private readonly apiKey: string
+  private readonly apiHost: string
 
   /**
    *
    * @param apiKey Your API key. If not set, the value will be read from the LANGTRACE_API_KEY environment variable
-   * @param api_host The host of the LangTrace API. Default is https://langtrace.ai/api/trace. If set a POST request will be made to this URL with an array of ReadableSpan objects.
+   * @param apiHost The host of the LangTrace API. Default is https://langtrace.ai/api/trace. If set a POST request will be made to this URL with an array of ReadableSpan objects.
    * See https://github.com/open-telemetry/opentelemetry-js/blob/3c8c29ac8fdd71cd1ef78d2b35c65ced81db16f4/packages/opentelemetry-sdk-trace-base/src/export/ReadableSpan.ts#L29
    */
-  constructor (apiKey?: string, api_host?: string) {
-    this.apiKey = apiKey ?? process.env.LANGTRACE_API_KEY
-    this.api_host = api_host ?? `${LANGTRACE_REMOTE_URL}/api/trace`
+  constructor (apiKey: string, apiHost: string) {
+    this.apiKey = apiKey
+    this.apiHost = apiHost === LANGTRACE_REMOTE_URL ? `${LANGTRACE_REMOTE_URL}/api/trace` : apiHost
 
-    if (this.apiKey === undefined) {
+    if (apiHost === LANGTRACE_REMOTE_URL && this.apiKey.length === 0) {
       throw new Error('No LangTrace API key provided')
     }
   }
@@ -65,9 +65,9 @@ export class LangTraceExporter implements SpanExporter {
       'Content-Type': 'application/json',
       Accept: 'application/json',
       'User-Agent': 'LangTraceExporter',
-      'x-api-key': this.apiKey!
+      'x-api-key': this.apiKey
     }
-    await axios.post(`${this.api_host}`, data, { headers }).then((response) => {
+    await axios.post(`${this.apiHost}`, data, { headers }).then((response) => {
       resultCallback({ code: response.status === 200 ? 0 : 1 })
     })
       .catch((error) => {
