@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 3.1.1
+
+### Patch Changes
+
+- Add gpt-4o support for token usage calculation
+
 ## 3.1.0
 
 ### Minor Changes
