@@ -75,22 +75,32 @@ async function importQuestions (): Promise<void> {
 }
 
 export async function basic (): Promise<void> {
+  await addSchema()
   // await importQuestions()
-  // await addSchema()
-  await nearTextQuery()
+  // await nearTextQueryAggregate()
   // await nearTextWhereQueryWithFilter()
+  // await nearTextQueryRaw()
 }
 
-async function nearTextQuery (): Promise<any> {
+async function nearTextQueryRaw (): Promise<any> {
   const res = await client.graphql
-    .get()
+    .raw()
+    .withQuery('query { Get { Question { answer } } }')
+    .do()
+
+  // console.log(JSON.stringify(res, null, 2))
+  return res
+}
+
+async function nearTextQueryAggregate (): Promise<any> {
+  const res = await client.graphql
+    .aggregate()
     .withClassName('Question')
-    .withFields('category')
-    .withNearText({ concepts: ['biology'] })
+    .withFields('category { count }')
     .withLimit(2)
     .do()
 
-  console.log(JSON.stringify(res, null, 2))
+  // console.log(JSON.stringify(res, null, 2))
   return res
 }
 async function nearTextWhereQueryWithFilter (): Promise<any> {
@@ -107,6 +117,6 @@ async function nearTextWhereQueryWithFilter (): Promise<any> {
     .withLimit(2)
     .do()
 
-  console.log(JSON.stringify(res, null, 2))
+  // console.log(JSON.stringify(res, null, 2))
   return res
 }

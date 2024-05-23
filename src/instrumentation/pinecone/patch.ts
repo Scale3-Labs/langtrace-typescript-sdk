@@ -41,6 +41,7 @@ export function genericPatch (
       'langtrace.version': langtraceVersion,
       'db.system': 'pinecone',
       'db.operation': api.OPERATION,
+      'db.query': JSON.stringify(args),
       ...customAttributes
     }
 
@@ -68,7 +69,6 @@ export function genericPatch (
 
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return response
         } catch (error: any) {
           // If an error occurs, record the exception and end the span

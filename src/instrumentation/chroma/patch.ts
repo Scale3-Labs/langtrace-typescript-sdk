@@ -46,6 +46,7 @@ export function collectionPatch (
       'langtrace.version': langtraceVersion,
       'db.system': 'chromadb',
       'db.operation': api.OPERATION,
+      'db.query': JSON.stringify(args),
       ...customAttributes
     }
 
@@ -72,7 +73,6 @@ export function collectionPatch (
 
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return response
         } catch (error: any) {
           span.recordException(error as Exception)
