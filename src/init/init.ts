@@ -29,6 +29,7 @@ import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex
 import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
 import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
 import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrumentation'
+import { weaviateInstrumentation } from '@langtrace-instrumentation/weaviate/instrumentation'
 
 /**
  * Initializes the LangTrace sdk with custom options.
@@ -100,7 +101,8 @@ export const init: LangTraceInit = ({
     pinecone: pineconeInstrumentation,
     llamaindex: llamaIndexInstrumentation,
     chromadb: chromaInstrumentation,
-    qdrant: qdrantInstrumentation
+    qdrant: qdrantInstrumentation,
+    weaviate: weaviateInstrumentation
   }
   if (instrumentations === undefined) {
     registerInstrumentations({

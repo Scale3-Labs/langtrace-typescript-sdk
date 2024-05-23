@@ -16,7 +16,7 @@
 
 import { SpanExporter } from '@opentelemetry/sdk-trace-base'
 
-export type InstrumentationType = 'openai' | 'cohere' | 'anthropic' | 'groq' | 'pinecone' | 'llamaindex' | 'chromadb' | 'qdrant'
+export type InstrumentationType = 'openai' | 'cohere' | 'anthropic' | 'groq' | 'pinecone' | 'llamaindex' | 'chromadb' | 'qdrant' | 'weaviate'
 
 export interface LangtraceInitOptions {
   api_key?: string
