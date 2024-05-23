@@ -18,7 +18,7 @@ import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/c
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
 import { queryTypeToFunctionToProps } from '@langtrace-constants/instrumentation/weaviate'
 import { setValueFromPath, getValueFromPath } from '@langtrace-utils/misc'
-import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
+import { DatabaseSpanAttributes, Event } from '@langtrase/trace-attributes'
 import { Exception, SpanKind, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api'
 
 interface PatchBuilderArgs {
@@ -82,7 +82,7 @@ export const patchBuilderFunctions = function (this: any, { clientInstance, clie
                       try {
                         const resp = await originalDo.apply(this, doArgs)
                         const response: Partial<DatabaseSpanAttributes> = { 'db.response': JSON.stringify(resp) }
-                        span.addEvent('response', response)
+                        span.addEvent(Event.RESPONSE, response)
                         span.setStatus({ code: SpanStatusCode.OK })
                         span.end()
                         return resp
