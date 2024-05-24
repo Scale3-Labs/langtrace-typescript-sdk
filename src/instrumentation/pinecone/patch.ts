@@ -17,7 +17,7 @@
 
 import { APIS } from '@langtrace-constants/instrumentation/pinecone'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
-import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
+import { DatabaseSpanAttributes, Event } from '@langtrase/trace-attributes'
 import { Tracer, context, trace, SpanKind, SpanStatusCode, Exception } from '@opentelemetry/api'
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 
@@ -66,7 +66,9 @@ export function genericPatch (
           // Call the original create method
           // NOTE: Not tracing the response data as it can contain sensitive information
           const response = await originalMethod.apply(originalContext, args)
-
+          if (response !== undefined) {
+            span.addEvent(Event.RESPONSE, { 'db.response': JSON.stringify(response) })
+          }
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
           return response

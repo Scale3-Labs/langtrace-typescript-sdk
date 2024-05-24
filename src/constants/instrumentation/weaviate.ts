@@ -28,6 +28,7 @@ export const queryTypeToFunctionToProps = {
   schema: {
     collectionName: ['class.class', 'className'],
     classCreator: ['class.class'],
+    classDeleter: ['className'],
     propertyCreator: ['className', 'property'],
     classGetter: ['className'],
     shardsGetter: ['className'],

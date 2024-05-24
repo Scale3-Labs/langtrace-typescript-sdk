@@ -17,7 +17,7 @@
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
 import { APIS } from '@langtrace-constants/instrumentation/qdrant'
-import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
+import { DatabaseSpanAttributes, Event } from '@langtrase/trace-attributes'
 import { Exception, SpanKind, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api'
 
 export function genericCollectionPatch (
@@ -51,7 +51,7 @@ export function genericCollectionPatch (
       async () => {
         try {
           const response = await originalMethod.apply(this, args)
-
+          if (response !== undefined) span.addEvent(Event.RESPONSE, { 'db.response': JSON.stringify(response) })
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
 

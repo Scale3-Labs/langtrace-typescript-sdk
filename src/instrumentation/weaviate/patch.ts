@@ -32,6 +32,7 @@ interface PatchBuilderArgs {
 
 /**
  * Patch the functions of the client instance that implement the CommandBase Interface in the Weaviate client
+ * Patches the do function of the builder functions to add tracingp
  * @param this any
  * @param args  PatchBuilderArgs
  */
@@ -68,7 +69,7 @@ export const patchBuilderFunctions = function (this: any, { clientInstance, clie
                     'langtrace.service.name': SERVICE_PROVIDERS.WEAVIATE,
                     'langtrace.service.type': 'vectordb',
                     'langtrace.service.version': moduleVersion,
-                    'db.system': 'weaviate',
+                    'db.system': SERVICE_PROVIDERS.WEAVIATE,
                     'server.address': clientArgs.host,
                     'db.operation': `${queryType}.${func}`,
                     'db.collection.name': getValueFromPath(functionCallInstance, collectionNameKey),
@@ -81,8 +82,7 @@ export const patchBuilderFunctions = function (this: any, { clientInstance, clie
                     async () => {
                       try {
                         const resp = await originalDo.apply(this, doArgs)
-                        const response: Partial<DatabaseSpanAttributes> = { 'db.response': JSON.stringify(resp) }
-                        span.addEvent(Event.RESPONSE, response)
+                        if (resp !== undefined) span.addEvent(Event.RESPONSE, { 'db.response': JSON.stringify(resp) })
                         span.setStatus({ code: SpanStatusCode.OK })
                         span.end()
                         return resp

@@ -21,9 +21,22 @@
  * @returns value at the path in the object
  */
 export function getValueFromPath (obj: Record<string, any>, path: string): any {
+  if (path === undefined) {
+    return undefined
+  }
   return path.split('.').reduce((o, p) => (o !== undefined ? o[p] : undefined), obj)
 }
+/**
+ *
+ * @param obj record<string, any>
+ * @param path dot separated string path
+ * @param value value to set at the path in the object
+ * @returns void
+ */
 export function setValueFromPath (obj: any, path: string, value: any): void {
+  if (path === undefined) {
+    return undefined
+  }
   const keys = path.split('.')
   const lastKey = keys.pop()
   const deepObj = keys.reduce((o, p) => (o[p] = o[p] ?? {}), obj)

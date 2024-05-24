@@ -3,6 +3,7 @@ import weaviate, { ObjectsBatcher } from 'weaviate-ts-client'
 import dotenv from 'dotenv'
 
 import fetch from 'node-fetch'
+import { withLangTraceRootSpan } from '@langtrace-utils/instrumentation'
 dotenv.config()
 init({ write_spans_to_console: true })
 
@@ -24,6 +25,7 @@ const classObj = {
 async function addSchema (): Promise<void> {
   await client.schema.classDeleter().withClassName('Question').do().then(async (_) => {
     const res = await client.schema.classCreator().withClass(classObj).do()
+    console.log(JSON.stringify(res, null, 2))
   })
 }
 
@@ -62,7 +64,7 @@ async function importQuestions (): Promise<void> {
     // When the batch counter reaches batchSize, push the objects to Weaviate
     if (counter++ === batchSize) {
       // flush the batch queue
-      const res = await batcher.do()
+      await batcher.do()
 
       // restart the batch queue
       counter = 0
@@ -71,15 +73,17 @@ async function importQuestions (): Promise<void> {
   }
 
   // Flush the remaining objects
-  const res = await batcher.do()
+  await batcher.do()
 }
 
 export async function basic (): Promise<void> {
-  await addSchema()
-  // await importQuestions()
-  // await nearTextQueryAggregate()
-  // await nearTextWhereQueryWithFilter()
-  // await nearTextQueryRaw()
+  await withLangTraceRootSpan(async () => {
+    await addSchema()
+    await importQuestions()
+    await nearTextQueryAggregate()
+    await nearTextWhereQueryWithFilter()
+    await nearTextQueryRaw()
+  })
 }
 
 async function nearTextQueryRaw (): Promise<any> {
@@ -88,7 +92,7 @@ async function nearTextQueryRaw (): Promise<any> {
     .withQuery('query { Get { Question { answer } } }')
     .do()
 
-  // console.log(JSON.stringify(res, null, 2))
+  console.log(JSON.stringify(res, null, 2))
   return res
 }
 
@@ -100,7 +104,7 @@ async function nearTextQueryAggregate (): Promise<any> {
     .withLimit(2)
     .do()
 
-  // console.log(JSON.stringify(res, null, 2))
+  console.log(JSON.stringify(res, null, 2))
   return res
 }
 async function nearTextWhereQueryWithFilter (): Promise<any> {
@@ -117,6 +121,6 @@ async function nearTextWhereQueryWithFilter (): Promise<any> {
     .withLimit(2)
     .do()
 
-  // console.log(JSON.stringify(res, null, 2))
+  console.log(JSON.stringify(res, null, 2))
   return res
 }
