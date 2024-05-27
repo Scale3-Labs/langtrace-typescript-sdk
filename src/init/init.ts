@@ -29,6 +29,7 @@ import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex
 import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
 import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
 import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrumentation'
+import { DiagConsoleLogger, DiagLogLevel, diag } from '@opentelemetry/api'
 
 /**
  * Initializes the LangTrace sdk with custom options.
@@ -57,7 +58,12 @@ export const init: LangTraceInit = ({
   custom_remote_exporter = undefined,
   instrumentations = undefined,
   api_host = LANGTRACE_REMOTE_URL,
-  disable_instrumentations = {}
+  disable_instrumentations = {},
+  logging = {
+    level: DiagLogLevel.INFO,
+    logger: new DiagConsoleLogger(),
+    disable: false
+  }
 }: LangtraceInitOptions = {}) => {
   const provider = new NodeTracerProvider({ sampler: new LangtraceSampler() })
   const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', api_host)
@@ -65,6 +71,12 @@ export const init: LangTraceInit = ({
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
+
+  diag.setLogger(logging.logger ?? new DiagConsoleLogger(), { suppressOverrideMessage: true, logLevel: logging.level })
+
+  if (logging.disable === true) {
+    diag.disable()
+  }
 
   if (api_host === LANGTRACE_REMOTE_URL) {
     if (api_key === undefined && process.env.LANGTRACE_API_KEY === undefined) {
@@ -89,7 +101,6 @@ export const init: LangTraceInit = ({
       provider.addSpanProcessor(new SimpleSpanProcessor(custom_remote_exporter))
     }
   }
-
   provider.register()
 
   const allInstrumentations: Record<InstrumentationType, any> = {
