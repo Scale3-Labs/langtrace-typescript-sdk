@@ -75,7 +75,6 @@ export function imagesGenerate (
           span.setAttributes(attributes)
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return response
         } catch (error: any) {
           span.recordException(error as Exception)
@@ -186,7 +185,6 @@ export function chatCompletionCreate (
               })
             })
             span.setStatus({ code: SpanStatusCode.OK })
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return resp
           } catch (error: any) {
             span.recordException(error as Exception)
@@ -213,12 +211,10 @@ export function chatCompletionCreate (
           const model = args[0].model
 
           // iterate over messages and calculate tokens
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           const promptContent: string = args[0].messages.map((message: any) => message?.content).join(' ')
           const promptTokens = calculatePromptTokens(promptContent, model as string)
 
           const resp = await originalMethod.apply(this, args)
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return handleStreamResponse(
             span,
             resp,
@@ -329,7 +325,6 @@ export function embeddingsCreate (
 
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return resp
         } catch (error: any) {
           span.recordException(error as Exception)
