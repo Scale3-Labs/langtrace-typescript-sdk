@@ -1,3 +1,3 @@
 
-import { basic } from '@langtrace-examples/weaviate/basic'
+import { basic } from '@langtrace-examples/pg/basic'
 void basic()

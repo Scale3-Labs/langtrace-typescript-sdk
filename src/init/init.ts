@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { LangTraceExporter } from '@langtrace-extensions/langtraceexporter/langtrace_exporter'
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/instrumentation'
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
+import { LangTraceExporter } from '@langtrace-extensions/langtraceexporter/langtrace_exporter'
 import { LangtraceSampler } from '@langtrace-extensions/langtracesampler/langtrace_sampler'
 import { InstrumentationType, LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
 import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_exporter'
@@ -30,6 +30,7 @@ import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrum
 import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
 import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrumentation'
 import { weaviateInstrumentation } from '@langtrace-instrumentation/weaviate/instrumentation'
+import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation'
 
 /**
  * Initializes the LangTrace sdk with custom options.
@@ -102,7 +103,8 @@ export const init: LangTraceInit = ({
     llamaindex: llamaIndexInstrumentation,
     chromadb: chromaInstrumentation,
     qdrant: qdrantInstrumentation,
-    weaviate: weaviateInstrumentation
+    weaviate: weaviateInstrumentation,
+    pg: pgInstrumentation
   }
   if (instrumentations === undefined) {
     registerInstrumentations({
