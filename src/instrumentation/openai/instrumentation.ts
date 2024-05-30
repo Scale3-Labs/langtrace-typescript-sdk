@@ -20,7 +20,7 @@ import {
   InstrumentationNodeModuleDefinition,
   isWrapped
 } from '@opentelemetry/instrumentation'
-import { chatCompletionCreate, embeddingsCreate, imagesGenerate } from '@langtrace-instrumentation/openai/patch'
+import { chatCompletionCreate, embeddingsCreate, imageEdit, imagesGenerate } from '@langtrace-instrumentation/openai/patch'
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
 class OpenAIInstrumentation extends InstrumentationBase<any> {
@@ -56,9 +56,12 @@ class OpenAIInstrumentation extends InstrumentationBase<any> {
   private _patch (openai: any, moduleVersion?: string): void {
     if (isWrapped(openai.OpenAI.Chat.Completions.prototype)) {
       this._unwrap(openai.OpenAI.Chat.Completions.prototype, 'create')
-    } else if (isWrapped(openai.OpenAI.Images.prototype)) {
+    }
+    if (isWrapped(openai.OpenAI.Images.prototype)) {
       this._unwrap(openai.OpenAI.Images.prototype, 'generate')
-    } else if (isWrapped(openai.OpenAI.Embeddings.prototype)) {
+      this._unwrap(openai.OpenAI.Images.prototype, 'edit')
+    }
+    if (isWrapped(openai.OpenAI.Embeddings.prototype)) {
       this._unwrap(openai.OpenAI.Embeddings.prototype, 'create')
     }
 
@@ -82,11 +85,15 @@ class OpenAIInstrumentation extends InstrumentationBase<any> {
       (originalMethod: (...args: any[]) => any) =>
         embeddingsCreate(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion)
     )
+    this._wrap(openai.OpenAI.Images.prototype,
+      'edit',
+      (originalMethod: (...args: any[]) => any) => imageEdit(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion))
   }
 
   private _unpatch (openai: any): void {
     this._unwrap(openai.OpenAI.Chat.Completions.prototype, 'create')
     this._unwrap(openai.OpenAI.Images.prototype, 'generate')
+    this._unwrap(openai.OpenAI.Images.prototype, 'edit')
     this._unwrap(openai.OpenAI.Embeddings.prototype, 'create')
   }
 }
