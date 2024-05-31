@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /*
  * Copyright (c) 2024 Scale3 Labs
  *
@@ -77,6 +76,7 @@ export const init: LangTraceInit = ({
       if (res !== undefined) {
         if (res.latestVersion !== res.currentVersion) {
           const message = boxText(`${c.yellow(`Version ${res.currentVersion} is outdated`)}. \nPlease run ${c.green('npm i @langtrase/typescript-sdk')} to update to the latest version ${c.green(res.latestVersion)}`)
+          // eslint-disable-next-line no-console
           console.log(message)
         } else {
           isLatestSdk = true
@@ -99,7 +99,6 @@ export const init: LangTraceInit = ({
     if (batch) {
       provider.addSpanProcessor(batchProcessorRemote)
     } else {
-      console.log('here in simple')
       provider.addSpanProcessor(simpleProcessorRemote)
     }
   } else if (custom_remote_exporter !== undefined) {
