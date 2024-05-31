@@ -28,6 +28,7 @@ export interface LangtraceInitOptions {
     all_except?: InstrumentationType[]
     only?: InstrumentationType[]
   }
+  disable_latest_version_check?: boolean
   instrumentations?: { [key in InstrumentationType]?: any }
 }
 export type LangTraceInit = (options?: LangtraceInitOptions) => void

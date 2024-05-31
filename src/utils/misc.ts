@@ -44,3 +44,12 @@ export function setValueFromPath (obj: any, path: string, value: any): void {
     deepObj[lastKey] = value
   }
 }
+
+export const boxMultiLineText = (text: string): string => {
+  const lines = text.split('\n')
+  const longestLine = lines.reduce((a, b) => (a.length > b.length ? a : b)).length
+  const top = '┌' + '─'.repeat(longestLine + 2) + '┐' // +2 for the spaces on each side
+  const bottom = '└' + '─'.repeat(longestLine + 2) + '┘' // +2 for the spaces on each side
+  const middle = lines.map((line) => '│ ' + line.padEnd(longestLine) + ' │').join('\n')
+  return `${top}\n${middle}\n${bottom}`
+}
