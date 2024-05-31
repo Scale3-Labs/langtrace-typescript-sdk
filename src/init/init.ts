@@ -75,9 +75,11 @@ export const init: LangTraceInit = ({
     void getCurrentAndLatestVersion().then((res) => {
       if (res !== undefined) {
         if (res.latestVersion !== res.currentVersion) {
-          const message = boxText(`${c.yellow(`Version ${res.currentVersion} is outdated`)}. \nPlease run ${c.green('npm i @langtrase/typescript-sdk')} to update to the latest version ${c.green(res.latestVersion)}`)
+          const versionOudatedMessage = `${c.white(`Version ${c.red(res.currentVersion)} is outdated`)}`
+          const installUpdateMessage = `${c.white(`To update to the latest version ${c.green(res.latestVersion)} run the command below\n\n${c.green('npm uninstall @langtrase/typescript-sdk && npm i @langtrase/typescript-sdk')}\n`)}`
+          const message = boxText(`${versionOudatedMessage}\n\n${installUpdateMessage}`)
           // eslint-disable-next-line no-console
-          console.log(message)
+          console.log(c.yellow(message))
         } else {
           isLatestSdk = true
         }

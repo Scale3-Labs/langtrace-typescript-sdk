@@ -70,5 +70,5 @@ export const boxText = (text: string): string => {
     return '│ ' + line + ' '.repeat(padding) + ' │'
   }).join('\n')
 
-  return `${top}\n${middle}\n${bottom}`
+  return `\n${top}\n${middle}\n${bottom}\n`
 }
