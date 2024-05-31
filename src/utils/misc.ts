@@ -17,6 +17,8 @@
 import axios from 'axios'
 // eslint-disable-next-line no-restricted-imports
 import { name, version } from '../../package.json'
+import { ansiRegex } from 'ansi-colors'
+
 /**
  *
  * @param obj record<string, any>
@@ -48,19 +50,25 @@ export function setValueFromPath (obj: any, path: string, value: any): void {
   }
 }
 
-export const boxText = (text: string): string => {
-  const lines = text.split('\n')
-  const longestLine = lines.reduce((a, b) => (a.length > b.length ? a : b)).length
-  const top = '┌' + '─'.repeat(longestLine + 2) + '┐' // +2 for the spaces on each side
-  const bottom = '└' + '─'.repeat(longestLine + 2) + '┘' // +2 for the spaces on each side
-  const middle = lines.map((line) => '│ ' + line.padEnd(longestLine) + ' │').join('\n')
-  return `${top}\n${middle}\n${bottom}`
-}
-
 export async function getCurrentAndLatestVersion (): Promise<{ currentVersion: string, latestVersion: string } | undefined> {
   const res = await axios.get(`https://registry.npmjs.org/${name}/latest`)
   const latestVersion = res.data.version
   if (latestVersion !== undefined) {
     return { currentVersion: version, latestVersion }
   }
+}
+
+export const boxText = (text: string): string => {
+  const lines = text.split('\n')
+  const strippedLines = lines.map(line => line.replace(ansiRegex, ''))
+  const longestLine = strippedLines.reduce((a, b) => (a.length > b.length ? a : b)).length
+
+  const top = '┌' + '─'.repeat(longestLine + 2) + '┐'
+  const bottom = '└' + '─'.repeat(longestLine + 2) + '┘'
+  const middle = lines.map((line, index) => {
+    const padding = longestLine - strippedLines[index].length
+    return '│ ' + line + ' '.repeat(padding) + ' │'
+  }).join('\n')
+
+  return `${top}\n${middle}\n${bottom}`
 }

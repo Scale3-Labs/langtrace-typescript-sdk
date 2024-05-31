@@ -31,7 +31,7 @@ import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrum
 import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
 import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrumentation'
 import { weaviateInstrumentation } from '@langtrace-instrumentation/weaviate/instrumentation'
-import { boxText, getCurrentAndLatestVersion } from '@langtrace-utils/misc'
+import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
 import c from 'ansi-colors'
 
 /**
@@ -99,6 +99,7 @@ export const init: LangTraceInit = ({
     if (batch) {
       provider.addSpanProcessor(batchProcessorRemote)
     } else {
+      console.log('here in simple')
       provider.addSpanProcessor(simpleProcessorRemote)
     }
   } else if (custom_remote_exporter !== undefined) {
