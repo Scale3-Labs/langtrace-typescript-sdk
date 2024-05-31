@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /*
  * Copyright (c) 2024 Scale3 Labs
  *
@@ -30,6 +31,8 @@ import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrum
 import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
 import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrumentation'
 import { weaviateInstrumentation } from '@langtrace-instrumentation/weaviate/instrumentation'
+import { boxText, getCurrentAndLatestVersion } from '@langtrace-utils/misc'
+import c from 'ansi-colors'
 
 /**
  * Initializes the LangTrace sdk with custom options.
@@ -51,6 +54,7 @@ import { weaviateInstrumentation } from '@langtrace-instrumentation/weaviate/ins
  *  - If both 'all_except' and 'only' are specified, an error will be thrown.
  */
 
+let isLatestSdk = false
 export const init: LangTraceInit = ({
   api_key = undefined,
   batch = false,
@@ -58,7 +62,8 @@ export const init: LangTraceInit = ({
   custom_remote_exporter = undefined,
   instrumentations = undefined,
   api_host = LANGTRACE_REMOTE_URL,
-  disable_instrumentations = {}
+  disable_instrumentations = {},
+  disable_latest_version_check = false
 }: LangtraceInitOptions = {}) => {
   const provider = new NodeTracerProvider({ sampler: new LangtraceSampler() })
   const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', api_host)
@@ -66,6 +71,19 @@ export const init: LangTraceInit = ({
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
+
+  if (!isLatestSdk && !disable_latest_version_check) {
+    void getCurrentAndLatestVersion().then((res) => {
+      if (res !== undefined) {
+        if (res.latestVersion !== res.currentVersion) {
+          const message = boxText(`${c.yellow(`Version ${res.currentVersion} is outdated`)}. \nPlease run ${c.green('npm i @langtrase/typescript-sdk')} to update to the latest version ${c.green(res.latestVersion)}`)
+          console.log(message)
+        } else {
+          isLatestSdk = true
+        }
+      }
+    })
+  }
 
   if (api_host === LANGTRACE_REMOTE_URL) {
     if (api_key === undefined && process.env.LANGTRACE_API_KEY === undefined) {

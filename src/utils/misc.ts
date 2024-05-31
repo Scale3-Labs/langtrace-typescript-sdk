@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import axios from 'axios'
+// eslint-disable-next-line no-restricted-imports
+import { name, version } from '../../package.json'
 /**
  *
  * @param obj record<string, any>
@@ -45,11 +48,19 @@ export function setValueFromPath (obj: any, path: string, value: any): void {
   }
 }
 
-export const boxMultiLineText = (text: string): string => {
+export const boxText = (text: string): string => {
   const lines = text.split('\n')
   const longestLine = lines.reduce((a, b) => (a.length > b.length ? a : b)).length
   const top = '┌' + '─'.repeat(longestLine + 2) + '┐' // +2 for the spaces on each side
   const bottom = '└' + '─'.repeat(longestLine + 2) + '┘' // +2 for the spaces on each side
   const middle = lines.map((line) => '│ ' + line.padEnd(longestLine) + ' │').join('\n')
   return `${top}\n${middle}\n${bottom}`
+}
+
+export async function getCurrentAndLatestVersion (): Promise<{ currentVersion: string, latestVersion: string } | undefined> {
+  const res = await axios.get(`https://registry.npmjs.org/${name}/latest`)
+  const latestVersion = res.data.version
+  if (latestVersion !== undefined) {
+    return { currentVersion: version, latestVersion }
+  }
 }
