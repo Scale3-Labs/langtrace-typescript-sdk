@@ -72,3 +72,17 @@ export const boxText = (text: string): string => {
 
   return `\n${top}\n${middle}\n${bottom}\n`
 }
+
+/**
+ * This function is used to convert an object to a string. It filters out functions and keys starting with '_' as they are considered private.
+ * @param obj any
+ * @returns string
+ */
+export function stringify (obj: any): string {
+  return JSON.stringify(obj, (key, value) => {
+    if (typeof value !== 'function' && !key.startsWith('_')) {
+      return value
+    }
+    return undefined
+  }, 2)
+}
