@@ -76,9 +76,9 @@ export const patchBuilderFunctions = function (this: any, { clientInstance, clie
                     'db.query': JSON.stringify(queryObj),
                     ...customAttributes
                   }
-                  const span = tracer.startSpan(`${queryType}.${func}.do`, { kind: SpanKind.CLIENT, attributes })
+                  const span = tracer.startSpan(`${queryType}.${func}.do`, { kind: SpanKind.CLIENT, attributes }, context.active())
                   return await context.with(
-                    trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
+                    trace.setSpan(context.active(), span),
                     async () => {
                       try {
                         const resp = await originalDo.apply(this, doArgs)
