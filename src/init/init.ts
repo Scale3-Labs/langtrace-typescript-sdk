@@ -31,6 +31,8 @@ import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/ins
 import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrumentation'
 import { DiagConsoleLogger, DiagLogLevel, diag } from '@opentelemetry/api'
 import { weaviateInstrumentation } from '@langtrace-instrumentation/weaviate/instrumentation'
+import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
+import c from 'ansi-colors'
 import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation'
 
 /**
@@ -53,6 +55,7 @@ import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation
  *  - If both 'all_except' and 'only' are specified, an error will be thrown.
  */
 
+let isLatestSdk = false
 export const init: LangTraceInit = ({
   api_key = undefined,
   batch = false,
@@ -65,7 +68,8 @@ export const init: LangTraceInit = ({
     level: DiagLogLevel.INFO,
     logger: new DiagConsoleLogger(),
     disable: false
-  }
+  },
+  disable_latest_version_check = false
 }: LangtraceInitOptions = {}) => {
   const provider = new NodeTracerProvider({ sampler: new LangtraceSampler() })
   const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', api_host)
@@ -78,6 +82,21 @@ export const init: LangTraceInit = ({
 
   if (logging.disable === true) {
     diag.disable()
+  }
+  if (!isLatestSdk && !disable_latest_version_check) {
+    void getCurrentAndLatestVersion().then((res) => {
+      if (res !== undefined) {
+        if (res.latestVersion !== res.currentVersion) {
+          const versionOudatedMessage = `${c.white(`Version ${c.red(res.currentVersion)} is outdated`)}`
+          const installUpdateMessage = `${c.white(`To update to the latest version ${c.green(res.latestVersion)} run the command below\n\n${c.green('npm uninstall @langtrase/typescript-sdk && npm i @langtrase/typescript-sdk')}`)}`
+          const message = boxText(`${versionOudatedMessage}\n\n${installUpdateMessage}`)
+          // eslint-disable-next-line no-console
+          console.log(c.yellow(message))
+        } else {
+          isLatestSdk = true
+        }
+      }
+    })
   }
 
   if (api_host === LANGTRACE_REMOTE_URL) {

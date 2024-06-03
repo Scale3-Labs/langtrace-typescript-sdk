@@ -34,6 +34,7 @@ export interface LangtraceInitOptions {
     logger?: DiagLogger
     disable?: boolean
   }
+  disable_latest_version_check?: boolean
   instrumentations?: { [key in InstrumentationType]?: any }
 }
 export type LangTraceInit = (options?: LangtraceInitOptions) => void
