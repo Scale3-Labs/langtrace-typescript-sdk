@@ -37,5 +37,6 @@ export const SERVICE_PROVIDERS = {
   CHROMA: 'Chroma',
   PPLX: 'Perplexity',
   QDRANT: 'Qdrant',
-  WEAVIATE: 'Weaviate'
+  WEAVIATE: 'Weaviate',
+  PG: 'pg'
 }

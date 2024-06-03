@@ -38,6 +38,8 @@ interface PatchBuilderArgs {
  */
 export const patchBuilderFunctions = function (this: any, { clientInstance, clientArgs, tracer, moduleVersion, sdkName, sdkVersion }: PatchBuilderArgs): void {
   // iterate over the queryTypeToFunctionToProps object and wrap the functions
+  // eslint-disable-next-line @typescript-eslint/no-this-alias
+  const patchThis = this
   Object.entries(queryTypeToFunctionToProps).forEach(([queryType, functionsMap]) => {
     Object.entries(functionsMap).forEach(([func, properties]) => {
       const queryTypeKey = queryType as keyof typeof clientInstance
@@ -46,14 +48,14 @@ export const patchBuilderFunctions = function (this: any, { clientInstance, clie
         if (clientInstance[queryTypeKey] !== undefined && typeof clientInstance[queryTypeKey][funcKey] === 'function') {
           // Wrap the function with to add tracing
           // example client.query.get
-          clientInstance[queryTypeKey][funcKey] = this._wrap(clientInstance[queryTypeKey], func, (original: any) => {
-            return (...originalArgs: any[]) => {
+          clientInstance[queryTypeKey][funcKey] = patchThis._wrap(clientInstance[queryTypeKey], func, (original: any) => {
+            return function (this: any, ...originalArgs: any[]) {
               // This is the instance that stores all the results of the different builder functions
               const functionCallInstance: Record<string, any> = original.apply(this, originalArgs)
               // Wrap the do function to add tracing
               // example client.query.get.do
-              this._wrap(functionCallInstance, 'do', (originalDo: any) => {
-                return async (...doArgs: any[]) => {
+              patchThis._wrap(functionCallInstance, 'do', (originalDo: any) => {
+                return async function (this: any, ...doArgs: any[]) {
                   const queryObj: { [key: string]: any } = {}
                   properties.forEach((path) => {
                     const value = getValueFromPath(functionCallInstance, path)
