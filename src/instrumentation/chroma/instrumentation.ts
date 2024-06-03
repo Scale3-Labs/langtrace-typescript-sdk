@@ -38,7 +38,6 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching ChromaDB SDK version ${moduleVersion}`)
         this._patch(moduleExports, moduleVersion as string)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return moduleExports
       },
       (moduleExports, moduleVersion) => {

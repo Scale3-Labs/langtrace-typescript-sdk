@@ -55,7 +55,6 @@ export function genericPatch (
           const response = await originalMethod.apply(this, args)
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return response
         } catch (error: any) {
           span.recordException(error as Exception)
