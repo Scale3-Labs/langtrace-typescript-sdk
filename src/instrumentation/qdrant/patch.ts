@@ -1,7 +1,23 @@
+/*
+ * Copyright (c) 2024 Scale3 Labs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
 import { APIS } from '@langtrace-constants/instrumentation/qdrant'
-import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
+import { DatabaseSpanAttributes, Event } from '@langtrase/trace-attributes'
 import { Exception, SpanKind, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api'
 
 export function genericCollectionPatch (
@@ -24,6 +40,7 @@ export function genericCollectionPatch (
       'langtrace.version': langtraceVersion,
       'db.system': 'qdrant',
       'db.operation': api.OPERATION,
+      'db.query': JSON.stringify(args),
       ...customAttributes
     }
 
@@ -34,11 +51,10 @@ export function genericCollectionPatch (
       async () => {
         try {
           const response = await originalMethod.apply(this, args)
-
+          if (response !== undefined) span.addEvent(Event.RESPONSE, { 'db.response': JSON.stringify(response) })
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
 
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return response
         } catch (error: any) {
           // If an error occurs, record the exception and end the span

@@ -65,7 +65,7 @@
          }
       ],
       "@typescript-eslint/no-this-alias": "warn",
-      "@typescript-eslint/no-unsafe-return": "warn",
+      "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/naming-convention": [
          "error",
          {

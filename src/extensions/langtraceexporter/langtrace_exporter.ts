@@ -16,6 +16,7 @@
 
 import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_exporter'
 import { ExportResult } from '@langtrace-extensions/langtraceexporter/types'
+import { diag } from '@opentelemetry/api'
 import { ReadableSpan, SpanExporter } from '@opentelemetry/sdk-trace-base'
 import axios from 'axios'
 
@@ -34,6 +35,7 @@ export class LangTraceExporter implements SpanExporter {
     this.apiHost = apiHost === LANGTRACE_REMOTE_URL ? `${LANGTRACE_REMOTE_URL}/api/trace` : apiHost
 
     if (apiHost === LANGTRACE_REMOTE_URL && this.apiKey.length === 0) {
+      diag.error('Unable to send traces to langtrce. No LangTrace API key provided. Please set the LANGTRACE_API_KEY environment variable')
       throw new Error('No LangTrace API key provided')
     }
   }
@@ -68,10 +70,11 @@ export class LangTraceExporter implements SpanExporter {
       'x-api-key': this.apiKey
     }
     await axios.post(`${this.apiHost}`, data, { headers }).then((response) => {
+      diag.info(`Exported ${spans.length} spans to ${this.apiHost} with status code ${response.status}`)
       resultCallback({ code: response.status === 200 ? 0 : 1 })
     })
       .catch((error) => {
-        resultCallback({ code: 1, error: error.response?.data })
+        resultCallback({ code: 1, error: new Error(`Failed to export ${spans.length} spans to ${this.apiHost}: ${JSON.stringify(error?.response?.data)}`) })
       })
   }
 

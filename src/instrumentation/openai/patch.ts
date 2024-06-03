@@ -26,6 +26,70 @@ import {
   SpanStatusCode, trace, Tracer
 } from '@opentelemetry/api'
 
+export function imageEdit (
+  originalMethod: (...args: any[]) => any,
+  tracer: Tracer,
+  langtraceVersion: string,
+  version?: string
+): (...args: any[]) => any {
+  return async function (this: any, ...args: any[]) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const originalContext = this
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
+    // Determine the service provider
+    let serviceProvider = SERVICE_PROVIDERS.OPENAI
+    if (originalContext?._client?.baseURL?.includes('azure') === true) {
+      serviceProvider = SERVICE_PROVIDERS.AZURE
+    }
+    const attributes: LLMSpanAttributes = {
+      'langtrace.sdk.name': '@langtrase/typescript-sdk',
+      'langtrace.service.name': serviceProvider,
+      'langtrace.service.type': 'llm',
+      'langtrace.service.version': version,
+      'langtrace.version': langtraceVersion,
+      'url.full': originalContext?._client?.baseURL,
+      'llm.api': APIS.IMAGES_EDIT.ENDPOINT,
+      'llm.model': args[0]?.model,
+      'http.max.retries': originalContext?._client?.maxRetries,
+      'http.timeout': originalContext?._client?.timeout,
+      'llm.prompt': JSON.stringify(args[0]?.prompt),
+      ...customAttributes
+    }
+
+    const span = tracer.startSpan(APIS.IMAGES_EDIT.METHOD, { kind: SpanKind.SERVER, attributes })
+    const f = await context.with(
+      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
+      async () => {
+        try {
+          const response = await originalMethod.apply(originalContext, args)
+          span.addEvent(Event.RESPONSE, {
+            'llm.responses': JSON.stringify(response?.data?.map((data: any) => {
+              return {
+                content: JSON.stringify(data),
+                role: 'assistant'
+              }
+            }))
+          })
+
+          span.setAttributes(attributes)
+          span.setStatus({ code: SpanStatusCode.OK })
+          span.end()
+          return response
+        } catch (error: any) {
+          span.recordException(error as Exception)
+          span.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: error.message
+          })
+          span.end()
+          throw error
+        }
+      }
+    )
+    return f
+  }
+}
+
 export function imagesGenerate (
   originalMethod: (...args: any[]) => any,
   tracer: Tracer,
@@ -58,7 +122,6 @@ export function imagesGenerate (
       ...customAttributes
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     const span = tracer.startSpan(APIS.IMAGES_GENERATION.METHOD, { kind: SpanKind.SERVER, attributes })
     const f = await context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
@@ -75,7 +138,6 @@ export function imagesGenerate (
           span.setAttributes(attributes)
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return response
         } catch (error: any) {
           span.recordException(error as Exception)
@@ -88,7 +150,7 @@ export function imagesGenerate (
         }
       }
     )
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return f
   }
 }
@@ -150,9 +212,7 @@ export function chatCompletionCreate (
     }
 
     if (!(args[0].stream as boolean) || args[0].stream === false) {
-      // eslint-disable-next-\line @typescript-eslint/no-unsafe-return
       const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes })
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return await context.with(
         trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
         async () => {
@@ -186,7 +246,6 @@ export function chatCompletionCreate (
               })
             })
             span.setStatus({ code: SpanStatusCode.OK })
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return resp
           } catch (error: any) {
             span.recordException(error as Exception)
@@ -201,9 +260,7 @@ export function chatCompletionCreate (
         }
       )
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes })
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return await context.with(
         trace.setSpan(
           context.active(),
@@ -213,12 +270,10 @@ export function chatCompletionCreate (
           const model = args[0].model
 
           // iterate over messages and calculate tokens
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           const promptContent: string = args[0].messages.map((message: any) => message?.content).join(' ')
           const promptTokens = calculatePromptTokens(promptContent, model as string)
 
           const resp = await originalMethod.apply(this, args)
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return handleStreamResponse(
             span,
             resp,
@@ -319,7 +374,6 @@ export function embeddingsCreate (
       attributes['llm.user'] = args[0]?.user
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     const span = tracer.startSpan(APIS.EMBEDDINGS_CREATE.METHOD, { kind: SpanKind.SERVER, attributes })
     const f = await context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
@@ -329,7 +383,6 @@ export function embeddingsCreate (
 
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return resp
         } catch (error: any) {
           span.recordException(error as Exception)
@@ -342,7 +395,6 @@ export function embeddingsCreate (
         }
       }
     )
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return f
   }
 }

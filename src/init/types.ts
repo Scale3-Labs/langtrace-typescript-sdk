@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
+import { DiagLogLevel, DiagLogger } from '@opentelemetry/api'
 import { SpanExporter } from '@opentelemetry/sdk-trace-base'
 
-export type InstrumentationType = 'openai' | 'cohere' | 'anthropic' | 'groq' | 'pinecone' | 'llamaindex' | 'chromadb' | 'qdrant'
+export type InstrumentationType = 'openai' | 'cohere' | 'anthropic' | 'groq' | 'pinecone' | 'llamaindex' | 'chromadb' | 'qdrant' | 'weaviate' | 'pg'
 
 export interface LangtraceInitOptions {
   api_key?: string
@@ -28,6 +29,12 @@ export interface LangtraceInitOptions {
     all_except?: InstrumentationType[]
     only?: InstrumentationType[]
   }
+  logging?: {
+    level?: DiagLogLevel
+    logger?: DiagLogger
+    disable?: boolean
+  }
+  disable_latest_version_check?: boolean
   instrumentations?: { [key in InstrumentationType]?: any }
 }
 export type LangTraceInit = (options?: LangtraceInitOptions) => void
