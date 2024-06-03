@@ -29,6 +29,7 @@ import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex
 import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
 import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/instrumentation'
 import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrumentation'
+import { DiagConsoleLogger, DiagLogLevel, diag } from '@opentelemetry/api'
 import { weaviateInstrumentation } from '@langtrace-instrumentation/weaviate/instrumentation'
 import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
 import c from 'ansi-colors'
@@ -63,6 +64,11 @@ export const init: LangTraceInit = ({
   instrumentations = undefined,
   api_host = LANGTRACE_REMOTE_URL,
   disable_instrumentations = {},
+  logging = {
+    level: DiagLogLevel.INFO,
+    logger: new DiagConsoleLogger(),
+    disable: false
+  },
   disable_latest_version_check = false
 }: LangtraceInitOptions = {}) => {
   const provider = new NodeTracerProvider({ sampler: new LangtraceSampler() })
@@ -72,6 +78,11 @@ export const init: LangTraceInit = ({
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
 
+  diag.setLogger(logging.logger ?? new DiagConsoleLogger(), { suppressOverrideMessage: true, logLevel: logging.level })
+
+  if (logging.disable === true) {
+    diag.disable()
+  }
   if (!isLatestSdk && !disable_latest_version_check) {
     void getCurrentAndLatestVersion().then((res) => {
       if (res !== undefined) {
@@ -111,7 +122,6 @@ export const init: LangTraceInit = ({
       provider.addSpanProcessor(new SimpleSpanProcessor(custom_remote_exporter))
     }
   }
-
   provider.register()
 
   const allInstrumentations: Record<InstrumentationType, any> = {
