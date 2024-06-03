@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 3.2.0
+
+### Minor Changes
+
+- Add support for pg tracing, debug logging options, warn about outdated version and weaviate tracing
+
 ## 3.1.1
 
 ### Patch Changes
