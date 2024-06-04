@@ -65,9 +65,9 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
       'llm.max_tokens': request.maxTokens?.toString(),
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.CHAT.METHOD, { kind: SpanKind.CLIENT, attributes })
+    const span = tracer.startSpan(APIS.CHAT.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
     try {
-      return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
+      return await context.with(trace.setSpan(context.active(), span), async () => {
         const prompts: Array<{ role: string, content: string }> = []
         if (request.preamble !== undefined && request.preamble !== '') {
           prompts.push({ role: 'SYSTEM', content: request.preamble })
@@ -136,8 +136,8 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       'llm.max_tokens': request.maxTokens?.toString(),
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.CHAT_STREAM.METHOD, { kind: SpanKind.CLIENT, attributes })
-    return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
+    const span = tracer.startSpan(APIS.CHAT_STREAM.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    return await context.with(trace.setSpan(context.active(), span), async () => {
       const prompts: Array<{ role: string, content: string }> = []
       if (request.preamble !== undefined && request.preamble !== '') {
         prompts.push({ role: 'SYSTEM', content: request.preamble })
@@ -172,9 +172,9 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.EMBED.METHOD, { kind: SpanKind.CLIENT, attributes })
+    const span = tracer.startSpan(APIS.EMBED.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
     try {
-      return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
+      return await context.with(trace.setSpan(context.active(), span), async () => {
         const response = await original.apply(this, [request, requestOptions])
         attributes['llm.token.counts'] = JSON.stringify({
           input_tokens: response.meta?.billedUnits?.inputTokens ?? 0,
@@ -215,9 +215,9 @@ export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer
       'llm.embedding_dataset_id': request.datasetId,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.EMBED_JOBS.METHOD, { kind: SpanKind.CLIENT, attributes })
+    const span = tracer.startSpan(APIS.EMBED_JOBS.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
     try {
-      return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
+      return await context.with(trace.setSpan(context.active(), span), async () => {
         const response = await original.apply(this, [request, requestOptions])
         attributes['llm.token.counts'] = JSON.stringify({
           input_tokens: response.meta?.billedUnits?.inputTokens ?? 0,
@@ -257,9 +257,9 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.RERANK.METHOD, { kind: SpanKind.CLIENT, attributes })
+    const span = tracer.startSpan(APIS.RERANK.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
     try {
-      return await context.with(trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
+      return await context.with(trace.setSpan(context.active(), span), async () => {
         const response = await original.apply(this, [request, requestOptions])
         const totalTokens = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['llm.retrieval.results'] = JSON.stringify(response.results)
