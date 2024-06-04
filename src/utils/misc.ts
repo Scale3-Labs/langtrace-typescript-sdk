@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+import axios from 'axios'
+// eslint-disable-next-line no-restricted-imports
+import { name, version } from '../../package.json'
+import { ansiRegex } from 'ansi-colors'
+
 /**
  *
  * @param obj record<string, any>
@@ -43,4 +48,41 @@ export function setValueFromPath (obj: any, path: string, value: any): void {
   if (lastKey !== undefined) {
     deepObj[lastKey] = value
   }
+}
+
+export async function getCurrentAndLatestVersion (): Promise<{ currentVersion: string, latestVersion: string } | undefined> {
+  const res = await axios.get(`https://registry.npmjs.org/${name}/latest`)
+  const latestVersion = res.data.version
+  if (latestVersion !== undefined) {
+    return { currentVersion: version, latestVersion }
+  }
+}
+
+export const boxText = (text: string): string => {
+  const lines = text.split('\n')
+  const strippedLines = lines.map(line => line.replace(ansiRegex, ''))
+  const longestLine = strippedLines.reduce((a, b) => (a.length > b.length ? a : b)).length
+
+  const top = '┌' + '─'.repeat(longestLine + 2) + '┐'
+  const bottom = '└' + '─'.repeat(longestLine + 2) + '┘'
+  const middle = lines.map((line, index) => {
+    const padding = longestLine - strippedLines[index].length
+    return '│ ' + line + ' '.repeat(padding) + ' │'
+  }).join('\n')
+
+  return `\n${top}\n${middle}\n${bottom}\n`
+}
+
+/**
+ * This function is used to convert an object to a string. It filters out functions and keys starting with '_' as they are considered private.
+ * @param obj any
+ * @returns string
+ */
+export function stringify (obj: any): string {
+  return JSON.stringify(obj, (key, value) => {
+    if (typeof value !== 'function' && !key.startsWith('_')) {
+      return value
+    }
+    return undefined
+  }, 2)
 }
