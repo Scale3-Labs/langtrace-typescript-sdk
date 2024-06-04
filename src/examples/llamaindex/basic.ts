@@ -2,7 +2,6 @@ import { init } from '@langtrace-init/init'
 import type { BaseReader, Metadata } from 'llamaindex'
 import { withLangTraceRootSpan } from '@langtrace-utils/instrumentation'
 import dotenv from 'dotenv'
-import fs from 'fs/promises'
 import {
   Document,
   FILE_EXT_TO_READER,
@@ -24,15 +23,10 @@ init({
 
 export async function basic (): Promise<void> {
   await withLangTraceRootSpan(async (spanId, traceId) => {
-    // Load essay from abramov.txt in Node
-    const path = 'node_modules/llamaindex/examples/abramov.txt'
+  // // Create Document object with essay
+    const document = new Document({ text: "Author of 'React' and 'Redux' books. He is a software engineer at Facebook. He studied at the University of Moscow and studied engineering" })
 
-    const essay = await fs.readFile(path, 'utf-8')
-
-    // Create Document object with essay
-    const document = new Document({ text: essay, id_: path })
-
-    // Split text and create embeddings. Store them in a VectorStoreIndex
+    // // Split text and create embeddings. Store them in a VectorStoreIndex
     const index = await VectorStoreIndex.fromDocuments([document])
 
     // Query the index

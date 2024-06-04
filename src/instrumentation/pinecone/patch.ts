@@ -45,9 +45,9 @@ export function genericPatch (
       ...customAttributes
     }
 
-    const span = tracer.startSpan(api.METHOD, { kind: SpanKind.CLIENT, attributes })
+    const span = tracer.startSpan(api.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
     return await context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
+      trace.setSpan(context.active(), span),
       async () => {
         try {
           if (this.target?.index !== undefined) {

@@ -42,9 +42,9 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
       'llm.tools': JSON.stringify(body.tools),
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes })
+    const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
     return await context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
+      trace.setSpan(context.active(), span),
       async () => {
         try {
           const resp = await original.apply(this, [body, options])
@@ -107,9 +107,9 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       'llm.tools': JSON.stringify(body.tools),
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes })
+    const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
     return await context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
+      trace.setSpan(context.active(), span),
       async () => {
         const resp = await original.apply(this, [body, options])
         return handleStream(resp, attributes, span)
