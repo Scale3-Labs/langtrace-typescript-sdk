@@ -24,6 +24,7 @@ import { chatCompletionCreate, embeddingsCreate, imageEdit, imagesGenerate } fro
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
 class OpenAIInstrumentation extends InstrumentationBase<any> {
+  private module: Record<string, any> | undefined
   constructor () {
     super(name, version)
   }
@@ -39,11 +40,13 @@ class OpenAIInstrumentation extends InstrumentationBase<any> {
       ['>=4.26.1 <6.0.0'],
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching OpenAI SDK version ${moduleVersion}`)
+        this.module = moduleExports
         this._patch(moduleExports, moduleVersion as string)
         return moduleExports
       },
       (moduleExports, moduleVersion) => {
         diag.debug(`Unpatching OpenAI SDK version ${moduleVersion}`)
+        this.module = moduleExports
         if (moduleExports !== undefined) {
           this._unpatch(moduleExports)
         }

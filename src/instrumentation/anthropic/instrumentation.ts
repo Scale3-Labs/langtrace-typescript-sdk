@@ -21,6 +21,7 @@ import { messagesCreate } from '@langtrace-instrumentation/anthropic/patch'
 import { version, name } from '../../../package.json'
 
 class AnthropicInstrumentation extends InstrumentationBase<any> {
+  private module: Record<string, any> | undefined
   constructor () {
     super(name, version)
   }
@@ -36,11 +37,13 @@ class AnthropicInstrumentation extends InstrumentationBase<any> {
       ['>=0.16.0'],
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching Anthropic SDK version ${moduleVersion}`)
+        this.module = moduleExports
         this._patch(moduleExports, moduleVersion as string)
         return moduleExports
       },
       (moduleExports, moduleVersion) => {
         diag.debug(`Unpatching Anthropic SDK version ${moduleVersion}`)
+        this.module = moduleExports
         if (moduleExports !== undefined) {
           this._unpatch(moduleExports)
         }

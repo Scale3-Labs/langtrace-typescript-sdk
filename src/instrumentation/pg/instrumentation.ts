@@ -22,6 +22,7 @@ import { diag } from '@opentelemetry/api'
 import { patchPgQuery } from '@langtrace-instrumentation/pg/patch'
 
 class PgInstrumentation extends InstrumentationBase<any> {
+  private module: Record<string, any> | undefined
   constructor () {
     super(name, version)
   }
@@ -37,11 +38,13 @@ class PgInstrumentation extends InstrumentationBase<any> {
       ['>=8.11.0'],
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching pg SDK version ${moduleVersion}`)
+        this.module = moduleExports
         this._patch(moduleExports, moduleVersion as string)
         return moduleExports
       },
       (moduleExports, moduleVersion) => {
         diag.debug(`Unpatching pg SDK version ${moduleVersion}`)
+        this.module = moduleExports
         if (moduleExports !== undefined) {
           this._unpatch(moduleExports)
         }

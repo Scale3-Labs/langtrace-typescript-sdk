@@ -19,7 +19,7 @@ init({
   batch: false,
   write_spans_to_console: true,
   disable_instrumentations: { all_except: ['llamaindex'] },
-  disable_tracing_for_methods: { llamaindex: ['llamaindex.RetrieverQueryEngine.query', 'llamaindex.SimpleVectorStore.query'] }
+  disable_tracing_for_methods: { }
 })
 
 export async function basic (): Promise<void> {
