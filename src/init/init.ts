@@ -69,7 +69,8 @@ export const init: LangTraceInit = ({
     logger: new DiagConsoleLogger(),
     disable: false
   },
-  disable_latest_version_check = false
+  disable_latest_version_check = false,
+  disable_tracing_for_methods = undefined
 }: LangtraceInitOptions = {}) => {
   const provider = new NodeTracerProvider({ sampler: new LangtraceSampler() })
   const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', api_host)
@@ -122,7 +123,6 @@ export const init: LangTraceInit = ({
       provider.addSpanProcessor(new SimpleSpanProcessor(custom_remote_exporter))
     }
   }
-  provider.register()
 
   const allInstrumentations: Record<InstrumentationType, any> = {
     openai: openAIInstrumentation,
@@ -136,6 +136,14 @@ export const init: LangTraceInit = ({
     weaviate: weaviateInstrumentation,
     pg: pgInstrumentation
   }
+  llamaIndexInstrumentation.disableTracingForMethods(disable_tracing_for_methods?.llamaindex ?? [])
+  // if (disable_tracing_for_methods !== undefined) {
+  //   Object.entries(disable_tracing_for_methods).forEach(([key, value]) => {
+  //     if (value !== undefined) {
+  //       allInstrumentations[key as InstrumentationType].setConfig({ disabled_methods: disable_tracing_for_methods[key as InstrumentationType] })
+  //     }
+  //   })
+  // }
   if (instrumentations === undefined) {
     registerInstrumentations({
       instrumentations: getInstrumentations(disable_instrumentations, allInstrumentations),
@@ -149,6 +157,7 @@ export const init: LangTraceInit = ({
     })
     registerInstrumentations({ tracerProvider: provider })
   }
+  provider.register()
 }
 
 const getInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<InstrumentationType, InstrumentationBase>): InstrumentationBase[] => {

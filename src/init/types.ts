@@ -14,6 +14,15 @@
  * limitations under the License.
  */
 
+import { AnthropicMethods } from '@langtrace-constants/instrumentation/anthropic'
+import { CohereMethods } from '@langtrace-constants/instrumentation/cohere'
+import { GroqMethods } from '@langtrace-constants/instrumentation/groq'
+import { LlamaIndexMethods } from '@langtrace-constants/instrumentation/llamaindex'
+import { OpenAIMethods } from '@langtrace-constants/instrumentation/openai'
+import { PgMethods } from '@langtrace-constants/instrumentation/pg'
+import { PineConeMethods } from '@langtrace-constants/instrumentation/pinecone'
+import { QdrantMethods } from '@langtrace-constants/instrumentation/qdrant'
+import { WeaviateMethods } from '@langtrace-constants/instrumentation/weaviate'
 import { DiagLogLevel, DiagLogger } from '@opentelemetry/api'
 import { SpanExporter } from '@opentelemetry/sdk-trace-base'
 
@@ -35,6 +44,26 @@ export interface LangtraceInitOptions {
     disable?: boolean
   }
   disable_latest_version_check?: boolean
+  disable_tracing_for_methods?: Partial<DisableTracing>
   instrumentations?: { [key in InstrumentationType]?: any }
 }
+
+interface InstrumentationMethods {
+  openai: OpenAIMethods[]
+  cohere: CohereMethods[]
+  anthropic: AnthropicMethods[]
+  groq: GroqMethods[]
+  pinecone: PineConeMethods[]
+  llamaindex: LlamaIndexMethods[]
+  chromadb: GroqMethods[]
+  qdrant: QdrantMethods[]
+  weaviate: WeaviateMethods[]
+  pg: PgMethods[]
+}
+
+// DisableTracing interface that enforces keys to match InstrumentationType
+type DisableTracing = {
+  [key in InstrumentationType]: InstrumentationMethods[key]
+}
+
 export type LangTraceInit = (options?: LangtraceInitOptions) => void

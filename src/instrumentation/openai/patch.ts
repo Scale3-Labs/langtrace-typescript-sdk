@@ -15,10 +15,10 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
+import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
 import { APIS } from '@langtrace-constants/instrumentation/openai'
 import { calculatePromptTokens, estimateTokens } from '@langtrace-utils/llm'
-import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
+import { LLMSpanAttributes } from '@langtrase/trace-attributes'
 import {
   context, Exception,
   Span,

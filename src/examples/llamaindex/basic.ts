@@ -1,9 +1,8 @@
 import { init } from '@langtrace-init/init'
+import type { BaseReader, Metadata } from 'llamaindex'
 import { withLangTraceRootSpan } from '@langtrace-utils/instrumentation'
 import dotenv from 'dotenv'
 import fs from 'fs/promises'
-import type { BaseReader, Metadata } from 'llamaindex'
-import * as ll from 'llamaindex'
 import {
   Document,
   FILE_EXT_TO_READER,
@@ -18,9 +17,9 @@ dotenv.config()
 
 init({
   batch: false,
-  write_spans_to_console: false,
-  disable_instrumentations: { all_except: ['llamaindex', 'openai'] },
-  instrumentations: { llamaindex: ll }
+  write_spans_to_console: true,
+  disable_instrumentations: { all_except: ['llamaindex'] },
+  disable_tracing_for_methods: { llamaindex: ['llamaindex.RetrieverQueryEngine.query', 'llamaindex.SimpleVectorStore.query'] }
 })
 
 export async function basic (): Promise<void> {
@@ -40,7 +39,7 @@ export async function basic (): Promise<void> {
     const queryEngine = index.asQueryEngine()
     const response = await queryEngine.query({ query: 'What did the author do in college?' })
     // Output response
-    console.info(response.toString())
+    // console.info(response.toString())
   })
 }
 

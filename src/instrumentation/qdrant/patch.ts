@@ -15,9 +15,9 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
+import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
 import { APIS } from '@langtrace-constants/instrumentation/qdrant'
-import { DatabaseSpanAttributes, Event } from '@langtrase/trace-attributes'
+import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
 import { Exception, SpanKind, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api'
 
 export function genericCollectionPatch (

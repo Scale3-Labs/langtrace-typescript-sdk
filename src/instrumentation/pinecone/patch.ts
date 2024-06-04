@@ -16,8 +16,8 @@
  */
 
 import { APIS } from '@langtrace-constants/instrumentation/pinecone'
-import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
-import { DatabaseSpanAttributes, Event } from '@langtrase/trace-attributes'
+import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
+import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
 import { Tracer, context, trace, SpanKind, SpanStatusCode, Exception } from '@opentelemetry/api'
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 

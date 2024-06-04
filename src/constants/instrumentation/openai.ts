@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-import { OpenAIMethods } from '@langtrase/trace-attributes'
-
 export const APIS = {
   CHAT_COMPLETION: {
-    METHOD: OpenAIMethods.CHAT_COMPLETION,
+    METHOD: 'openai.chat.completion',
     ENDPOINT: '/chat/completions'
   },
   IMAGES_GENERATION: {
-    METHOD: OpenAIMethods.IMAGES_GENERATION,
+    METHOD: 'openai.images.generate',
     ENDPOINT: '/images/generations'
   },
   IMAGES_EDIT: {
@@ -30,7 +28,8 @@ export const APIS = {
     ENDPOINT: '/images/edits'
   },
   EMBEDDINGS_CREATE: {
-    METHOD: OpenAIMethods.EMBEDDINGS_CREATE,
+    METHOD: 'openai.embeddings.create',
     ENDPOINT: '/embeddings'
   }
-}
+} as const
+export type OpenAIMethods = typeof APIS[keyof typeof APIS]['METHOD']

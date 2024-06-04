@@ -24,7 +24,7 @@ export const queryTypeToFunctionToProps = {
     raw: [
       'query'
     ]
-  },
+  } as const,
   schema: {
     collectionName: ['class.class', 'className'],
     classCreator: ['class.class'],
@@ -37,11 +37,25 @@ export const queryTypeToFunctionToProps = {
     tenantsGetter: ['className'],
     tenantsUpdater: ['className', 'tenants'],
     tenantExists: ['className', 'tenant']
-  },
+  } as const,
   batch: {
     collectionName: [],
     objectsBatcher: ['consistencyLevel', 'objects'],
     referencesBatcher: ['consistencyLevel', 'beaconPath'],
     referencePayloadBuilder: ['fromClassName', 'fromId', 'fromRefProp', 'toClassName', 'toId']
-  }
+  } as const
 }
+
+// Define a type that recursively maps over all properties, generating strings in the format "prefix.propertyName"
+// Ignores 'collectionName' properties
+type AllNestedProperties<T, Prefix extends string = ''> = {
+  [K in keyof T]: K extends 'collectionName' // Check if the key is 'collectionName'
+    ? never // Ignore 'collectionName'
+    : T[K] extends readonly string[] // Check if the value is a readonly array of strings
+      ? `${Prefix}${K & string}.${T[K][number]}` // Map each string in the array to "prefix.propertyName"
+      : T[K] extends object // Check if the value is an object
+        ? `${Prefix}${K & string}` | AllNestedProperties<T[K], `${Prefix}${K & string}.`> // Recursively map properties
+        : never; // Otherwise, return never
+}[keyof T & string] // Ensure the key is treated as a string
+
+export type WeaviateMethods = AllNestedProperties< typeof queryTypeToFunctionToProps>

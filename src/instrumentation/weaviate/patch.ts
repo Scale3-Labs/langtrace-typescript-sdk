@@ -15,10 +15,10 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
+import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
 import { queryTypeToFunctionToProps } from '@langtrace-constants/instrumentation/weaviate'
 import { setValueFromPath, getValueFromPath } from '@langtrace-utils/misc'
-import { DatabaseSpanAttributes, Event } from '@langtrase/trace-attributes'
+import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
 import { Exception, SpanKind, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api'
 
 interface PatchBuilderArgs {
@@ -57,7 +57,7 @@ export const patchBuilderFunctions = function (this: any, { clientInstance, clie
               patchThis._wrap(functionCallInstance, 'do', (originalDo: any) => {
                 return async function (this: any, ...doArgs: any[]) {
                   const queryObj: { [key: string]: any } = {}
-                  properties.forEach((path) => {
+                  properties.forEach((path: string) => {
                     const value = getValueFromPath(functionCallInstance, path)
                     if (value !== undefined) {
                       setValueFromPath(queryObj, path, value)

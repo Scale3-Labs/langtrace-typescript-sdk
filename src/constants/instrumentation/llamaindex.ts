@@ -15,10 +15,12 @@
  */
 
 export const APIS = {
-  CHAT_COMPLETION: {
-    METHOD: 'groq.chat.completions.create',
-    ENDPOINT: '/chat/completions'
-  }
+  RETIREVER_QUERY_ENGINE_QUERY: { METHOD: 'llamaindex.RetrieverQueryEngine.query' },
+  RETIREVER_QUERY_ENGINE_RETRIEVE: { METHOD: 'llamainindex.RetrieverQueryEngine.retrieve' },
+  VECTOR_INDEX_RETRIEVER_RETRIEVE: { METHOD: 'llamaindex.VectorIndexRetriever.retrieve' },
+  SIMPLE_VECTOR_STORE_QUERY: { METHOD: 'llamaindex.SimpleVectorStore.query' },
+  OPEN_AI_CHAT: { METHOD: 'llamaindex.OpenAI.chat' }
+
 } as const
 
-export type GroqMethods = typeof APIS[keyof typeof APIS]['METHOD']
+export type LlamaIndexMethods = typeof APIS[keyof typeof APIS]['METHOD']
