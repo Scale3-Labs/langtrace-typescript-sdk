@@ -34,7 +34,7 @@ export class LangTraceExporter implements SpanExporter {
     this.apiKey = apiKey
     this.apiHost = apiHost === LANGTRACE_REMOTE_URL ? `${LANGTRACE_REMOTE_URL}/api/trace` : apiHost
 
-    if (apiHost === LANGTRACE_REMOTE_URL && this.apiKey.length === 0) {
+    if (this.apiHost === LANGTRACE_REMOTE_URL && this.apiKey.length === 0) {
       diag.error('Unable to send traces to langtrce. No LangTrace API key provided. Please set the LANGTRACE_API_KEY environment variable')
       throw new Error('No LangTrace API key provided')
     }
@@ -74,7 +74,7 @@ export class LangTraceExporter implements SpanExporter {
       resultCallback({ code: response.status === 200 ? 0 : 1 })
     })
       .catch((error) => {
-        resultCallback({ code: 1, error: new Error(`Failed to export ${spans.length} spans to ${this.apiHost}: ${JSON.stringify(error?.response?.data)}`) })
+        resultCallback({ code: 1, error: new Error(`Failed to export ${spans.length} spans to ${this.apiHost}: ${JSON.stringify(error?.response?.data ?? error.cause ?? error.message)}`) })
       })
   }
 
