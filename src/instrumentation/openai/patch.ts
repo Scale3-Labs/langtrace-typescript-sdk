@@ -52,7 +52,7 @@ export function imageEdit (
       'llm.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.prompt': JSON.stringify(args[0]?.prompt),
+      'llm.prompts': JSON.stringify(args[0]?.prompt),
       ...customAttributes
     }
 

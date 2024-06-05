@@ -46,16 +46,19 @@ export const queryTypeToFunctionToProps = {
   } as const
 }
 
-// Define a type that recursively maps over all properties, generating strings in the format "prefix.propertyName"
-// Ignores 'collectionName' properties
-type AllNestedProperties<T, Prefix extends string = ''> = {
-  [K in keyof T]: K extends 'collectionName' // Check if the key is 'collectionName'
-    ? never // Ignore 'collectionName'
-    : T[K] extends readonly string[] // Check if the value is a readonly array of strings
-      ? `${Prefix}${K & string}.${T[K][number]}` // Map each string in the array to "prefix.propertyName"
-      : T[K] extends object // Check if the value is an object
-        ? `${Prefix}${K & string}` | AllNestedProperties<T[K], `${Prefix}${K & string}.`> // Recursively map properties
-        : never; // Otherwise, return never
-}[keyof T & string] // Ensure the key is treated as a string
+// Define a type that generates strings in the format "prefix.methodName.do", excluding 'collectionName'
+type AllNestedMethods<T, Prefix extends string = ''> = {
+  [K in keyof T]: K extends 'collectionName'
+    ? never
+    : T[K] extends object
+      ? AllNestedMethods<T[K], `${Prefix}${K & string}.`> | `${Prefix}${K & string}.do`
+      : never;
+}[keyof T & string]
 
-export type WeaviateMethods = AllNestedProperties< typeof queryTypeToFunctionToProps>
+// Define a type that maps only the nested properties, skipping top-level keys
+type NestedMethodsOnly<T> = {
+  [K in keyof T]: T[K] extends object ? AllNestedMethods<T[K], `${K & string}.`> : never;
+}[keyof T & string]
+
+// Define the WeaviateMethods type using the NestedMethodsOnly type
+export type WeaviateMethods = NestedMethodsOnly<typeof queryTypeToFunctionToProps>

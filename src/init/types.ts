@@ -44,7 +44,7 @@ export interface LangtraceInitOptions {
     disable?: boolean
   }
   disable_latest_version_check?: boolean
-  disable_tracing_for_methods?: Partial<DisableTracing>
+  disable_tracing_for_methods?: Partial<TracedMethods>
   instrumentations?: { [key in InstrumentationType]?: any }
 }
 
@@ -62,7 +62,7 @@ interface InstrumentationMethods {
 }
 
 // DisableTracing interface that enforces keys to match InstrumentationType
-type DisableTracing = {
+export type TracedMethods = {
   [key in InstrumentationType]: InstrumentationMethods[key]
 }
 

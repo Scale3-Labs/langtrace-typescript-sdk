@@ -17,7 +17,6 @@ dotenv.config()
 init({
   batch: false,
   write_spans_to_console: true,
-  disable_instrumentations: { all_except: ['llamaindex'] },
   disable_tracing_for_methods: { }
 })
 

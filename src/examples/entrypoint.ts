@@ -1,3 +1,3 @@
-import { basic } from '@langtrace-examples/llamaindex/basic'
+import { imageEdit } from '@langtrace-examples/openai/images-edit'
 
-void basic()
+void imageEdit()

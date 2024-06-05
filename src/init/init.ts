@@ -72,7 +72,7 @@ export const init: LangTraceInit = ({
   disable_latest_version_check = false,
   disable_tracing_for_methods = undefined
 }: LangtraceInitOptions = {}) => {
-  const provider = new NodeTracerProvider({ sampler: new LangtraceSampler() })
+  const provider = new NodeTracerProvider({ sampler: new LangtraceSampler(disable_tracing_for_methods) })
   const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', api_host)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
@@ -136,14 +136,7 @@ export const init: LangTraceInit = ({
     weaviate: weaviateInstrumentation,
     pg: pgInstrumentation
   }
-  llamaIndexInstrumentation.disableTracingForMethods(disable_tracing_for_methods?.llamaindex ?? [])
-  // if (disable_tracing_for_methods !== undefined) {
-  //   Object.entries(disable_tracing_for_methods).forEach(([key, value]) => {
-  //     if (value !== undefined) {
-  //       allInstrumentations[key as InstrumentationType].setConfig({ disabled_methods: disable_tracing_for_methods[key as InstrumentationType] })
-  //     }
-  //   })
-  // }
+
   if (instrumentations === undefined) {
     registerInstrumentations({
       instrumentations: getInstrumentations(disable_instrumentations, allInstrumentations),
