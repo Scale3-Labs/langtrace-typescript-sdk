@@ -41,8 +41,6 @@ export class LangTraceExporter implements SpanExporter {
   }
 
   async export (spans: ReadableSpan[], resultCallback: (result: ExportResult) => void): Promise<void> {
-    // eslint-disable-next-line no-console
-    console.log('Exporting spans to LangTrace')
     const data: Array<Partial<ReadableSpan>> = spans.map((span) => ({
       traceId: span.spanContext().traceId,
       spanId: span.spanContext().spanId,

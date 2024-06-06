@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { TracedMethods } from '@langtrace-init/types'
 import { SpanKind, Attributes, Context, trace, TraceFlags, diag } from '@opentelemetry/api'
 import { Sampler, SamplingDecision, SamplingResult } from '@opentelemetry/sdk-trace-base'

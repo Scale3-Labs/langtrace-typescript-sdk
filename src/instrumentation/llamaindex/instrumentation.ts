@@ -64,7 +64,6 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
       const cls = (llama)[key]
       if (cls.prototype !== undefined) {
         if (cls.prototype.query !== undefined) {
-          // eslint-disable-next-line no-console
           if (isWrapped(cls.prototype)) {
             this._unwrap(cls.prototype, 'query')
           }
