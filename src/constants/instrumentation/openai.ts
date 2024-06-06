@@ -26,7 +26,7 @@ export const APIS = {
     ENDPOINT: '/images/generations'
   },
   IMAGES_EDIT: {
-    METHOD: 'openai.images.edit',
+    METHOD: OpenAIMethods.IMAGES_EDIT,
     ENDPOINT: '/images/edits'
   },
   EMBEDDINGS_CREATE: {
