@@ -22,7 +22,6 @@ import { ChatFn, ChatStreamFn, EmbedFn, EmbedJobsCreateFn, RerankFn } from '@lan
 import { chatPatch, chatStreamPatch, embedJobsCreatePatch, embedPatch, rerankPatch } from '@langtrace-instrumentation/cohere/patch'
 
 class CohereInstrumentation extends InstrumentationBase<any> {
-  private module: Record<string, any> | undefined
   constructor () {
     super(name, version)
   }
@@ -38,13 +37,11 @@ class CohereInstrumentation extends InstrumentationBase<any> {
       ['>= 7.2.0'],
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching cohere SDK version ${moduleVersion}`)
-        this.module = moduleExports
         this._patch(moduleExports, moduleVersion as string)
         return moduleExports
       },
       (moduleExports, moduleVersion) => {
         diag.debug(`Unpatching cohere SDK version ${moduleVersion}`)
-        this.module = moduleExports
         if (moduleExports !== undefined) {
           this._unpatch(moduleExports)
         }

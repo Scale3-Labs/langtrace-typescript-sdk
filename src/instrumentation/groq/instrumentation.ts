@@ -22,7 +22,6 @@ import { chatPatch } from '@langtrace-instrumentation/groq/patch'
 import { ChatFn, ChatStreamFn } from '@langtrace-instrumentation/groq/types'
 
 class GroqInstrumentation extends InstrumentationBase<any> {
-  private module: Record<string, any> | undefined
   constructor () {
     super(name, version)
   }
@@ -38,13 +37,11 @@ class GroqInstrumentation extends InstrumentationBase<any> {
       ['>= 0.3.3'],
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching groq SDK version ${moduleVersion}`)
-        this.module = moduleExports
         this._patch(moduleExports, moduleVersion as string)
         return moduleExports
       },
       (moduleExports, moduleVersion) => {
         diag.debug(`Unpatching groq SDK version ${moduleVersion}`)
-        this.module = moduleExports
         if (moduleExports !== undefined) {
           this._unpatch(moduleExports)
         }

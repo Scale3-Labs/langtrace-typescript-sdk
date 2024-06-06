@@ -25,11 +25,8 @@ import {
 } from '@opentelemetry/instrumentation'
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
-import { getValueFromPath } from '@langtrace-utils/misc'
 
 class LlamaIndexInstrumentation extends InstrumentationBase<any> {
-  private module: Record<string, any> | undefined
-
   constructor () {
     super(name, version)
   }
@@ -46,13 +43,11 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching LlamaIndex SDK version ${moduleVersion}`)
         this._patch(moduleExports, moduleVersion as string)
-        this.module = moduleExports
         return moduleExports
       },
       (moduleExports, moduleVersion) => {
         diag.debug(`Unpatching LlamaIndex SDK version ${moduleVersion}`)
         if (moduleExports !== undefined) {
-          this.module = moduleExports
           this._unpatch(moduleExports)
         }
       }
@@ -181,55 +176,30 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
     }
   }
 
-  public disableTracingForMethods (methods: string[]): void {
-    // eslint-disable-next-line no-console
-    const classPathToMethod: Record<string, string[]> = {}
-    for (const method of methods) {
-      const [_, className, methodName] = method.split('.')
-      if (classPathToMethod[`${className}.prototype`] === undefined) {
-        classPathToMethod[`${className}.prototype`] = [methodName]
-      } else {
-        classPathToMethod[`${className}.prototype`].push(methodName)
+  private _unpatch (llama: any): void {
+    for (const key in llama) {
+      const cls = (llama)[key]
+      if (cls.prototype !== undefined) {
+        if (cls.prototype.query !== undefined) {
+          this._unwrap(cls.prototype, 'query')
+        }
+        if (cls.prototype.retrieve !== undefined) {
+          this._unwrap(cls.prototype, 'retrieve')
+        }
+        if (cls.prototype.chat !== undefined) {
+          this._unwrap(cls.prototype, 'chat')
+        }
+        if (cls.prototype.call !== undefined) {
+          this._unwrap(cls.prototype, 'call')
+        }
+        if (cls.prototype.extract !== undefined) {
+          this._unwrap(cls.prototype, 'extract')
+        }
+        if (cls.prototype.loadData !== undefined) {
+          this._unwrap(cls.prototype, 'loadData')
+        }
       }
     }
-    // eslint-disable-next-line no-console
-    Object.entries(classPathToMethod).forEach(([key, value]) => {
-      const proto = getValueFromPath(this.module ?? {}, key)
-      if (proto !== undefined) {
-        value.forEach((methodName) => {
-          if (proto[methodName] !== undefined) {
-            this._unwrap(proto, methodName)
-          }
-        })
-      }
-    })
-    this._unpatch(this.module)
-  }
-
-  private _unpatch (llama: any): void {
-    // for (const key in llama) {
-    //   const cls = (llama)[key]
-    //   if (cls.prototype !== undefined) {
-    //     if (cls.prototype.query !== undefined) {
-    //       this._unwrap(cls.prototype, 'query')
-    //     }
-    //     if (cls.prototype.retrieve !== undefined) {
-    //       this._unwrap(cls.prototype, 'retrieve')
-    //     }
-    //     if (cls.prototype.chat !== undefined) {
-    //       this._unwrap(cls.prototype, 'chat')
-    //     }
-    //     if (cls.prototype.call !== undefined) {
-    //       this._unwrap(cls.prototype, 'call')
-    //     }
-    //     if (cls.prototype.extract !== undefined) {
-    //       this._unwrap(cls.prototype, 'extract')
-    //     }
-    //     if (cls.prototype.loadData !== undefined) {
-    //       this._unwrap(cls.prototype, 'loadData')
-    //     }
-    //   }
-    // }
   }
 }
 

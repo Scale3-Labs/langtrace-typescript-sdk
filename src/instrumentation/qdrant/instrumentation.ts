@@ -22,7 +22,6 @@ import { APIS } from '@langtrace-constants/instrumentation/qdrant'
 import { genericCollectionPatch } from '@langtrace-instrumentation/qdrant/patch'
 
 class QdrantInstrumentation extends InstrumentationBase<any> {
-  private module: Record<string, any> | undefined
   constructor () {
     super(name, version)
   }
@@ -38,13 +37,11 @@ class QdrantInstrumentation extends InstrumentationBase<any> {
       ['>=1.9.0'],
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching Qdrant SDK version ${moduleVersion}`)
-        this.module = moduleExports
         this._patch(moduleExports, moduleVersion as string)
         return moduleExports
       },
       (moduleExports, moduleVersion) => {
         diag.debug(`Unpatching Qdrant SDK version ${moduleVersion}`)
-        this.module = moduleExports
         if (moduleExports !== undefined) {
           this._unpatch(moduleExports)
         }
