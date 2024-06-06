@@ -85,11 +85,11 @@ export function messagesCreate (
     }
 
     if (!(args[0].stream as boolean) || args[0].stream === false) {
-      const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes })
+      const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
       return await context.with(
         trace.setSpan(
           context.active(),
-          trace.getSpan(context.active()) ?? span
+          span
         ),
         async () => {
           try {
@@ -126,11 +126,11 @@ export function messagesCreate (
         }
       )
     } else {
-      const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes })
+      const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
       return await context.with(
         trace.setSpan(
           context.active(),
-          trace.getSpan(context.active()) ?? span
+          span
         ),
         async () => {
           const resp: AsyncIterable<unknown> = await originalMethod.apply(this, args)

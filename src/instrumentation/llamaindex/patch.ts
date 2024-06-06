@@ -46,10 +46,9 @@ export function genericPatch (
       'llamaindex.task.name': task,
       ...customAttributes
     }
-    const span = tracer.startSpan(method, { kind: SpanKind.CLIENT, attributes })
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    const span = tracer.startSpan(method, { kind: SpanKind.CLIENT, attributes }, context.active())
     return await context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
+      trace.setSpan(context.active(), span),
       async () => {
         try {
           const response = await originalMethod.apply(this, args)

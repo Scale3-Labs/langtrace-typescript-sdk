@@ -62,10 +62,10 @@ export function collectionPatch (
       attributes['db.chromadb.embedding_model'] = this.embeddingFunction.model
     }
 
-    const span = tracer.startSpan(api.METHOD, { kind: SpanKind.CLIENT, attributes })
+    const span = tracer.startSpan(api.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
+      trace.setSpan(context.active(), span),
       async () => {
         try {
           // NOTE: Not tracing the response data as it can contain sensitive information

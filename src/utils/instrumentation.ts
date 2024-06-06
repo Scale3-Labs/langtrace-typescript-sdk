@@ -30,11 +30,12 @@ export async function withLangTraceRootSpan<T> (
   name = 'LangtraceRootSpan',
   spanKind: SpanKind = SpanKind.INTERNAL
 ): Promise<T> {
-  const tracer = trace.getTracer('langtrace')
-  const rootSpan = tracer.startSpan(name, { kind: spanKind, attributes: { 'langtrace.sdk.name': '@langtrase/typescript-sdk' } })
-
   // Use the OpenTelemetry context management API to set the current span
-  return await context.with(trace.setSpan(context.active(), rootSpan), async () => {
+  const currentContext = context.active()
+  const tracer = trace.getTracer('@langtrase/typescript-sdk')
+  const rootSpan = tracer.startSpan(name, { kind: spanKind, attributes: { 'langtrace.sdk.name': '@langtrase/typescript-sdk' } }, currentContext)
+
+  return await context.with(trace.setSpan(currentContext, rootSpan), async () => {
     try {
       // Execute the wrapped function
       const result = await fn(rootSpan.spanContext().spanId, rootSpan.spanContext().traceId)

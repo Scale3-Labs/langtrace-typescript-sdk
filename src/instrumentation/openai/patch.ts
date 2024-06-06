@@ -20,10 +20,13 @@ import { APIS } from '@langtrace-constants/instrumentation/openai'
 import { calculatePromptTokens, estimateTokens } from '@langtrace-utils/llm'
 import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
 import {
-  context, Exception,
+  Exception,
   Span,
   SpanKind,
-  SpanStatusCode, trace, Tracer
+  SpanStatusCode,
+  Tracer,
+  context,
+  trace
 } from '@opentelemetry/api'
 
 export function imageEdit (
@@ -53,12 +56,15 @@ export function imageEdit (
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
       'llm.prompt': JSON.stringify(args[0]?.prompt),
+      'llm.top_k': args[0]?.n,
+      'llm.image.size': args[0]?.size,
+      'llm.response_format': args[0]?.response_format,
       ...customAttributes
     }
 
-    const span = tracer.startSpan(APIS.IMAGES_EDIT.METHOD, { kind: SpanKind.SERVER, attributes })
+    const span = tracer.startSpan(APIS.IMAGES_EDIT.METHOD, { kind: SpanKind.SERVER, attributes }, context.active())
     const f = await context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
+      trace.setSpan(context.active(), span),
       async () => {
         try {
           const response = await originalMethod.apply(originalContext, args)
@@ -122,9 +128,9 @@ export function imagesGenerate (
       ...customAttributes
     }
 
-    const span = tracer.startSpan(APIS.IMAGES_GENERATION.METHOD, { kind: SpanKind.SERVER, attributes })
+    const span = tracer.startSpan(APIS.IMAGES_GENERATION.METHOD, { kind: SpanKind.SERVER, attributes }, context.active())
     const f = await context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
+      trace.setSpan(context.active(), span),
       async () => {
         try {
           const response = await originalMethod.apply(originalContext, args)
@@ -212,9 +218,9 @@ export function chatCompletionCreate (
     }
 
     if (!(args[0].stream as boolean) || args[0].stream === false) {
-      const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes })
+      const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
       return await context.with(
-        trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
+        trace.setSpan(context.active(), span),
         async () => {
           try {
             const resp = await originalMethod.apply(this, args)
@@ -260,11 +266,11 @@ export function chatCompletionCreate (
         }
       )
     } else {
-      const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes })
+      const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
       return await context.with(
         trace.setSpan(
           context.active(),
-          trace.getSpan(context.active()) ?? span
+          span
         ),
         async () => {
           const model = args[0].model
@@ -374,9 +380,9 @@ export function embeddingsCreate (
       attributes['llm.user'] = args[0]?.user
     }
 
-    const span = tracer.startSpan(APIS.EMBEDDINGS_CREATE.METHOD, { kind: SpanKind.SERVER, attributes })
+    const span = tracer.startSpan(APIS.EMBEDDINGS_CREATE.METHOD, { kind: SpanKind.SERVER, attributes }, context.active())
     const f = await context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
+      trace.setSpan(context.active(), span),
       async () => {
         try {
           const resp = await originalMethod.apply(originalContext, args)

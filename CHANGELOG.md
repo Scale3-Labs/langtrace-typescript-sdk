@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 3.2.1
+
+### Patch Changes
+
+- Bug fix for sendUserFeedback and getPromptFrom registry for hosted setups using the wrong url.
+
 ## 3.2.0
 
 ### Minor Changes
