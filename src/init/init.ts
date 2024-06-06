@@ -48,7 +48,7 @@ import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation
  * @param instrumentations Instrumentations to enable.
  *      This is used for next.js applications as automatic instrumentation is not supported.
  * @param api_host API host to send spans to.
- *      Specifies the destination server for the span data.
+ *      Specifies the destination server for the span data. For self hosted instances, this should be set to <HOSTED_LANGTRACE_URL>/api/trace.
  * @param disable_instrumentations Instrumentations to disable.
  *  - all_except: will disable all instrumentations except the ones specified.
  *  - only: will disable only the instrumentations specified.
@@ -71,12 +71,16 @@ export const init: LangTraceInit = ({
   },
   disable_latest_version_check = false
 }: LangtraceInitOptions = {}) => {
+  const host = (process.env.LANGTRACE_API_HOST ?? api_host ?? LANGTRACE_REMOTE_URL)
+
   const provider = new NodeTracerProvider({ sampler: new LangtraceSampler() })
-  const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', api_host)
+  const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', host)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
+
+  process.env.LANGTRACE_API_HOST = host.replace('/api/trace', '')
 
   diag.setLogger(logging.logger ?? new DiagConsoleLogger(), { suppressOverrideMessage: true, logLevel: logging.level })
 
