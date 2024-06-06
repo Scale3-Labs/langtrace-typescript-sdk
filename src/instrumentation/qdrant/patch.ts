@@ -44,10 +44,9 @@ export function genericCollectionPatch (
       ...customAttributes
     }
 
-    const span = tracer.startSpan(api.METHOD, { kind: SpanKind.CLIENT, attributes })
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    const span = tracer.startSpan(api.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
     return await context.with(
-      trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span),
+      trace.setSpan(context.active(), span),
       async () => {
         try {
           const response = await originalMethod.apply(this, args)
