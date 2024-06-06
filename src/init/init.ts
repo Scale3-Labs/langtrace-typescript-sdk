@@ -48,7 +48,7 @@ import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation
  * @param instrumentations Instrumentations to enable.
  *      This is used for next.js applications as automatic instrumentation is not supported.
  * @param api_host API host to send spans to.
- *      Specifies the destination server for the span data.
+ *      Specifies the destination server for the span data. For self hosted instances, this should be set to <HOSTED_LANGTRACE_URL>/api/trace.
  * @param disable_instrumentations Instrumentations to disable.
  *  - all_except: will disable all instrumentations except the ones specified.
  *  - only: will disable only the instrumentations specified.
@@ -73,11 +73,14 @@ export const init: LangTraceInit = ({
   disable_tracing_for_methods = undefined
 }: LangtraceInitOptions = {}) => {
   const provider = new NodeTracerProvider({ sampler: new LangtraceSampler(disable_tracing_for_methods) })
-  const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', api_host)
+  const host = (process.env.LANGTRACE_API_HOST ?? api_host ?? LANGTRACE_REMOTE_URL)
+  const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', host)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
+
+  process.env.LANGTRACE_API_HOST = host.replace('/api/trace', '')
 
   diag.setLogger(logging.logger ?? new DiagConsoleLogger(), { suppressOverrideMessage: true, logLevel: logging.level })
 
@@ -123,6 +126,7 @@ export const init: LangTraceInit = ({
       provider.addSpanProcessor(new SimpleSpanProcessor(custom_remote_exporter))
     }
   }
+  provider.register()
 
   const allInstrumentations: Record<InstrumentationType, any> = {
     openai: openAIInstrumentation,
@@ -150,7 +154,6 @@ export const init: LangTraceInit = ({
     })
     registerInstrumentations({ tracerProvider: provider })
   }
-  provider.register()
 }
 
 const getInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<InstrumentationType, InstrumentationBase>): InstrumentationBase[] => {

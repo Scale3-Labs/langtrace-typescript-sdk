@@ -20,10 +20,13 @@ import { APIS } from '@langtrace-constants/instrumentation/openai'
 import { calculatePromptTokens, estimateTokens } from '@langtrace-utils/llm'
 import { LLMSpanAttributes } from '@langtrase/trace-attributes'
 import {
-  context, Exception,
+  Exception,
   Span,
   SpanKind,
-  SpanStatusCode, trace, Tracer
+  SpanStatusCode,
+  Tracer,
+  context,
+  trace
 } from '@opentelemetry/api'
 
 export function imageEdit (
@@ -52,7 +55,10 @@ export function imageEdit (
       'llm.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.prompts': JSON.stringify(args[0]?.prompt),
+      'llm.prompt': JSON.stringify(args[0]?.prompt),
+      'llm.top_k': args[0]?.n,
+      'llm.image.size': args[0]?.size,
+      'llm.response_format': args[0]?.response_format,
       ...customAttributes
     }
 
