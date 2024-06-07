@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 3.3.1
+
+### Patch Changes
+
+- Export supported function types
+
 ## 3.3.0
 
 ### Minor Changes

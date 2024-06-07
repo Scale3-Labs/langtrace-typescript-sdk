@@ -21,7 +21,39 @@ import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
 import { withLangTraceRootSpan, withAdditionalAttributes } from '@langtrace-utils/instrumentation'
 import { getPromptFromRegistry, sendUserFeedback } from '@langtrace-utils/langtrace'
 import { LangtracePrompt } from '@langtrace-utils/types'
+import { OpenAIFunctions } from '@langtrace-constants/instrumentation/openai'
+import { GroqFunctions } from '@langtrace-constants/instrumentation/groq'
+import { PgFunctions } from '@langtrace-constants/instrumentation/pg'
+import { LlamaIndexFunctions } from '@langtrace-constants/instrumentation/llamaindex'
+import { AnthropicFunctions } from '@langtrace-constants/instrumentation/anthropic'
+import { QdrantFunctions } from '@langtrace-constants/instrumentation/qdrant'
+import { WeaviateFunctions } from '@langtrace-constants/instrumentation/weaviate'
+import { ChromadbFunctions } from '@langtrace-constants/instrumentation/chroma'
+import { PineConeFunctions } from '@langtrace-constants/instrumentation/pinecone'
+import { CohereFunctions } from '@langtrace-constants/instrumentation/cohere'
+import { Event } from '@langtrace-constants/common'
 
 export {
-  init, withLangTraceRootSpan, LangTraceInit, LangtraceInitOptions, withAdditionalAttributes, getPromptFromRegistry, LangtracePrompt, sendUserFeedback
+  // Features
+  init,
+  withLangTraceRootSpan,
+  LangTraceInit,
+  LangtraceInitOptions,
+  withAdditionalAttributes,
+  getPromptFromRegistry,
+  LangtracePrompt,
+  sendUserFeedback,
+  // Instrumentation functions
+  OpenAIFunctions,
+  GroqFunctions,
+  PgFunctions,
+  LlamaIndexFunctions,
+  AnthropicFunctions,
+  QdrantFunctions,
+  WeaviateFunctions,
+  ChromadbFunctions,
+  PineConeFunctions,
+  CohereFunctions,
+  // Common
+  Event
 }
