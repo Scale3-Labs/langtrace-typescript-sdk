@@ -15,6 +15,7 @@
  */
 
 import { AnthropicMethods } from '@langtrace-constants/instrumentation/anthropic'
+import { ChromaMethods } from '@langtrace-constants/instrumentation/chroma'
 import { CohereMethods } from '@langtrace-constants/instrumentation/cohere'
 import { GroqMethods } from '@langtrace-constants/instrumentation/groq'
 import { LlamaIndexMethods } from '@langtrace-constants/instrumentation/llamaindex'
@@ -55,7 +56,7 @@ interface InstrumentationMethods {
   groq: GroqMethods[]
   pinecone: PineConeMethods[]
   llamaindex: LlamaIndexMethods[]
-  chromadb: GroqMethods[]
+  chromadb: ChromaMethods[]
   qdrant: QdrantMethods[]
   weaviate: WeaviateMethods[]
   pg: PgMethods[]

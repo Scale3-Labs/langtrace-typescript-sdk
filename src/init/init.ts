@@ -53,7 +53,14 @@ import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation
  *  - all_except: will disable all instrumentations except the ones specified.
  *  - only: will disable only the instrumentations specified.
  *  - If both 'all_except' and 'only' are specified, an error will be thrown.
- */
+ * @param logging Logging configuration.
+ *  - level: Log level to use.
+ *  - logger: Logger to use.
+ *  - disable: Whether to disable logging.
+ * @param disable_latest_version_check Whether to disable the check for the latest version of the sdk.
+ * @param disable_tracing_for_methods Methods to disable tracing for.
+ *  - This is used to disable tracing for specific methods in instrumentations. For example, to disable tracing for all methods in the anthropic instrumentation, set disable_tracing_for_methods: { anthropic: ['method1', 'method2'] }
+*/
 
 let isLatestSdk = false
 export const init: LangTraceInit = ({
