@@ -31,7 +31,7 @@ import { WeaviateFunctions } from '@langtrace-constants/instrumentation/weaviate
 import { ChromadbFunctions } from '@langtrace-constants/instrumentation/chroma'
 import { PineConeFunctions } from '@langtrace-constants/instrumentation/pinecone'
 import { CohereFunctions } from '@langtrace-constants/instrumentation/cohere'
-import { Event } from '@langtrace-constants/common'
+import { Event } from '@langtrace-constants/instrumentation/common'
 
 export {
   // Features
