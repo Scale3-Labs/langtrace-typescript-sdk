@@ -5,11 +5,7 @@ import dotenv from 'dotenv'
 import fetch from 'node-fetch'
 import { withLangTraceRootSpan } from '@langtrace-utils/instrumentation'
 dotenv.config()
-init({
-  write_spans_to_console: true,
-  disable_tracing_for_functions: { weaviate: ['graphql.get.do', 'graphql.aggregate.do', 'graphql.raw.do', 'batch.objectsBatcher.do', 'schema.classCreator.do', 'schema.classDeleter.do'] }
-
-})
+init({ write_spans_to_console: true })
 
 const client = weaviate.client({
   apiKey: { apiKey: process.env.WEAVIATE_API_KEY ?? '' },

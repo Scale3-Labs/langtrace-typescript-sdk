@@ -14,11 +14,7 @@ import {
 } from 'llamaindex'
 dotenv.config()
 
-init({
-  batch: false,
-  write_spans_to_console: true,
-  disable_tracing_for_functions: { llamaindex: ['llamaindex.RetrieverQueryEngine.query'], openai: ['openai.embeddings.create'] }
-})
+init({ batch: false, write_spans_to_console: true })
 
 export async function basic (): Promise<void> {
   await withLangTraceRootSpan(async (spanId, traceId) => {
@@ -32,7 +28,7 @@ export async function basic (): Promise<void> {
     const queryEngine = index.asQueryEngine()
     const response = await queryEngine.query({ query: 'What did the author do in college?' })
     // Output response
-    // console.info(response.toString())
+    console.info(response.toString())
   })
 }
 
