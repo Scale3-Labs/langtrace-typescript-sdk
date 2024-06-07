@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-export const APIS: Record<
-string,
-{ METHOD: string, ENDPOINT: string, OPERATION: string }
-> = {
+export const APIS = {
   UPSERT: {
     METHOD: 'pinecone.index.upsert',
     ENDPOINT: '/vectors/upsert',
@@ -45,4 +42,4 @@ string,
   }
 } as const
 
-export type PineConeMethods = typeof APIS[keyof typeof APIS]['METHOD']
+export type PineConeFunctions = typeof APIS[keyof typeof APIS]['METHOD']

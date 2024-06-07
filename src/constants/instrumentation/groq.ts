@@ -21,4 +21,4 @@ export const APIS = {
   }
 } as const
 
-export type GroqMethods = typeof APIS[keyof typeof APIS]['METHOD']
+export type GroqFunctions = typeof APIS[keyof typeof APIS]['METHOD']

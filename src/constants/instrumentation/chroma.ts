@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export const APIS: { [key: string]: { METHOD: string, OPERATION: string } } = {
+export const APIS = {
   ADD: {
     METHOD: 'chromadb.collection.add',
     OPERATION: 'add'
@@ -45,4 +45,4 @@ export const APIS: { [key: string]: { METHOD: string, OPERATION: string } } = {
   }
 } as const
 
-export type ChromaMethods = typeof APIS[keyof typeof APIS]['METHOD']
+export type ChromadbFunctions = typeof APIS[keyof typeof APIS]['METHOD']

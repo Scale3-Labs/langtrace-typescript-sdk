@@ -20,4 +20,4 @@ export const APIS = {
     ENDPOINT: '/v1/messages'
   }
 } as const
-export type AnthropicMethods = typeof APIS[keyof typeof APIS]['METHOD']
+export type AnthropicFunctions = typeof APIS[keyof typeof APIS]['METHOD']

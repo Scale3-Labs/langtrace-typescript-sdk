@@ -58,8 +58,7 @@ import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation
  *  - logger: Logger to use.
  *  - disable: Whether to disable logging.
  * @param disable_latest_version_check Whether to disable the check for the latest version of the sdk.
- * @param disable_tracing_for_methods Methods to disable tracing for.
- *  - This is used to disable tracing for specific methods in instrumentations. For example, to disable tracing for all methods in the anthropic instrumentation, set disable_tracing_for_methods: { anthropic: ['method1', 'method2'] }
+ * @param disable_tracing_for_functions Functions per vendor to disable tracing for.
 */
 
 let isLatestSdk = false
@@ -77,9 +76,9 @@ export const init: LangTraceInit = ({
     disable: false
   },
   disable_latest_version_check = false,
-  disable_tracing_for_methods = undefined
+  disable_tracing_for_functions = undefined
 }: LangtraceInitOptions = {}) => {
-  const provider = new NodeTracerProvider({ sampler: new LangtraceSampler(disable_tracing_for_methods) })
+  const provider = new NodeTracerProvider({ sampler: new LangtraceSampler(disable_tracing_for_functions) })
   const host = (process.env.LANGTRACE_API_HOST ?? api_host ?? LANGTRACE_REMOTE_URL)
   const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', host)
   const consoleExporter = new ConsoleSpanExporter()

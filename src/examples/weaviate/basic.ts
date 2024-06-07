@@ -7,7 +7,7 @@ import { withLangTraceRootSpan } from '@langtrace-utils/instrumentation'
 dotenv.config()
 init({
   write_spans_to_console: true,
-  disable_tracing_for_methods: { weaviate: ['graphql.get.do', 'graphql.aggregate.do', 'graphql.raw.do', 'batch.objectsBatcher.do', 'schema.classCreator.do', 'schema.classDeleter.do'] }
+  disable_tracing_for_functions: { weaviate: ['graphql.get.do', 'graphql.aggregate.do', 'graphql.raw.do', 'batch.objectsBatcher.do', 'schema.classCreator.do', 'schema.classDeleter.do'] }
 
 })
 

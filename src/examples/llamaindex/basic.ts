@@ -17,7 +17,7 @@ dotenv.config()
 init({
   batch: false,
   write_spans_to_console: true,
-  disable_tracing_for_methods: { }
+  disable_tracing_for_functions: { llamaindex: ['llamaindex.RetrieverQueryEngine.query'], openai: ['openai.embeddings.create'] }
 })
 
 export async function basic (): Promise<void> {

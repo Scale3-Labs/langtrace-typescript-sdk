@@ -368,7 +368,7 @@ export function embeddingsCreate (
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
       'llm.embedding_inputs': JSON.stringify([args[0]?.input]),
-      'llm.encoding.formats': JSON.stringify([args[0]?.encoding_format]),
+      'llm.encoding.formats': args[0]?.encoding_format === undefined ? undefined : JSON.stringify([args[0]?.encoding_format]),
       ...customAttributes
     }
 

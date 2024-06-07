@@ -16,4 +16,4 @@
 
 export const APIS = { QUERY: { METHOD: 'pg.Client.query' } } as const
 
-export type PgMethods = typeof APIS[keyof typeof APIS]['METHOD']
+export type PgFunctions = typeof APIS[keyof typeof APIS]['METHOD']

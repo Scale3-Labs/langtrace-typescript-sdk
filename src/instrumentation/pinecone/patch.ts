@@ -31,7 +31,7 @@ export function genericPatch (
   return async function (this: any, ...args: any[]): Promise<any> {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const originalContext = this
-    const api = APIS[method]
+    const api = APIS[method as keyof typeof APIS]
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const attributes: DatabaseSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',

@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-export const APIS: Record<
-string,
-{ METHOD: string, OPERATION: string }
-> = {
+export const APIS = {
   GET_COLLECTION: {
     METHOD: 'qdrantdb.get_collection',
     OPERATION: 'getCollection'
@@ -76,4 +73,4 @@ string,
   }
 } as const
 
-export type QdrantMethods = typeof APIS[keyof typeof APIS]['METHOD']
+export type QdrantFunctions = typeof APIS[keyof typeof APIS]['METHOD']

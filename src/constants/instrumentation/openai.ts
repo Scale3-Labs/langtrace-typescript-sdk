@@ -32,4 +32,4 @@ export const APIS = {
     ENDPOINT: '/embeddings'
   }
 } as const
-export type OpenAIMethods = typeof APIS[keyof typeof APIS]['METHOD']
+export type OpenAIFunctions = typeof APIS[keyof typeof APIS]['METHOD']

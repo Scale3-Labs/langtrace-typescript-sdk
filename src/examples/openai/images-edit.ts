@@ -5,7 +5,7 @@ import OpenAI from 'openai'
 import fs from 'fs'
 dotenv.config()
 
-init({ write_spans_to_console: true, batch: false })
+init({ write_spans_to_console: true, batch: false, disable_tracing_for_functions: { openai: ['openai.images.edit'] } })
 
 const openai = new OpenAI()
 

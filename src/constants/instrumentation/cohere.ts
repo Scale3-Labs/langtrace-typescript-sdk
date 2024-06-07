@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export const APIS: { [key: string]: { METHOD: string, ENDPOINT: string } } = {
+export const APIS = {
   CHAT: {
     METHOD: 'cohere.chat',
     ENDPOINT: '/v1/chat'
@@ -37,4 +37,4 @@ export const APIS: { [key: string]: { METHOD: string, ENDPOINT: string } } = {
   }
 } as const
 
-export type CohereMethods = typeof APIS[keyof typeof APIS]['METHOD']
+export type CohereFunctions = typeof APIS[keyof typeof APIS]['METHOD']

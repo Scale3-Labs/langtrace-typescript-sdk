@@ -61,4 +61,4 @@ type NestedMethodsOnly<T> = {
 }[keyof T & string]
 
 // Define the WeaviateMethods type using the NestedMethodsOnly type
-export type WeaviateMethods = NestedMethodsOnly<typeof queryTypeToFunctionToProps>
+export type WeaviateFunctions = NestedMethodsOnly<typeof queryTypeToFunctionToProps>

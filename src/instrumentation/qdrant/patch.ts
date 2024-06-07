@@ -29,7 +29,7 @@ export function genericCollectionPatch (
   version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]): Promise<any> {
-    const api = APIS[method]
+    const api = APIS[method as keyof typeof APIS]
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
 
     const attributes: DatabaseSpanAttributes = {
