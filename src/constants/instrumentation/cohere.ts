@@ -17,10 +17,24 @@
 export const APIS = {
   CHAT: {
     METHOD: 'cohere.chat',
-    API: '/v1/chat'
+    ENDPOINT: '/v1/chat'
   },
-  CHAT_STREAM: { METHOD: 'cohere.chatStream' },
-  EMBED: { METHOD: 'cohere.embed', API: '/v1/embed' },
-  EMBED_JOBS: { METHOD: 'cohere.embedJobs.create', API: '/v1/embed-jobs' },
-  RERANK: { METHOD: 'cohere.rerank', API: '/v1/rerank' }
-}
+  CHAT_STREAM: {
+    METHOD: 'cohere.chatStream',
+    ENDPOINT: '/v1/chat'
+  },
+  EMBED: {
+    METHOD: 'cohere.embed',
+    ENDPOINT: '/v1/embed'
+  },
+  EMBED_JOBS: {
+    METHOD: 'cohere.embedJobs.create',
+    ENDPOINT: '/v1/embed-jobs'
+  },
+  RERANK: {
+    METHOD: 'cohere.rerank',
+    ENDPOINT: '/v1/rerank'
+  }
+} as const
+
+export type CohereFunctions = typeof APIS[keyof typeof APIS]['METHOD']

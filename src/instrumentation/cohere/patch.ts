@@ -17,7 +17,7 @@
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { APIS } from '@langtrace-constants/instrumentation/cohere'
-import { LLMSpanAttributes, Event } from '@langtrase/trace-attributes'
+import { Event } from '@langtrace-constants/instrumentation/common'
 import {
   Span,
   SpanKind,
@@ -36,6 +36,7 @@ import {
   ICreateEmbedJobRequest,
   ICreateEmbedJobResponse
 } from '@langtrace-instrumentation/cohere/types'
+import { LLMSpanAttributes } from '@langtrase/trace-attributes'
 
 export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: ICohereClient, request: IChatRequest, requestOptions?: IRequestOptions): Promise<INonStreamedChatResponse> {
@@ -47,7 +48,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
-      'llm.api': APIS.CHAT.API,
+      'llm.api': APIS.CHAT.ENDPOINT,
       'llm.model': request.model ?? 'command-r',
       'http.max.retries': requestOptions?.maxRetries,
       'llm.temperature': request.temperature,
@@ -117,7 +118,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
-      'llm.api': APIS.CHAT.API,
+      'llm.api': APIS.CHAT.ENDPOINT,
       'llm.model': request.model ?? 'command-r',
       'http.max.retries': requestOptions?.maxRetries,
       'llm.temperature': request.temperature,
@@ -163,7 +164,7 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
-      'llm.api': APIS.EMBED.API,
+      'llm.api': APIS.EMBED.ENDPOINT,
       'llm.model': request.model ?? 'embed-english-v2.0',
       'http.max.retries': requestOptions?.maxRetries,
       'llm.embedding_input_type': request.inputType,
@@ -205,7 +206,7 @@ export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
-      'llm.api': APIS.EMBED_JOBS.API,
+      'llm.api': APIS.EMBED_JOBS.ENDPOINT,
       'llm.model': request.model,
       'http.max.retries': requestOptions?.maxRetries,
       'llm.embedding_input_type': request.inputType,
@@ -249,7 +250,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
-      'llm.api': APIS.RERANK.API,
+      'llm.api': APIS.RERANK.ENDPOINT,
       'llm.model': request.model,
       'http.max.retries': requestOptions?.maxRetries,
       'llm.documents': JSON.stringify(request.documents),

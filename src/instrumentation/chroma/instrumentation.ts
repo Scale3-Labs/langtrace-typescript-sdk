@@ -54,14 +54,14 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
   private _patch (chromadb: any, moduleVersion?: string): void {
     if (isWrapped(chromadb.Collection.prototype)) {
       Object.keys(APIS).forEach((api) => {
-        this._unwrap(chromadb.Collection.prototype, APIS[api].OPERATION)
+        this._unwrap(chromadb.Collection.prototype, APIS[api as keyof typeof APIS].OPERATION)
       })
     }
 
     Object.keys(APIS).forEach((api) => {
       this._wrap(
         chromadb.Collection.prototype,
-        APIS[api].OPERATION,
+        APIS[api as keyof typeof APIS].OPERATION,
         (originalMethod: (...args: any[]) => any) =>
           collectionPatch(originalMethod, api, this.tracer, this.instrumentationVersion, moduleVersion)
       )
@@ -70,7 +70,7 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
 
   private _unpatch (chromadb: any): void {
     Object.keys(APIS).forEach((api) => {
-      this._unwrap(chromadb.Collection.prototype, APIS[api].OPERATION)
+      this._unwrap(chromadb.Collection.prototype, APIS[api as keyof typeof APIS].OPERATION)
     })
   }
 }

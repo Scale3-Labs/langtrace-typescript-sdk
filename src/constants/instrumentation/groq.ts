@@ -19,4 +19,6 @@ export const APIS = {
     METHOD: 'groq.chat.completions.create',
     ENDPOINT: '/chat/completions'
   }
-}
+} as const
+
+export type GroqFunctions = typeof APIS[keyof typeof APIS]['METHOD']

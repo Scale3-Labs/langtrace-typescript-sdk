@@ -14,66 +14,63 @@
  * limitations under the License.
  */
 
-import { QdrantDBMethods } from '@langtrase/trace-attributes'
-
-export const APIS: Record<
-string,
-{ METHOD: string, OPERATION: string }
-> = {
+export const APIS = {
   GET_COLLECTION: {
-    METHOD: QdrantDBMethods.GET_COLLECTION,
+    METHOD: 'qdrantdb.get_collection',
     OPERATION: 'getCollection'
   },
   GET_COLLECTIONS: {
-    METHOD: QdrantDBMethods.GET_COLLECTIONS,
+    METHOD: 'qdrantdb.get_collections',
     OPERATION: 'getCollections'
   },
   DELETE: {
-    METHOD: QdrantDBMethods.DELETE,
+    METHOD: 'qdrantdb.delete',
     OPERATION: 'delete'
   },
   DISCOVER: {
-    METHOD: QdrantDBMethods.DISCOVER,
+    METHOD: 'qdrantdb.discover',
     OPERATION: 'discoverPoints'
   },
   DISCOVER_BATCH: {
-    METHOD: QdrantDBMethods.DISCOVER_BATCH,
+    METHOD: 'qdrantdb.discover_batch',
     OPERATION: 'discoverBatchPoints'
   },
   RECOMMEND: {
-    METHOD: QdrantDBMethods.RECOMMEND,
+    METHOD: 'qdrantdb.recommend',
     OPERATION: 'recommend'
   },
   RECOMMEND_BATCH: {
-    METHOD: QdrantDBMethods.RECOMMEND_BATCH,
+    METHOD: 'qdrantdb.recommend_batch',
     OPERATION: 'recommendBatch'
   },
   RETRIEVE: {
-    METHOD: QdrantDBMethods.RETRIEVE,
+    METHOD: 'qdrantdb.retrieve',
     OPERATION: 'retrieve'
   },
   SEARCH: {
-    METHOD: QdrantDBMethods.SEARCH,
+    METHOD: 'qdrantdb.search',
     OPERATION: 'search'
   },
   SEARCH_BATCH: {
-    METHOD: QdrantDBMethods.SEARCH_BATCH,
+    METHOD: 'qdrantdb.search_batch',
     OPERATION: 'searchBatch'
   },
   UPSERT: {
-    METHOD: QdrantDBMethods.UPSERT,
+    METHOD: 'qdrantdb.upsert',
     OPERATION: 'upsert'
   },
   COUNT: {
-    METHOD: QdrantDBMethods.COUNT,
+    METHOD: 'qdrantdb.count',
     OPERATION: 'count'
   },
   UPDATE_COLLECTION: {
-    METHOD: QdrantDBMethods.UPDATE_COLLECTION,
+    METHOD: 'qdrantdb.update_collection',
     OPERATION: 'updateCollection'
   },
   UPDATE_VECTORS: {
-    METHOD: QdrantDBMethods.UPDATE_VECTORS,
+    METHOD: 'qdrantdb.update_vectors',
     OPERATION: 'updateVectors'
   }
-}
+} as const
+
+export type QdrantFunctions = typeof APIS[keyof typeof APIS]['METHOD']

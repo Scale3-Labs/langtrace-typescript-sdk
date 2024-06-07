@@ -14,35 +14,35 @@
  * limitations under the License.
  */
 
-import { ChromaDBMethods } from '@langtrase/trace-attributes'
-
-export const APIS: Record<string, { METHOD: string, OPERATION: string }> = {
+export const APIS = {
   ADD: {
-    METHOD: ChromaDBMethods.ADD,
+    METHOD: 'chromadb.collection.add',
     OPERATION: 'add'
   },
   QUERY: {
-    METHOD: ChromaDBMethods.QUERY,
+    METHOD: 'chromadb.collection.query',
     OPERATION: 'query'
   },
   DELETE: {
-    METHOD: ChromaDBMethods.DELETE,
+    METHOD: 'chromadb.collection.delete',
     OPERATION: 'delete'
   },
   PEEK: {
-    METHOD: ChromaDBMethods.PEEK,
+    METHOD: 'chromadb.collection.peek',
     OPERATION: 'peek'
   },
   UPDATE: {
-    METHOD: ChromaDBMethods.UPDATE,
+    METHOD: 'chromadb.collection.update',
     OPERATION: 'update'
   },
   MODIFY: {
-    METHOD: ChromaDBMethods.MODIFY,
+    METHOD: 'chromadb.collection.modify',
     OPERATION: 'modify'
   },
   COUNT: {
-    METHOD: ChromaDBMethods.COUNT,
+    METHOD: 'chromadb.collection.count',
     OPERATION: 'count'
   }
-}
+} as const
+
+export type ChromadbFunctions = typeof APIS[keyof typeof APIS]['METHOD']

@@ -54,13 +54,13 @@ class QdrantInstrumentation extends InstrumentationBase<any> {
   private _patch (qdrant: any, moduleVersion?: string): void {
     if (isWrapped(qdrant.QdrantClient.prototype)) {
       Object.keys(APIS).forEach((api) => {
-        this._unwrap(qdrant.QdrantClient.prototype, APIS[api].OPERATION)
+        this._unwrap(qdrant.QdrantClient.prototype, APIS[api as keyof typeof APIS].OPERATION)
       })
     }
     Object.keys(APIS).forEach((api) => {
       this._wrap(
         qdrant.QdrantClient.prototype,
-        APIS[api].OPERATION,
+        APIS[api as keyof typeof APIS].OPERATION,
         (originalMethod: (...args: any[]) => any) =>
           genericCollectionPatch(originalMethod, api, this.tracer, this.instrumentationVersion, name, moduleVersion)
       )
@@ -69,7 +69,7 @@ class QdrantInstrumentation extends InstrumentationBase<any> {
 
   private _unpatch (qdrant: any): void {
     Object.keys(APIS).forEach((api) => {
-      this._unwrap(qdrant.QdrantClient.prototype, APIS[api].OPERATION)
+      this._unwrap(qdrant.QdrantClient.prototype, APIS[api as keyof typeof APIS].OPERATION)
     })
   }
 }

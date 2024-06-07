@@ -4,7 +4,8 @@ import {
 } from '@langtrace-instrumentation/groq/types'
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { APIS } from '@langtrace-constants/instrumentation/groq'
-import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
+import { Event } from '@langtrace-constants/instrumentation/common'
+import { LLMSpanAttributes } from '@langtrase/trace-attributes'
 
 export const chatPatch = (original: ChatStreamFn | ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: IGroqClient, body: IChatCompletionCreateParamsStreaming | IChatCompletionCreateParamsNonStreaming,
