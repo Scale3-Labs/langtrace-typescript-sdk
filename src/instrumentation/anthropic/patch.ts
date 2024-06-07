@@ -17,8 +17,9 @@
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { APIS } from '@langtrace-constants/instrumentation/anthropic'
-import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
-import { Event, LLMSpanAttributes } from '@langtrase/trace-attributes'
+import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
+import { LLMSpanAttributes } from '@langtrase/trace-attributes'
+
 import {
   Exception,
   Span,

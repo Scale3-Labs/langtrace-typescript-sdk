@@ -24,7 +24,7 @@ export const queryTypeToFunctionToProps = {
     raw: [
       'query'
     ]
-  },
+  } as const,
   schema: {
     collectionName: ['class.class', 'className'],
     classCreator: ['class.class'],
@@ -37,11 +37,28 @@ export const queryTypeToFunctionToProps = {
     tenantsGetter: ['className'],
     tenantsUpdater: ['className', 'tenants'],
     tenantExists: ['className', 'tenant']
-  },
+  } as const,
   batch: {
     collectionName: [],
     objectsBatcher: ['consistencyLevel', 'objects'],
     referencesBatcher: ['consistencyLevel', 'beaconPath'],
     referencePayloadBuilder: ['fromClassName', 'fromId', 'fromRefProp', 'toClassName', 'toId']
-  }
+  } as const
 }
+
+// Define a type that generates strings in the format "prefix.methodName.do", excluding 'collectionName'
+type AllNestedMethods<T, Prefix extends string = ''> = {
+  [K in keyof T]: K extends 'collectionName'
+    ? never
+    : T[K] extends object
+      ? AllNestedMethods<T[K], `${Prefix}${K & string}.`> | `${Prefix}${K & string}.do`
+      : never;
+}[keyof T & string]
+
+// Define a type that maps only the nested properties, skipping top-level keys
+type NestedMethodsOnly<T> = {
+  [K in keyof T]: T[K] extends object ? AllNestedMethods<T[K], `${K & string}.`> : never;
+}[keyof T & string]
+
+// Define the WeaviateMethods type using the NestedMethodsOnly type
+export type WeaviateFunctions = NestedMethodsOnly<typeof queryTypeToFunctionToProps>

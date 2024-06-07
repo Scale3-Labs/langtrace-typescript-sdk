@@ -58,6 +58,7 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
   private _patch (llama: any, moduleVersion?: string): void {
     // Note: Instrumenting only the core concepts of LlamaIndex SDK
     // https://github.com/run-llama/LlamaIndexTS?tab=readme-ov-file
+
     for (const key in llama) {
       const cls = (llama)[key]
       if (cls.prototype !== undefined) {

@@ -14,4 +14,6 @@
  * limitations under the License.
  */
 
-export const APIS = { QUERY: { METHOD: 'pg.Client.query' } }
+export const APIS = { QUERY: { METHOD: 'pg.Client.query' } } as const
+
+export type PgFunctions = typeof APIS[keyof typeof APIS]['METHOD']

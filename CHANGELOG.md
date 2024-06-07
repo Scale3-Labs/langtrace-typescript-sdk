@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 3.3.0
+
+### Minor Changes
+
+- Add disabling tracing for functions per vendor
+
 ## 3.2.1
 
 ### Patch Changes

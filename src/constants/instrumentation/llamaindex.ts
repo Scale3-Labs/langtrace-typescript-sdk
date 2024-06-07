@@ -15,21 +15,12 @@
  */
 
 export const APIS = {
-  CHAT_COMPLETION: {
-    METHOD: 'openai.chat.completion',
-    ENDPOINT: '/chat/completions'
-  },
-  IMAGES_GENERATION: {
-    METHOD: 'openai.images.generate',
-    ENDPOINT: '/images/generations'
-  },
-  IMAGES_EDIT: {
-    METHOD: 'openai.images.edit',
-    ENDPOINT: '/images/edits'
-  },
-  EMBEDDINGS_CREATE: {
-    METHOD: 'openai.embeddings.create',
-    ENDPOINT: '/embeddings'
-  }
+  RETIREVER_QUERY_ENGINE_QUERY: { METHOD: 'llamaindex.RetrieverQueryEngine.query' },
+  RETIREVER_QUERY_ENGINE_RETRIEVE: { METHOD: 'llamaindex.RetrieverQueryEngine.retrieve' },
+  VECTOR_INDEX_RETRIEVER_RETRIEVE: { METHOD: 'llamaindex.VectorIndexRetriever.retrieve' },
+  SIMPLE_VECTOR_STORE_QUERY: { METHOD: 'llamaindex.SimpleVectorStore.query' },
+  OPEN_AI_CHAT: { METHOD: 'llamaindex.OpenAI.chat' }
+
 } as const
-export type OpenAIFunctions = typeof APIS[keyof typeof APIS]['METHOD']
+
+export type LlamaIndexFunctions = typeof APIS[keyof typeof APIS]['METHOD']

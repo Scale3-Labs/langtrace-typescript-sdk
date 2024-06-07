@@ -1,9 +1,9 @@
-import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
+import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
 import { APIS } from '@langtrace-constants/instrumentation/pg'
-import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
-import { DatabaseSpanAttributes, Event } from '@langtrase/trace-attributes'
+import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
 import { context, Exception, SpanKind, SpanStatusCode, trace, Tracer } from '@opentelemetry/api'
 import { stringify } from '@langtrace-utils/misc'
+import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 
 export const patchPgQuery = (original: any, tracer: Tracer, sdkName: string, langtraceVersion: string, version?: string): any => {
   return async function (this: any, queryOrTextConfig: any, values: any, callback: any) {
