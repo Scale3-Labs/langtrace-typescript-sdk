@@ -19,4 +19,5 @@ export const APIS = {
     METHOD: 'anthropic.messages.create',
     ENDPOINT: '/v1/messages'
   }
-}
+} as const
+export type AnthropicFunctions = typeof APIS[keyof typeof APIS]['METHOD']

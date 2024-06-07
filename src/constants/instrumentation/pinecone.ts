@@ -14,35 +14,32 @@
  * limitations under the License.
  */
 
-import { PineconeMethods } from '@langtrase/trace-attributes'
-
-export const APIS: Record<
-string,
-{ METHOD: string, ENDPOINT: string, OPERATION: string }
-> = {
+export const APIS = {
   UPSERT: {
-    METHOD: PineconeMethods.UPSERT,
+    METHOD: 'pinecone.index.upsert',
     ENDPOINT: '/vectors/upsert',
     OPERATION: 'upsert'
   },
   QUERY: {
-    METHOD: PineconeMethods.QUERY,
+    METHOD: 'pinecone.index.query',
     ENDPOINT: '/query',
     OPERATION: 'query'
   },
   DELETE_ONE: {
-    METHOD: PineconeMethods.DELETE_ONE,
+    METHOD: 'pinecone.index.deleteOne',
     ENDPOINT: '/vectors/delete',
     OPERATION: 'deleteOne'
   },
   DELETE_MANY: {
-    METHOD: PineconeMethods.DELETE_MANY,
+    METHOD: 'pinecone.index.deleteMany',
     ENDPOINT: '/vectors/delete',
     OPERATION: 'deleteMany'
   },
   DELETE_ALL: {
-    METHOD: PineconeMethods.DELETE_ALL,
+    METHOD: 'pinecone.index.deleteAll',
     ENDPOINT: '/vectors/delete',
     OPERATION: 'deleteAll'
   }
-}
+} as const
+
+export type PineConeFunctions = typeof APIS[keyof typeof APIS]['METHOD']

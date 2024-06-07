@@ -53,7 +53,13 @@ import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation
  *  - all_except: will disable all instrumentations except the ones specified.
  *  - only: will disable only the instrumentations specified.
  *  - If both 'all_except' and 'only' are specified, an error will be thrown.
- */
+ * @param logging Logging configuration.
+ *  - level: Log level to use.
+ *  - logger: Logger to use.
+ *  - disable: Whether to disable logging.
+ * @param disable_latest_version_check Whether to disable the check for the latest version of the sdk.
+ * @param disable_tracing_for_functions Functions per vendor to disable tracing for.
+*/
 
 let isLatestSdk = false
 export const init: LangTraceInit = ({
@@ -69,11 +75,11 @@ export const init: LangTraceInit = ({
     logger: new DiagConsoleLogger(),
     disable: false
   },
-  disable_latest_version_check = false
+  disable_latest_version_check = false,
+  disable_tracing_for_functions = undefined
 }: LangtraceInitOptions = {}) => {
+  const provider = new NodeTracerProvider({ sampler: new LangtraceSampler(disable_tracing_for_functions) })
   const host = (process.env.LANGTRACE_API_HOST ?? api_host ?? LANGTRACE_REMOTE_URL)
-
-  const provider = new NodeTracerProvider({ sampler: new LangtraceSampler() })
   const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', host)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
@@ -140,6 +146,7 @@ export const init: LangTraceInit = ({
     weaviate: weaviateInstrumentation,
     pg: pgInstrumentation
   }
+
   if (instrumentations === undefined) {
     registerInstrumentations({
       instrumentations: getInstrumentations(disable_instrumentations, allInstrumentations),

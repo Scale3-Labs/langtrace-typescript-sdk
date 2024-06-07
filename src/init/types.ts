@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
+import { AnthropicFunctions } from '@langtrace-constants/instrumentation/anthropic'
+import { ChromadbFunctions } from '@langtrace-constants/instrumentation/chroma'
+import { CohereFunctions } from '@langtrace-constants/instrumentation/cohere'
+import { GroqFunctions } from '@langtrace-constants/instrumentation/groq'
+import { LlamaIndexFunctions } from '@langtrace-constants/instrumentation/llamaindex'
+import { OpenAIFunctions } from '@langtrace-constants/instrumentation/openai'
+import { PgFunctions } from '@langtrace-constants/instrumentation/pg'
+import { PineConeFunctions } from '@langtrace-constants/instrumentation/pinecone'
+import { QdrantFunctions } from '@langtrace-constants/instrumentation/qdrant'
+import { WeaviateFunctions } from '@langtrace-constants/instrumentation/weaviate'
 import { DiagLogLevel, DiagLogger } from '@opentelemetry/api'
 import { SpanExporter } from '@opentelemetry/sdk-trace-base'
 
@@ -35,6 +45,26 @@ export interface LangtraceInitOptions {
     disable?: boolean
   }
   disable_latest_version_check?: boolean
+  disable_tracing_for_functions?: Partial<TracedFunctions>
   instrumentations?: { [key in InstrumentationType]?: any }
 }
+
+interface InstrumentationFunctions {
+  openai: OpenAIFunctions[]
+  cohere: CohereFunctions[]
+  anthropic: AnthropicFunctions[]
+  groq: GroqFunctions[]
+  pinecone: PineConeFunctions[]
+  llamaindex: LlamaIndexFunctions[]
+  chromadb: ChromadbFunctions[]
+  qdrant: QdrantFunctions[]
+  weaviate: WeaviateFunctions[]
+  pg: PgFunctions[]
+}
+
+// DisableTracing interface that enforces keys to match InstrumentationType
+export type TracedFunctions = {
+  [key in InstrumentationType]: InstrumentationFunctions[key]
+}
+
 export type LangTraceInit = (options?: LangtraceInitOptions) => void
