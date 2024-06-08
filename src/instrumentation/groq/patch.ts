@@ -6,6 +6,7 @@ import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/c
 import { APIS } from '@langtrace-constants/instrumentation/groq'
 import { Event } from '@langtrace-constants/instrumentation/common'
 import { LLMSpanAttributes } from '@langtrase/trace-attributes'
+import { createStreamProxy } from '@langtrace-utils/misc'
 
 export const chatPatch = (original: ChatStreamFn | ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: IGroqClient, body: IChatCompletionCreateParamsStreaming | IChatCompletionCreateParamsNonStreaming,
@@ -112,12 +113,12 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       trace.setSpan(context.active(), span),
       async () => {
         const resp = await original.apply(this, [body, options])
-        return handleStream(resp, attributes, span)
+        return createStreamProxy(resp, handleStream(resp, attributes, span))
       })
   }
 }
 
-async function * handleStream (stream: AsyncIterable<any>, attributes: LLMSpanAttributes, span: Span): AsyncIterable<any> {
+async function * handleStream (stream: AsyncIterable<any>, attributes: LLMSpanAttributes, span: Span): any {
   const responseReconstructed: string[] = []
   try {
     span.addEvent(Event.STREAM_START)
