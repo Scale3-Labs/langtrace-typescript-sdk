@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 3.3.1
+
+### Patch Changes
+
+- Fix patch stream issue of not preserving the original object
+
 ## 3.3.0
 
 ### Minor Changes
