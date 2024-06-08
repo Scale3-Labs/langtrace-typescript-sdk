@@ -18,6 +18,7 @@
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { APIS } from '@langtrace-constants/instrumentation/anthropic'
 import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
+import { createStreamProxy } from '@langtrace-utils/misc'
 import { LLMSpanAttributes } from '@langtrase/trace-attributes'
 
 import {
@@ -135,7 +136,7 @@ export function messagesCreate (
         ),
         async () => {
           const resp: AsyncIterable<unknown> = await originalMethod.apply(this, args)
-          return handleStreamResponse(span, resp, attributes)
+          return createStreamProxy(resp, handleStreamResponse(span, resp, attributes))
         }
       )
     }
