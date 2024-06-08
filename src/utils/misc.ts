@@ -86,3 +86,20 @@ export function stringify (obj: any): string {
     return undefined
   }, 2)
 }
+
+/**
+ *
+ * @param stream input stream
+ * @param generatorFuncResponse generator function response from the wrapped stream
+ * @returns stream proxy
+ */
+export function createStreamProxy (stream: any, generatorFuncResponse: any): any {
+  return new Proxy(stream, {
+    get (target, prop, receiver) {
+      if (prop === Symbol.asyncIterator) {
+        return () => generatorFuncResponse
+      }
+      return Reflect.get(target, prop, receiver)
+    }
+  })
+}

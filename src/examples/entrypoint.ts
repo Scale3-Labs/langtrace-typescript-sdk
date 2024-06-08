@@ -1,3 +1,3 @@
-import { basic } from '@langtrace-examples/llamaindex/basic'
+import { chatCompletionStreaming } from '@langtrace-examples/openai/chat-completion-streaming'
 
-void basic()
+void chatCompletionStreaming()

@@ -33,14 +33,13 @@ export class LangTraceExporter implements SpanExporter {
   constructor (apiKey: string, apiHost: string) {
     this.apiKey = apiKey
     this.apiHost = apiHost === LANGTRACE_REMOTE_URL ? `${LANGTRACE_REMOTE_URL}/api/trace` : apiHost
-
-    if (this.apiHost === LANGTRACE_REMOTE_URL && this.apiKey.length === 0) {
-      diag.error('Unable to send traces to langtrce. No LangTrace API key provided. Please set the LANGTRACE_API_KEY environment variable')
-      throw new Error('No LangTrace API key provided')
-    }
   }
 
   async export (spans: ReadableSpan[], resultCallback: (result: ExportResult) => void): Promise<void> {
+    // If the API key is not set, we will not export the spans
+    if (this.apiHost === LANGTRACE_REMOTE_URL && this.apiKey.length === 0) {
+      await this.shutdown()
+    }
     const data: Array<Partial<ReadableSpan>> = spans.map((span) => ({
       traceId: span.spanContext().traceId,
       spanId: span.spanContext().spanId,
@@ -66,8 +65,10 @@ export class LangTraceExporter implements SpanExporter {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      'User-Agent': 'LangTraceExporter',
-      'x-api-key': this.apiKey
+      'User-Agent': 'LangTraceExporter'
+    }
+    if (this.apiKey.length > 0) {
+      headers['x-api-key'] = this.apiKey
     }
     await axios.post(`${this.apiHost}`, data, { headers }).then((response) => {
       diag.info(`Exported ${spans.length} spans to ${this.apiHost} with status code ${response.status}`)

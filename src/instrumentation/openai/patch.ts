@@ -18,6 +18,7 @@ import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/c
 import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
 import { APIS } from '@langtrace-constants/instrumentation/openai'
 import { calculatePromptTokens, estimateTokens } from '@langtrace-utils/llm'
+import { createStreamProxy } from '@langtrace-utils/misc'
 import { LLMSpanAttributes } from '@langtrase/trace-attributes'
 import {
   Exception,
@@ -280,11 +281,11 @@ export function chatCompletionCreate (
           const promptTokens = calculatePromptTokens(promptContent, model as string)
 
           const resp = await originalMethod.apply(this, args)
-          return handleStreamResponse(
+          return createStreamProxy(resp, handleStreamResponse(
             span,
             resp,
             promptTokens
-          )
+          ))
         }
       )
     }
