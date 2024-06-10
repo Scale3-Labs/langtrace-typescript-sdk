@@ -14,7 +14,18 @@
  * limitations under the License.
  */
 
+import { VendorTracedFunctions } from '@langtrace-init/types'
 import { TiktokenEncoding, TiktokenModel } from 'tiktoken'
+import { AnthropicFunctionNames } from '@langtrace-constants/instrumentation/anthropic'
+import { PgFunctionNames } from '@langtrace-constants/instrumentation/pg'
+import { ChromadbFunctionNames } from '@langtrace-constants/instrumentation/chroma'
+import { CohereFunctionNames } from '@langtrace-constants/instrumentation/cohere'
+import { GroqFunctionNames } from '@langtrace-constants/instrumentation/groq'
+import { LlamaIndexFunctionNames } from '@langtrace-constants/instrumentation/llamaindex'
+import { OpenAIFunctionNames } from '@langtrace-constants/instrumentation/openai'
+import { PineConeFunctionNames } from '@langtrace-constants/instrumentation/pinecone'
+import { QdrantFunctionNames } from '@langtrace-constants/instrumentation/qdrant'
+import { WeaviateFunctionNames } from '@langtrace-constants/instrumentation/weaviate'
 
 // https://github.com/dqbd/tiktoken/blob/main/wasm/src/lib.rs
 export const TIKTOKEN_MODEL_MAPPING: Record<TiktokenModel | string, TiktokenEncoding> = {
@@ -46,4 +57,17 @@ export enum Event {
   STREAM_OUTPUT = 'stream.output',
   STREAM_END = 'stream.end',
   RESPONSE = 'response',
+}
+
+export const TracedFunctionsByVendor: VendorTracedFunctions = {
+  anthropic: AnthropicFunctionNames,
+  pg: PgFunctionNames,
+  chromadb: ChromadbFunctionNames,
+  cohere: CohereFunctionNames,
+  groq: GroqFunctionNames,
+  llamaindex: LlamaIndexFunctionNames,
+  openai: OpenAIFunctionNames,
+  pinecone: PineConeFunctionNames,
+  qdrant: QdrantFunctionNames,
+  weaviate: WeaviateFunctionNames
 }
