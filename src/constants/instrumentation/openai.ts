@@ -33,3 +33,4 @@ export const APIS = {
   }
 } as const
 export type OpenAIFunctions = typeof APIS[keyof typeof APIS]['METHOD']
+export const OpenAIFunctionNames: OpenAIFunctions[] = Object.values(APIS).map((api) => api.METHOD)

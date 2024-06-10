@@ -21,3 +21,4 @@ export const APIS = {
   }
 } as const
 export type AnthropicFunctions = typeof APIS[keyof typeof APIS]['METHOD']
+export const AnthropicFunctionNames: AnthropicFunctions[] = Object.values(APIS).map((api) => api.METHOD)
