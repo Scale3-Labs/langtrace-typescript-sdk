@@ -27,7 +27,20 @@ import { WeaviateFunctions } from '@langtrace-constants/instrumentation/weaviate
 import { DiagLogLevel, DiagLogger } from '@opentelemetry/api'
 import { SpanExporter } from '@opentelemetry/sdk-trace-base'
 
-export type InstrumentationType = 'openai' | 'cohere' | 'anthropic' | 'groq' | 'pinecone' | 'llamaindex' | 'chromadb' | 'qdrant' | 'weaviate' | 'pg'
+export const Vendors = {
+  OPENAI: 'openai',
+  COHERE: 'cohere',
+  ANTHROPIC: 'anthropic',
+  GROQ: 'groq',
+  PINECONE: 'pinecone',
+  LLAMAINDEX: 'llamaindex',
+  CHROMADB: 'chromadb',
+  QDRANT: 'qdrant',
+  WEAVIATE: 'weaviate',
+  PG: 'pg'
+} as const
+
+export type Vendor = typeof Vendors[keyof typeof Vendors]
 
 export interface LangtraceInitOptions {
   api_key?: string
@@ -36,8 +49,8 @@ export interface LangtraceInitOptions {
   custom_remote_exporter?: SpanExporter
   api_host?: string
   disable_instrumentations?: {
-    all_except?: InstrumentationType[]
-    only?: InstrumentationType[]
+    all_except?: Vendor[]
+    only?: Vendor[]
   }
   logging?: {
     level?: DiagLogLevel
@@ -45,11 +58,11 @@ export interface LangtraceInitOptions {
     disable?: boolean
   }
   disable_latest_version_check?: boolean
-  disable_tracing_for_functions?: Partial<TracedFunctions>
-  instrumentations?: { [key in InstrumentationType]?: any }
+  disable_tracing_for_functions?: Partial<VendorTracedFunctions>
+  instrumentations?: { [key in Vendor]?: any }
 }
 
-interface InstrumentationFunctions {
+interface VendorInstrumentationFunctions {
   openai: OpenAIFunctions[]
   cohere: CohereFunctions[]
   anthropic: AnthropicFunctions[]
@@ -63,8 +76,8 @@ interface InstrumentationFunctions {
 }
 
 // DisableTracing interface that enforces keys to match InstrumentationType
-export type TracedFunctions = {
-  [key in InstrumentationType]: InstrumentationFunctions[key]
+export type VendorTracedFunctions = {
+  [key in Vendor]: VendorInstrumentationFunctions[key]
 }
 
 export type LangTraceInit = (options?: LangtraceInitOptions) => void

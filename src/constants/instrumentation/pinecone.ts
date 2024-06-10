@@ -43,3 +43,4 @@ export const APIS = {
 } as const
 
 export type PineConeFunctions = typeof APIS[keyof typeof APIS]['METHOD']
+export const PineConeFunctionNames: PineConeFunctions[] = Object.values(APIS).map((api) => api.METHOD)

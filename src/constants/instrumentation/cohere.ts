@@ -38,3 +38,4 @@ export const APIS = {
 } as const
 
 export type CohereFunctions = typeof APIS[keyof typeof APIS]['METHOD']
+export const CohereFunctionNames: CohereFunctions[] = Object.values(APIS).map((api) => api.METHOD)

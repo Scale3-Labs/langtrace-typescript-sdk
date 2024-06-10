@@ -1,11 +1,11 @@
-import { TracedFunctions } from '@langtrace-init/types'
+import { VendorTracedFunctions } from '@langtrace-init/types'
 import { SpanKind, Attributes, Context, trace, TraceFlags, diag } from '@opentelemetry/api'
 import { Sampler, SamplingDecision, SamplingResult } from '@opentelemetry/sdk-trace-base'
 
 export class LangtraceSampler implements Sampler {
   private readonly _disabled_function_names: Set<string>
 
-  constructor (disabled_functions: Partial<TracedFunctions> | undefined) {
+  constructor (disabled_functions: Partial<VendorTracedFunctions> | undefined) {
     this._disabled_function_names = new Set<string>()
     for (const key in disabled_functions) {
       if (disabled_functions[key as keyof typeof disabled_functions] !== undefined) {

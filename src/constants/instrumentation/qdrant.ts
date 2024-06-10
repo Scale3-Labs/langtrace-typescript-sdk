@@ -74,3 +74,4 @@ export const APIS = {
 } as const
 
 export type QdrantFunctions = typeof APIS[keyof typeof APIS]['METHOD']
+export const QdrantFunctionNames: QdrantFunctions[] = Object.values(APIS).map((api) => api.METHOD)
