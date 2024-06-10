@@ -19,7 +19,7 @@ import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/in
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { LangTraceExporter } from '@langtrace-extensions/langtraceexporter/langtrace_exporter'
 import { LangtraceSampler } from '@langtrace-extensions/langtracesampler/langtrace_sampler'
-import { InstrumentationType, LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
+import { Vendor, LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
 import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_exporter'
 import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
 import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
@@ -134,7 +134,7 @@ export const init: LangTraceInit = ({
   }
   provider.register()
 
-  const allInstrumentations: Record<InstrumentationType, any> = {
+  const allInstrumentations: Record<Vendor, any> = {
     openai: openAIInstrumentation,
     cohere: cohereInstrumentation,
     anthropic: anthropicInstrumentation,
@@ -155,27 +155,27 @@ export const init: LangTraceInit = ({
   } else {
     Object.entries(instrumentations).forEach(([key, value]) => {
       if (value !== undefined) {
-        allInstrumentations[key as InstrumentationType].manualPatch(value)
+        allInstrumentations[key as Vendor].manualPatch(value)
       }
     })
     registerInstrumentations({ tracerProvider: provider })
   }
 }
 
-const getInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<InstrumentationType, InstrumentationBase>): InstrumentationBase[] => {
+const getInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<Vendor, InstrumentationBase>): InstrumentationBase[] => {
   if (disable_instrumentations.only !== undefined && disable_instrumentations.all_except !== undefined) {
     throw new Error('Cannot specify both only and all_except in disable_instrumentations')
   }
   const instrumentations = Object.fromEntries(Object.entries(allInstrumentations)
     .filter(([key, instrumentation]) => {
       if (disable_instrumentations.all_except !== undefined) {
-        if (!disable_instrumentations.all_except.includes(key as InstrumentationType)) {
+        if (!disable_instrumentations.all_except.includes(key as Vendor)) {
           instrumentation.disable()
           return false
         }
       }
       if (disable_instrumentations.only !== undefined) {
-        if (disable_instrumentations.only.includes(key as InstrumentationType)) {
+        if (disable_instrumentations.only.includes(key as Vendor)) {
           instrumentation.disable()
           return false
         }

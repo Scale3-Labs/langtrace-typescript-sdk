@@ -62,3 +62,10 @@ type NestedMethodsOnly<T> = {
 
 // Define the WeaviateMethods type using the NestedMethodsOnly type
 export type WeaviateFunctions = NestedMethodsOnly<typeof queryTypeToFunctionToProps>
+
+export const WeaviateFunctionNames = Object.entries(queryTypeToFunctionToProps).map(([operationType, operations]) => {
+  return Object.entries(operations).map(([operation, methods]: [string, string[]]) => {
+    if (operation === 'collectionName') return []
+    return `${operationType}.${operation}.do`
+  }).flat()
+}).flat() as WeaviateFunctions[]

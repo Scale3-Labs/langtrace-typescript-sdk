@@ -24,3 +24,4 @@ export const APIS = {
 } as const
 
 export type LlamaIndexFunctions = typeof APIS[keyof typeof APIS]['METHOD']
+export const LlamaIndexFunctionNames: LlamaIndexFunctions[] = Object.values(APIS).map((api) => api.METHOD)

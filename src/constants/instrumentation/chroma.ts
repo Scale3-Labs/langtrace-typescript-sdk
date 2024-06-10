@@ -46,3 +46,4 @@ export const APIS = {
 } as const
 
 export type ChromadbFunctions = typeof APIS[keyof typeof APIS]['METHOD']
+export const ChromadbFunctionNames: ChromadbFunctions[] = Object.values(APIS).map((api) => api.METHOD)
