@@ -111,7 +111,7 @@ export const init: LangTraceInit = ({
 
   if (api_host === LANGTRACE_REMOTE_URL) {
     if (api_key === undefined && process.env.LANGTRACE_API_KEY === undefined) {
-      throw new Error('API key is required to export traces to Langtrace')
+      diag.warn('No API key provided. Please provide an API key to start sending traces to Langtrace.')
     }
   }
   if (api_key !== undefined) {

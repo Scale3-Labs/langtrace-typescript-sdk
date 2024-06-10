@@ -6,7 +6,7 @@ dotenv.config()
 
 const openai = new OpenAI()
 
-init({ write_spans_to_console: false })
+init({ write_spans_to_console: true })
 
 export async function chatCompletionStreaming (): Promise<void> {
   const stream = await openai.chat.completions.create({
@@ -14,6 +14,7 @@ export async function chatCompletionStreaming (): Promise<void> {
     messages: [{ role: 'user', content: 'Say this is a test 3 times' }],
     stream: true
   })
+
   for await (const chunk of stream) {
     process.stdout.write(chunk.choices[0]?.delta?.content ?? '')
   }

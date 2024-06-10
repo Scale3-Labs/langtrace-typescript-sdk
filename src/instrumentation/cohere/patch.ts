@@ -37,6 +37,7 @@ import {
   ICreateEmbedJobResponse
 } from '@langtrace-instrumentation/cohere/types'
 import { LLMSpanAttributes } from '@langtrase/trace-attributes'
+import { createStreamProxy } from '@langtrace-utils/misc'
 
 export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: ICohereClient, request: IChatRequest, requestOptions?: IRequestOptions): Promise<INonStreamedChatResponse> {
@@ -149,7 +150,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       prompts.push({ role: 'USER', content: request.message })
       attributes['llm.prompts'] = JSON.stringify(prompts)
       const response = await original.apply(this, [request, requestOptions])
-      return handleStream(response, attributes, span)
+      return createStreamProxy(response, handleStream(response, attributes, span))
     })
   }
 }
@@ -284,7 +285,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
   }
 }
 
-async function * handleStream (stream: any, attributes: LLMSpanAttributes, span: Span): AsyncGenerator<any, void> {
+async function * handleStream (stream: any, attributes: LLMSpanAttributes, span: Span): any {
   try {
     span.addEvent(Event.STREAM_START)
     for await (const chat of stream) {
