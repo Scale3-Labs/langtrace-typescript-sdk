@@ -1,3 +1,5 @@
-import { chatCompletion } from '@langtrace-examples/groq/basic'
+// import { chatCompletionStreaming } from '@langtrace-examples/openai/chat-completion-streaming'
 
-void chatCompletion()
+import { generateEmbedding } from '@langtrace-examples/ollama/basic'
+
+void generateEmbedding()
