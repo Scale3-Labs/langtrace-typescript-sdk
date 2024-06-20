@@ -19,6 +19,7 @@ import { ChromadbFunctions } from '@langtrace-constants/instrumentation/chroma'
 import { CohereFunctions } from '@langtrace-constants/instrumentation/cohere'
 import { GroqFunctions } from '@langtrace-constants/instrumentation/groq'
 import { LlamaIndexFunctions } from '@langtrace-constants/instrumentation/llamaindex'
+import { OllamaFunctions } from '@langtrace-constants/instrumentation/ollama'
 import { OpenAIFunctions } from '@langtrace-constants/instrumentation/openai'
 import { PgFunctions } from '@langtrace-constants/instrumentation/pg'
 import { PineConeFunctions } from '@langtrace-constants/instrumentation/pinecone'
@@ -37,7 +38,8 @@ export const Vendors = {
   CHROMADB: 'chromadb',
   QDRANT: 'qdrant',
   WEAVIATE: 'weaviate',
-  PG: 'pg'
+  PG: 'pg',
+  OLLAMA: 'ollama'
 } as const
 
 export type Vendor = typeof Vendors[keyof typeof Vendors]
@@ -73,6 +75,7 @@ interface VendorInstrumentationFunctions {
   qdrant: QdrantFunctions[]
   weaviate: WeaviateFunctions[]
   pg: PgFunctions[]
+  ollama: OllamaFunctions[]
 }
 
 // DisableTracing interface that enforces keys to match InstrumentationType
