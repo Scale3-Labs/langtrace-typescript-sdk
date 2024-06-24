@@ -52,14 +52,14 @@ export function imageEdit (
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
-      'llm.api': APIS.IMAGES_EDIT.ENDPOINT,
-      'llm.model': args[0]?.model,
+      'url.path': APIS.IMAGES_EDIT.ENDPOINT,
+      'gen_ai.request.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.prompt': JSON.stringify(args[0]?.prompt),
-      'llm.top_k': args[0]?.n,
-      'llm.image.size': args[0]?.size,
-      'llm.response_format': args[0]?.response_format,
+      'gen_ai.prompt': JSON.stringify(args[0]?.prompt),
+      'gen_ai.request.top_k': args[0]?.n,
+      'gen_ai.image.size': args[0]?.size,
+      'gen_ai.response_format': args[0]?.response_format,
       ...customAttributes
     }
 
@@ -69,14 +69,15 @@ export function imageEdit (
       async () => {
         try {
           const response = await originalMethod.apply(originalContext, args)
-          span.addEvent(Event.RESPONSE, {
-            'llm.responses': JSON.stringify(response?.data?.map((data: any) => {
+          const responseAttributes: Partial<LLMSpanAttributes> = {
+            'gen_ai.completion': JSON.stringify(response?.data?.map((data: any) => {
               return {
                 content: JSON.stringify(data),
                 role: 'assistant'
               }
             }))
-          })
+          }
+          span.addEvent(Event.RESPONSE, responseAttributes)
 
           span.setAttributes(attributes)
           span.setStatus({ code: SpanStatusCode.OK })
@@ -121,11 +122,11 @@ export function imagesGenerate (
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
-      'llm.api': APIS.IMAGES_GENERATION.ENDPOINT,
-      'llm.model': args[0]?.model,
+      'url.path': APIS.IMAGES_GENERATION.ENDPOINT,
+      'gen_ai.request.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.prompts': JSON.stringify([{ role: 'user', content: args[0]?.prompt }]),
+      'gen_ai.prompt': JSON.stringify([{ role: 'user', content: args[0]?.prompt }]),
       ...customAttributes
     }
 
@@ -135,7 +136,7 @@ export function imagesGenerate (
       async () => {
         try {
           const response = await originalMethod.apply(originalContext, args)
-          attributes['llm.responses'] = JSON.stringify(response?.data?.map((data: any) => {
+          attributes['gen_ai.completion'] = JSON.stringify(response?.data?.map((data: any) => {
             return {
               content: JSON.stringify(data),
               role: 'assistant'
@@ -185,25 +186,17 @@ export function chatCompletionCreate (
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
+      'gen_ai.request.model': args[0]?.model,
       'url.full': originalContext?._client?.baseURL,
-      'llm.api': APIS.CHAT_COMPLETION.ENDPOINT,
+      'url.path': APIS.CHAT_COMPLETION.ENDPOINT,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.prompts': JSON.stringify(args[0]?.messages),
-      'llm.stream': args[0]?.stream,
+      'gen_ai.prompt': JSON.stringify(args[0]?.messages),
+      'gen_ai.request.stream': args[0]?.stream,
+      'gen_ai.request.temperature': args[0]?.temperature,
+      'gen_ai.request.top_p': args[0]?.top_p,
+      'gen_ai.user': args[0]?.user,
       ...customAttributes
-    }
-
-    if (args[0]?.temperature !== undefined) {
-      attributes['llm.temperature'] = args[0]?.temperature
-    }
-
-    if (args[0]?.top_p !== undefined) {
-      attributes['llm.top_p'] = args[0]?.top_p
-    }
-
-    if (args[0]?.user !== undefined) {
-      attributes['llm.user'] = args[0]?.user
     }
     if (args[0]?.functions !== undefined) {
       const functionsToTools = args[0].functions.map((func: any) => {
@@ -212,10 +205,10 @@ export function chatCompletionCreate (
           type: 'function'
         }
       })
-      attributes['llm.tools'] = JSON.stringify(functionsToTools)
+      attributes['gen_ai.request.tools'] = JSON.stringify(functionsToTools)
     }
     if (args[0]?.tools !== undefined) {
-      attributes['llm.tools'] = JSON.stringify(args[0]?.tools)
+      attributes['gen_ai.request.tools'] = JSON.stringify(args[0]?.tools)
     }
 
     if (!(args[0].stream as boolean) || args[0].stream === false) {
@@ -236,22 +229,15 @@ export function chatCompletionCreate (
               }
               return result
             })
-            attributes['llm.responses'] = JSON.stringify(responses)
-            span.setAttributes({
-              'llm.responses': JSON.stringify(responses),
-              'llm.model': resp.model
-            })
-
-            if (resp?.system_fingerprint !== undefined) {
-              span.setAttributes({ 'llm.system.fingerprint': resp?.system_fingerprint })
+            const responseAttributes: Partial<LLMSpanAttributes> = {
+              'gen_ai.completion': JSON.stringify(responses),
+              'gen_ai.response.model': resp.model,
+              'gen_ai.system_fingerprint': resp.system_fingerprint,
+              'gen_ai.usage.prompt_tokens': resp.usage.prompt_tokens,
+              'gen_ai.usage.completion_tokens': resp.usage.completion_tokens,
+              'gen_ai.request.max_tokens': resp.usage.total_tokens
             }
-            span.setAttributes({
-              'llm.token.counts': JSON.stringify({
-                input_tokens: (typeof resp?.usage?.prompt_tokens !== 'undefined') ? resp.usage.prompt_tokens : 0,
-                output_tokens: (typeof resp?.usage?.completion_tokens !== 'undefined') ? resp.usage.completion_tokens : 0,
-                total_tokens: (typeof resp?.usage?.total_tokens !== 'undefined') ? resp.usage.total_tokens : 0
-              })
-            })
+            span.setAttributes({ ...attributes, ...responseAttributes })
             span.setStatus({ code: SpanStatusCode.OK })
             return resp
           } catch (error: any) {
@@ -284,7 +270,8 @@ export function chatCompletionCreate (
           return createStreamProxy(resp, handleStreamResponse(
             span,
             resp,
-            promptTokens
+            promptTokens,
+            attributes
           ))
         }
       )
@@ -295,7 +282,8 @@ export function chatCompletionCreate (
 async function * handleStreamResponse (
   span: Span,
   stream: any,
-  promptTokens: number
+  promptTokens: number,
+  inputAttributes: Partial<LLMSpanAttributes>
 ): any {
   let completionTokens = 0
   const result: string[] = []
@@ -312,26 +300,21 @@ async function * handleStreamResponse (
       const tokenCount = estimateTokens(content as string)
       completionTokens += tokenCount
       result.push(content as string)
-      span.addEvent(Event.STREAM_OUTPUT, {
-        tokens: tokenCount,
-        response: JSON.stringify(content)
-      })
+      if (chunk.choices[0]?.delta?.content !== undefined) {
+        span.addEvent(Event.STREAM_OUTPUT, { 'genai.completion.chunk': JSON.stringify({ role: chunk.choices[0]?.delta?.role ?? 'assistant', content: chunk.choices[0]?.delta?.content }) })
+      }
       yield chunk
     }
-
+    span.addEvent(Event.RESPONSE, { 'genai.completion': result.length > 0 ? JSON.stringify({ role: 'assistant', content: result.join('') }) : undefined })
     span.setStatus({ code: SpanStatusCode.OK })
-    span.setAttributes({
-      'llm.model': model,
-      'llm.token.counts': JSON.stringify({
-        input_tokens: promptTokens,
-        output_tokens: completionTokens,
-        total_tokens: completionTokens + promptTokens,
-        ...customAttributes
-      }),
-      'llm.responses': JSON.stringify([
-        { role: 'assistant', content: result.join('') } // [{message: <>, type: 'image-generation'}]
-      ])
-    })
+    const attributes: Partial<LLMSpanAttributes> = {
+      'gen_ai.response.model': model,
+      'gen_ai.usage.prompt_tokens': promptTokens,
+      'gen_ai.usage.completion_tokens': completionTokens,
+      'gen_ai.request.max_tokens': completionTokens + promptTokens,
+      ...customAttributes
+    }
+    span.setAttributes({ ...inputAttributes, ...attributes })
     span.addEvent(Event.STREAM_END)
   } catch (error: any) {
     span.recordException(error as Exception)
@@ -364,21 +347,21 @@ export function embeddingsCreate (
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
-      'llm.api': APIS.EMBEDDINGS_CREATE.ENDPOINT,
-      'llm.model': args[0]?.model,
+      'url.path': APIS.EMBEDDINGS_CREATE.ENDPOINT,
+      'gen_ai.request.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'llm.embedding_inputs': JSON.stringify([args[0]?.input]),
-      'llm.encoding.formats': args[0]?.encoding_format === undefined ? undefined : JSON.stringify([args[0]?.encoding_format]),
+      'gen_ai.request.embedding_inputs': JSON.stringify([args[0]?.input]),
+      'gen_ai.request.encoding_formats': args[0]?.encoding_format === undefined ? undefined : [args[0]?.encoding_format],
       ...customAttributes
     }
 
     if (args[0]?.dimensions !== undefined) {
-      attributes['llm.dimensions'] = args[0]?.dimensions
+      attributes['gen_ai.request.dimensions'] = args[0]?.dimensions
     }
 
     if (args[0]?.user !== undefined) {
-      attributes['llm.user'] = args[0]?.user
+      attributes['gen_ai.user'] = args[0]?.user
     }
 
     const span = tracer.startSpan(APIS.EMBEDDINGS_CREATE.METHOD, { kind: SpanKind.SERVER, attributes }, context.active())
