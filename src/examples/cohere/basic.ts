@@ -3,7 +3,7 @@ import * as cohere from 'cohere-ai'
 import { Tool } from 'cohere-ai/api'
 import fs from 'fs'
 
-init({ disable_instrumentations: { all_except: ['openai'] } })
+init({ disable_instrumentations: { all_except: ['cohere'] }, write_spans_to_console: true })
 
 const c = new cohere.CohereClient()
 export const basicChat = async (): Promise<void> => {
@@ -16,7 +16,7 @@ export const basicChat = async (): Promise<void> => {
     connectors: [{ id: 'web-search' }]
 
   })
-  console.info('Received prediction', prediction)
+  // console.info('Received prediction', prediction)
 }
 export const basicAgent = async (): Promise<void> => {
   const tools: Tool[] = [
@@ -80,7 +80,8 @@ Unless the user asks for a different style of answer, you should answer in full 
 export const basicStream = async (): Promise<void> => {
   const stream = await c.chatStream({
     model: 'command',
-    message: 'Tell me a two letter word!'
+    message: 'Tell me a two letter word!',
+    k: 1
   })
   const responses = []
   for await (const chat of stream) {

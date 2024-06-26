@@ -70,6 +70,7 @@ export function messagesCreate (
       'gen_ai.request.top_p': args[0]?.top_p,
       'gen_ai.request.top_k': args[0]?.top_k,
       'gen_ai.user': args[0]?.metadata?.user_id,
+      'gen_ai.request.max_tokens': args[0]?.max_tokens,
       'gen_ai.response.model': args[0]?.model,
       ...customAttributes
     }
@@ -87,8 +88,7 @@ export function messagesCreate (
             span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(resp.content.map((c: any) => ({ content: c.text, role: 'assistant' }))) })
             const respAttributes: Partial<LLMSpanAttributes> = {
               'gen_ai.usage.completion_tokens': resp.usage.output_tokens,
-              'gen_ai.usage.prompt_tokens': resp.usage.input_tokens,
-              'gen_ai.request.max_tokens': Number(resp.usage.input_tokens ?? 0) + Number(resp.usage.output_tokens ?? 0)
+              'gen_ai.usage.prompt_tokens': resp.usage.input_tokens
             }
             span.setAttributes({ ...attributes, ...respAttributes })
             span.setStatus({ code: SpanStatusCode.OK })
@@ -137,7 +137,6 @@ async function * handleStreamResponse (span: Span, stream: any, attributes: LLMS
       const responseAttributes: Partial<LLMSpanAttributes> = {
         'gen_ai.response.model': streamStartMessage.model,
         'gen_ai.usage.completion_tokens': streamStartMessage.usage.output_tokens,
-        'gen_ai.request.max_tokens': Number(streamStartMessage.usage.input_tokens ?? 0) + Number(streamStartMessage.usage.output_tokens ?? 0),
         'gen_ai.usage.prompt_tokens': streamStartMessage.usage.input_tokens
       }
       span.setAttributes({ ...attributes, ...responseAttributes })

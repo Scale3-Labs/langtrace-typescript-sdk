@@ -69,15 +69,7 @@ export function imageEdit (
       async () => {
         try {
           const response = await originalMethod.apply(originalContext, args)
-          const responseAttributes: Partial<LLMSpanAttributes> = {
-            'gen_ai.completion': JSON.stringify(response?.data?.map((data: any) => {
-              return {
-                content: JSON.stringify(data),
-                role: 'assistant'
-              }
-            }))
-          }
-          span.addEvent(Event.RESPONSE, responseAttributes)
+          span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(response?.data?.map((data: any) => ({ content: JSON.stringify(data), role: 'assistant' }))) })
 
           span.setAttributes(attributes)
           span.setStatus({ code: SpanStatusCode.OK })
@@ -85,10 +77,7 @@ export function imageEdit (
           return response
         } catch (error: any) {
           span.recordException(error as Exception)
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error.message
-          })
+          span.setStatus({ code: SpanStatusCode.ERROR })
           span.end()
           throw error
         }
@@ -136,23 +125,13 @@ export function imagesGenerate (
       async () => {
         try {
           const response = await originalMethod.apply(originalContext, args)
-          attributes['gen_ai.completion'] = JSON.stringify(response?.data?.map((data: any) => {
-            return {
-              content: JSON.stringify(data),
-              role: 'assistant'
-            }
-          }))
-
-          span.setAttributes(attributes)
+          span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(response?.data?.map((data: any) => (({ content: JSON.stringify(data), role: 'assistant' })))) })
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
           return response
         } catch (error: any) {
           span.recordException(error as Exception)
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error.message
-          })
+          span.setStatus({ code: SpanStatusCode.ERROR })
           span.end()
           throw error
         }
@@ -196,6 +175,8 @@ export function chatCompletionCreate (
       'gen_ai.request.temperature': args[0]?.temperature,
       'gen_ai.request.top_p': args[0]?.top_p,
       'gen_ai.user': args[0]?.user,
+      'gen_ai.request.max_tokens': args[0]?.max_tokens,
+      'gen_ai.request.tools': JSON.stringify(args[0]?.tools),
       ...customAttributes
     }
     if (args[0]?.functions !== undefined) {
@@ -207,10 +188,6 @@ export function chatCompletionCreate (
       })
       attributes['gen_ai.request.tools'] = JSON.stringify(functionsToTools)
     }
-    if (args[0]?.tools !== undefined) {
-      attributes['gen_ai.request.tools'] = JSON.stringify(args[0]?.tools)
-    }
-
     if (!(args[0].stream as boolean) || args[0].stream === false) {
       const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
       return await context.with(
@@ -229,23 +206,19 @@ export function chatCompletionCreate (
               }
               return result
             })
+            span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(responses) })
             const responseAttributes: Partial<LLMSpanAttributes> = {
-              'gen_ai.completion': JSON.stringify(responses),
               'gen_ai.response.model': resp.model,
               'gen_ai.system_fingerprint': resp.system_fingerprint,
               'gen_ai.usage.prompt_tokens': resp.usage.prompt_tokens,
-              'gen_ai.usage.completion_tokens': resp.usage.completion_tokens,
-              'gen_ai.request.max_tokens': resp.usage.total_tokens
+              'gen_ai.usage.completion_tokens': resp.usage.completion_tokens
             }
             span.setAttributes({ ...attributes, ...responseAttributes })
             span.setStatus({ code: SpanStatusCode.OK })
             return resp
           } catch (error: any) {
             span.recordException(error as Exception)
-            span.setStatus({
-              code: SpanStatusCode.ERROR,
-              message: error.message
-            })
+            span.setStatus({ code: SpanStatusCode.ERROR })
             throw error
           } finally {
             span.end()
@@ -301,24 +274,23 @@ async function * handleStreamResponse (
       completionTokens += tokenCount
       result.push(content as string)
       if (chunk.choices[0]?.delta?.content !== undefined) {
-        span.addEvent(Event.STREAM_OUTPUT, { 'genai.completion.chunk': JSON.stringify({ role: chunk.choices[0]?.delta?.role ?? 'assistant', content: chunk.choices[0]?.delta?.content }) })
+        span.addEvent(Event.STREAM_OUTPUT, { 'gen_ai.completion.chunk': JSON.stringify({ role: chunk.choices[0]?.delta?.role ?? 'assistant', content: chunk.choices[0]?.delta?.content }) })
       }
       yield chunk
     }
-    span.addEvent(Event.RESPONSE, { 'genai.completion': result.length > 0 ? JSON.stringify({ role: 'assistant', content: result.join('') }) : undefined })
+    span.addEvent(Event.RESPONSE, { 'gen_ai.completion': result.length > 0 ? JSON.stringify([{ role: 'assistant', content: result.join('') }]) : undefined })
     span.setStatus({ code: SpanStatusCode.OK })
     const attributes: Partial<LLMSpanAttributes> = {
       'gen_ai.response.model': model,
       'gen_ai.usage.prompt_tokens': promptTokens,
       'gen_ai.usage.completion_tokens': completionTokens,
-      'gen_ai.request.max_tokens': completionTokens + promptTokens,
       ...customAttributes
     }
     span.setAttributes({ ...inputAttributes, ...attributes })
     span.addEvent(Event.STREAM_END)
   } catch (error: any) {
     span.recordException(error as Exception)
-    span.setStatus({ code: SpanStatusCode.ERROR, message: error.message })
+    span.setStatus({ code: SpanStatusCode.ERROR })
     throw error
   } finally {
     span.end()
@@ -353,15 +325,9 @@ export function embeddingsCreate (
       'http.timeout': originalContext?._client?.timeout,
       'gen_ai.request.embedding_inputs': JSON.stringify([args[0]?.input]),
       'gen_ai.request.encoding_formats': args[0]?.encoding_format === undefined ? undefined : [args[0]?.encoding_format],
+      'gen_ai.request.dimensions': args[0]?.dimensions,
+      'gen_ai.user': args[0]?.user,
       ...customAttributes
-    }
-
-    if (args[0]?.dimensions !== undefined) {
-      attributes['gen_ai.request.dimensions'] = args[0]?.dimensions
-    }
-
-    if (args[0]?.user !== undefined) {
-      attributes['gen_ai.user'] = args[0]?.user
     }
 
     const span = tracer.startSpan(APIS.EMBEDDINGS_CREATE.METHOD, { kind: SpanKind.SERVER, attributes }, context.active())
@@ -376,10 +342,7 @@ export function embeddingsCreate (
           return resp
         } catch (error: any) {
           span.recordException(error as Exception)
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error.message
-          })
+          span.setStatus({ code: SpanStatusCode.ERROR })
           span.end()
           throw error
         }

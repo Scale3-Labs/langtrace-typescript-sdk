@@ -28,19 +28,19 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
       'langtrace.service.version': moduleVersion,
       'langtrace.version': langtraceVersion,
       'url.full': this?._client?.baseURL,
-      'llm.api': APIS.CHAT_COMPLETION.METHOD,
-      'llm.model': body.model,
+      'url.path': APIS.CHAT_COMPLETION.METHOD,
+      'gen_ai.request.model': body.model,
       'http.max.retries': options?.maxRetries ?? this._client.maxRetries,
       'http.timeout': options?.timeout ?? this._client.timeout,
-      'llm.stream': body?.stream ?? false,
-      'llm.temperature': body.temperature,
-      'llm.top_p': body.top_p,
-      'llm.top_logprobs': body.top_logprobs,
-      'llm.user': body.user,
-      'llm.frequency_penalty': body?.frequency_penalty?.toString(),
-      'llm.presence_penalty': body?.presence_penalty?.toString(),
-      'llm.max_tokens': body?.max_tokens?.toString(),
-      'llm.tools': JSON.stringify(body.tools),
+      'gen_ai.request.stream': body?.stream ?? false,
+      'gen_ai.request.temperature': body.temperature,
+      'gen_ai.request.top_p': body.top_p,
+      'gen_ai.request.top_k': body.top_logprobs,
+      'gen_ai.user': body.user,
+      'gen_ai.request.frequency_penalty': body?.frequency_penalty,
+      'gen_ai.request.presence_penalty': body?.presence_penalty,
+      'gen_ai.request.max_tokens': body?.max_tokens,
+      'gen_ai.request.tools': JSON.stringify(body.tools),
       ...customAttributes
     }
     const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
@@ -58,22 +58,13 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
             }
             return result
           })
-          attributes['llm.responses'] = JSON.stringify(responses)
-          span.setAttributes({
-            'llm.responses': JSON.stringify(responses),
-            'llm.model': resp.model
-          })
+          span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(responses) })
+          attributes['gen_ai.system_fingerprint'] = resp?.system_fingerprint
+          attributes['gen_ai.response.model'] = resp.model
+          attributes['gen_ai.usage.prompt_tokens'] = resp?.usage?.prompt_tokens
+          attributes['gen_ai.usage.completion_tokens'] = resp?.usage?.completion_tokens
 
-          if (resp?.system_fingerprint !== undefined) {
-            span.setAttributes({ 'llm.system.fingerprint': resp?.system_fingerprint })
-          }
-          span.setAttributes({
-            'llm.token.counts': JSON.stringify({
-              input_tokens: (typeof resp?.usage?.prompt_tokens !== 'undefined') ? resp.usage.prompt_tokens : 0,
-              output_tokens: (typeof resp?.usage?.completion_tokens !== 'undefined') ? resp.usage.completion_tokens : 0,
-              total_tokens: (typeof resp?.usage?.total_tokens !== 'undefined') ? resp.usage.total_tokens : 0
-            })
-          })
+          span.setAttributes(attributes)
           span.setStatus({ code: SpanStatusCode.OK })
           return resp
         } finally {
@@ -93,19 +84,19 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       'langtrace.service.version': moduleVersion,
       'langtrace.version': langtraceVersion,
       'url.full': this?._client?.baseURL,
-      'llm.api': APIS.CHAT_COMPLETION.METHOD,
-      'llm.model': body.model,
+      'url.path': APIS.CHAT_COMPLETION.METHOD,
+      'gen_ai.request.model': body.model,
       'http.max.retries': options?.maxRetries ?? this._client.maxRetries,
       'http.timeout': options?.timeout ?? this._client.timeout,
-      'llm.stream': body?.stream ?? false,
-      'llm.temperature': body.temperature,
-      'llm.top_p': body.top_p,
-      'llm.top_logprobs': body.top_logprobs,
-      'llm.user': body.user,
-      'llm.frequency_penalty': body?.frequency_penalty?.toString(),
-      'llm.presence_penalty': body?.presence_penalty?.toString(),
-      'llm.max_tokens': body?.max_tokens?.toString(),
-      'llm.tools': JSON.stringify(body.tools),
+      'gen_ai.request.stream': body?.stream ?? true,
+      'gen_ai.request.temperature': body.temperature,
+      'gen_ai.request.top_p': body.top_p,
+      'gen_ai.request.top_k': body.top_logprobs,
+      'gen_ai.user': body.user,
+      'gen_ai.request.frequency_penalty': body?.frequency_penalty,
+      'gen_ai.request.presence_penalty': body?.presence_penalty,
+      'gen_ai.request.max_tokens': body?.max_tokens,
+      'gen_ai.request.tools': JSON.stringify(body.tools),
       ...customAttributes
     }
     const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
@@ -122,27 +113,33 @@ async function * handleStream (stream: AsyncIterable<any>, attributes: LLMSpanAt
   const responseReconstructed: string[] = []
   try {
     span.addEvent(Event.STREAM_START)
+    let role: string | undefined
     for await (const chunk of stream) {
-      span.addEvent(Event.STREAM_OUTPUT, { response: chunk.choices[0].delta.content ?? '' })
+      const content = chunk.choices[0].delta.content as string
+      const r = chunk.choices[0].delta.role
+      if (r !== undefined) {
+        role = r
+      }
+      if (content !== undefined) {
+        span.addEvent(Event.STREAM_OUTPUT, { 'gen_ai.completion.chunk': JSON.stringify({ role, content }) })
+      }
       responseReconstructed.push(chunk.choices[0].delta.content as string ?? '')
 
       if (chunk.choices[0].finish_reason === 'stop') {
-        const totalTokens = Number(chunk.x_groq?.usage?.completion_tokens ?? 0)
-        const inputTokens = chunk.x_groq?.usage?.prompt_tokens ?? 0
-        attributes['llm.token.counts'] = JSON.stringify({
-          input_tokens: inputTokens,
-          output_tokens: totalTokens - inputTokens,
-          total_tokens: totalTokens
-        })
+        attributes['gen_ai.usage.completion_tokens'] = chunk.x_groq?.usage?.completion_tokens
+        attributes['gen_ai.usage.prompt_tokens'] = chunk.x_groq?.usage?.prompt_tokens
+        attributes['gen_ai.response.model'] = chunk?.model
+        attributes['gen_ai.system_fingerprint'] = chunk?.system_fingerprint
       }
       yield chunk
     }
     span.addEvent(Event.STREAM_END)
-    attributes['llm.responses'] = JSON.stringify([{ role: 'assistant', content: responseReconstructed.join('') }])
+    span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify([{ role: 'assistant', content: responseReconstructed.join('') }]) })
     span.setAttributes(attributes)
     span.setStatus({ code: SpanStatusCode.OK })
   } catch (error: unknown) {
-    span.setStatus({ code: SpanStatusCode.ERROR, message: (error as Error).message })
+    span.recordException(error as Error)
+    span.setStatus({ code: SpanStatusCode.ERROR })
     throw error
   } finally {
     span.end()
