@@ -57,10 +57,7 @@ export function genericPatch (
           return response
         } catch (error: any) {
           span.recordException(error as Exception)
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error.message
-          })
+          span.setStatus({ code: SpanStatusCode.ERROR })
           span.end()
           throw error
         }

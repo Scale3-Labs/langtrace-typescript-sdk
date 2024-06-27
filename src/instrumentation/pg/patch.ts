@@ -35,10 +35,7 @@ export const patchPgQuery = (original: any, tracer: Tracer, sdkName: string, lan
           return resp
         } catch (error: any) {
           span.recordException(error as Exception)
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error.message
-          })
+          span.setStatus({ code: SpanStatusCode.ERROR })
           span.end()
           throw error
         }

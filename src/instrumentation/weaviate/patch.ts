@@ -90,10 +90,7 @@ export const patchBuilderFunctions = function (this: any, { clientInstance, clie
                         return resp
                       } catch (error: any) {
                         span.recordException(error as Exception)
-                        span.setStatus({
-                          code: SpanStatusCode.ERROR,
-                          message: error.message
-                        })
+                        span.setStatus({ code: SpanStatusCode.ERROR })
                         span.end()
                         throw error
                       }
