@@ -133,7 +133,7 @@ async function * handleStreamResponse (span: Span, stream: any, attributes: LLMS
         result.push(content as string)
       }
 
-      span.addEvent(Event.STREAM_OUTPUT, { 'gen_ai.completion': JSON.stringify([{ content: result.join(''), role: streamStartMessage.role }]) })
+      span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify([{ content: result.join(''), role: streamStartMessage.role }]) })
       const responseAttributes: Partial<LLMSpanAttributes> = {
         'gen_ai.response.model': streamStartMessage.model,
         'gen_ai.usage.completion_tokens': streamStartMessage.usage.output_tokens,

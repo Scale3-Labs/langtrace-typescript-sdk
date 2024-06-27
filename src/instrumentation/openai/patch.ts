@@ -59,7 +59,7 @@ export function imageEdit (
       'gen_ai.prompt': JSON.stringify(args[0]?.prompt),
       'gen_ai.request.top_k': args[0]?.n,
       'gen_ai.image.size': args[0]?.size,
-      'gen_ai.response_format': args[0]?.response_format,
+      'gen_ai.response_format': args[0]?.response_format?.type ?? args[0]?.response_format,
       ...customAttributes
     }
 

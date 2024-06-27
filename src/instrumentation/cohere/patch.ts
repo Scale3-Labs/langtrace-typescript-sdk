@@ -75,7 +75,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
           prompts.push({ role: 'system', content: request.preamble })
         }
         if (request.chatHistory !== undefined) {
-          prompts.push(...request.chatHistory.map((chat) => { return { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role === 'SYSTEM' ? 'system' : 'user', content: chat.message } }))
+          prompts.push(...request.chatHistory.map((chat) => { return { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role.toLowerCase(), content: chat.message } }))
         }
         prompts.push({ role: 'user', content: request.message })
         attributes['gen_ai.prompt'] = JSON.stringify(prompts)
@@ -83,11 +83,12 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
         const responseAttributes: Partial<LLMSpanAttributes> = {
           'gen_ai.usage.prompt_tokens': response.meta?.billedUnits?.inputTokens,
           'gen_ai.usage.completion_tokens': response.meta?.billedUnits?.outputTokens,
+          'gen_ai.usage.search_units': response.meta?.billedUnits?.searchUnits,
           'gen_ai.response_id': response.response_id,
           'gen_ai.response.tool_calls': response.toolCalls !== undefined ? JSON.stringify(response.toolCalls) : undefined
         }
         if (response.chatHistory !== undefined) {
-          span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(response.chatHistory.map((chat) => { return { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role === 'SYSTEM' ? 'system' : 'user', content: chat.message } })) })
+          span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(response.chatHistory.map((chat) => { return { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role.toLowerCase(), content: chat.message } })) })
         } else {
           span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify([{ role: 'assistant', content: response.text }]) })
         }
@@ -140,7 +141,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
         prompts.push({ role: 'system', content: request.preamble })
       }
       if (request.chatHistory !== undefined) {
-        prompts.push(...request.chatHistory.map((chat) => { return { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role === 'SYSTEM' ? 'system' : 'user', content: chat.message } }))
+        prompts.push(...request.chatHistory.map((chat) => { return { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role.toLowerCase(), content: chat.message } }))
       }
       prompts.push({ role: 'user', content: request.message })
       attributes['gen_ai.prompt'] = JSON.stringify(prompts)
@@ -175,6 +176,7 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
         const response = await original.apply(this, [request, requestOptions])
         attributes['gen_ai.usage.completion_tokens'] = response.meta?.billedUnits?.outputTokens
         attributes['gen_ai.usage.prompt_tokens'] = response.meta?.billedUnits?.inputTokens
+        attributes['gen_ai.usage.search_units'] = response.meta?.billedUnits?.searchUnits
         span.setAttributes(attributes)
         span.setStatus({ code: SpanStatusCode.OK })
         return response
@@ -215,6 +217,7 @@ export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer
         const response = await original.apply(this, [request, requestOptions])
         attributes['gen_ai.usage.completion_tokens'] = response.meta?.billedUnits?.outputTokens
         attributes['gen_ai.usage.prompt_tokens'] = response.meta?.billedUnits?.inputTokens
+        attributes['gen_ai.usage.search_units'] = response.meta?.billedUnits?.searchUnits
         span.setAttributes(attributes)
         span.setStatus({ code: SpanStatusCode.OK })
         return response
@@ -256,6 +259,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
         attributes['gen_ai.response_id'] = response.id
         attributes['gen_ai.usage.completion_tokens'] = response.meta?.billedUnits?.outputTokens
         attributes['gen_ai.usage.prompt_tokens'] = response.meta?.billedUnits?.inputTokens
+        attributes['gen_ai.usage.search_units'] = response.meta?.billedUnits?.searchUnits
 
         span.setAttributes(attributes)
         span.setStatus({ code: SpanStatusCode.OK })
@@ -282,13 +286,14 @@ async function * handleStream (stream: any, attributes: LLMSpanAttributes, span:
         span.addEvent(Event.STREAM_END)
         let response: Array<{ role: string, content: string }> | { role: string, content: string } = []
         if (chat.response.chatHistory !== undefined) {
-          response = chat.response.chatHistory.map((chat: any) => { return { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role === 'SYSTEM' ? 'system' : 'user', content: chat.message } })
+          response = chat.response.chatHistory.map((chat: any) => { return { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role.toLowerCase(), content: chat.message } })
         } else {
           response = { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role === 'SYSTEM' ? 'system' : 'user', content: chat.response.text }
         }
         span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(response) })
         attributes['gen_ai.usage.completion_tokens'] = chat.response.meta?.billedUnits?.outputTokens
         attributes['gen_ai.usage.prompt_tokens'] = chat.response.meta?.billedUnits?.inputTokens
+        attributes['gen_ai.usage.search_units'] = chat.response.meta?.billedUnits?.searchUnits
         attributes['gen_ai.response.tool_calls'] = chat.response.toolCalls !== undefined ? JSON.stringify(chat.response.toolCalls) : undefined
         attributes['gen_ai.response_id'] = chat.response.response_id
       }
