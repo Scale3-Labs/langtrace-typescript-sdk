@@ -62,7 +62,6 @@ import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation
 */
 
 let isLatestSdk = false
-let isInitialized = false
 
 export const init: LangTraceInit = ({
   api_key = undefined,
@@ -80,7 +79,7 @@ export const init: LangTraceInit = ({
   disable_latest_version_check = false,
   disable_tracing_for_functions = undefined
 }: LangtraceInitOptions = {}) => {
-  if (isInitialized) {
+  if (global.langtrace_initalized) {
     // eslint-disable-next-line no-console
     console.log(c.yellow('Langtrace has already been initialized. Skipping initialization. Move the "Langtrace.init()" call to the top of your file to ensure it\'s only called once.'))
     return
@@ -166,7 +165,7 @@ export const init: LangTraceInit = ({
     })
     registerInstrumentations({ tracerProvider: provider })
   }
-  isInitialized = true
+  global.langtrace_initalized = true
 }
 
 const getInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<Vendor, InstrumentationBase>): InstrumentationBase[] => {
