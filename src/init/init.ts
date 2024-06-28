@@ -34,6 +34,7 @@ import { weaviateInstrumentation } from '@langtrace-instrumentation/weaviate/ins
 import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
 import c from 'ansi-colors'
 import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation'
+import { ollamaInstrumentation } from '@langtrace-instrumentation/ollama/instrumentation'
 
 /**
  * Initializes the LangTrace sdk with custom options.
@@ -110,7 +111,7 @@ export const init: LangTraceInit = ({
   }
 
   if (api_host === LANGTRACE_REMOTE_URL) {
-    if (api_key === undefined && process.env.LANGTRACE_API_KEY === undefined) {
+    if (api_key === undefined && process.env.LANGTRACE_API_KEY === undefined && !write_spans_to_console) {
       diag.warn('No API key provided. Please provide an API key to start sending traces to Langtrace.')
     }
   }
@@ -144,7 +145,8 @@ export const init: LangTraceInit = ({
     chromadb: chromaInstrumentation,
     qdrant: qdrantInstrumentation,
     weaviate: weaviateInstrumentation,
-    pg: pgInstrumentation
+    pg: pgInstrumentation,
+    ollama: ollamaInstrumentation
   }
 
   if (instrumentations === undefined) {

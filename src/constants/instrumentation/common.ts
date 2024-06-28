@@ -26,6 +26,7 @@ import { OpenAIFunctionNames } from '@langtrace-constants/instrumentation/openai
 import { PineConeFunctionNames } from '@langtrace-constants/instrumentation/pinecone'
 import { QdrantFunctionNames } from '@langtrace-constants/instrumentation/qdrant'
 import { WeaviateFunctionNames } from '@langtrace-constants/instrumentation/weaviate'
+import { OllamaFunctionNames } from '@langtrace-constants/instrumentation/ollama'
 
 // https://github.com/dqbd/tiktoken/blob/main/wasm/src/lib.rs
 export const TIKTOKEN_MODEL_MAPPING: Record<TiktokenModel | string, TiktokenEncoding> = {
@@ -69,5 +70,6 @@ export const TracedFunctionsByVendor: VendorTracedFunctions = {
   openai: OpenAIFunctionNames,
   pinecone: PineConeFunctionNames,
   qdrant: QdrantFunctionNames,
-  weaviate: WeaviateFunctionNames
+  weaviate: WeaviateFunctionNames,
+  ollama: OllamaFunctionNames
 }

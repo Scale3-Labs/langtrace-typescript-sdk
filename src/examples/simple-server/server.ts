@@ -1,5 +1,6 @@
 import { init } from '@langtrace-init/init'
 import { withLangTraceRootSpan, withAdditionalAttributes } from '@langtrace-utils/instrumentation'
+import { getPromptFromRegistry } from '@langtrace-utils/langtrace'
 import dotenv from 'dotenv'
 import * as http from 'http'
 import OpenAI from 'openai'
@@ -33,7 +34,7 @@ const server = http.createServer(async (req, res) => {
           { role: 'user', content: 'Say this is a mock 4 times' }
         ]
       })
-    }, { 'user.feedback.rating': -1, 'user.id': '1234' })
+    }, await getPromptFromRegistry('123'))
 
     await openai.chat.completions.create({
       model: 'gpt-4',
