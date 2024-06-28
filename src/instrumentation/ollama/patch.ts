@@ -32,27 +32,27 @@ export const generateStreamPatch = (original: GenerateStreamFn, tracer: Tracer, 
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const prompts = []
     if (generateRequest.system !== undefined) {
-      prompts.push({ role: 'SYSTEM', content: generateRequest.system })
+      prompts.push({ role: 'system', content: generateRequest.system })
     }
-    prompts.push({ role: 'USER', content: generateRequest.prompt })
+    prompts.push({ role: 'user', content: generateRequest.prompt })
 
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': 'ollama',
       'langtrace.service.type': 'llm',
       'langtrace.service.version': moduleVersion,
-      'llm.prompts': JSON.stringify(prompts),
+      'gen_ai.prompt': JSON.stringify(prompts),
       'langtrace.version': langtraceVersion,
       'url.full': this?.config?.host,
-      'llm.api': APIS.GENERATE.ENDPOINT,
-      'llm.model': generateRequest.model,
-      'llm.stream': generateRequest.stream,
-      'llm.temperature': generateRequest.options?.temperature,
-      'llm.top_p': generateRequest.options?.top_p,
+      'url.path': APIS.GENERATE.ENDPOINT,
+      'gen_ai.request.model': generateRequest.model,
+      'gen_ai.request.stream': generateRequest.stream,
+      'gen_ai.request.temperature': generateRequest.options?.temperature,
+      'gen_ai.request.top_p': generateRequest.options?.top_p,
       'http.timeout': Number.isNaN(Number(generateRequest?.keep_alive)) ? undefined : Number(generateRequest?.keep_alive),
-      'llm.frequency_penalty': generateRequest?.options?.frequency_penalty?.toString(),
-      'llm.presence_penalty': generateRequest?.options?.presence_penalty?.toString(),
-      'llm.response_format': generateRequest.format,
+      'gen_ai.request.frequency_penalty': generateRequest?.options?.frequency_penalty,
+      'gen_ai.request.presence_penalty': generateRequest?.options?.presence_penalty,
+      'gen_ai.request.response_format': generateRequest.format,
       ...customAttributes
     }
     const span = tracer.startSpan(APIS.GENERATE.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
@@ -70,27 +70,27 @@ export const generatePatchNonStreamed = (original: GenerateFn, tracer: Tracer, l
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const prompts = []
     if (generateRequest.system !== undefined) {
-      prompts.push({ role: 'SYSTEM', content: generateRequest.system })
+      prompts.push({ role: 'system', content: generateRequest.system })
     }
-    prompts.push({ role: 'USER', content: generateRequest.prompt })
+    prompts.push({ role: 'user', content: generateRequest.prompt })
 
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': 'ollama',
       'langtrace.service.type': 'llm',
-      'llm.prompts': JSON.stringify(prompts),
+      'gen_ai.prompt': JSON.stringify(prompts),
       'langtrace.service.version': moduleVersion,
       'langtrace.version': langtraceVersion,
       'url.full': this?.config?.host,
-      'llm.api': APIS.GENERATE.ENDPOINT,
-      'llm.model': generateRequest.model,
-      'llm.stream': generateRequest.stream,
-      'llm.temperature': generateRequest.options?.temperature,
-      'llm.top_p': generateRequest.options?.top_p,
+      'url.path': APIS.GENERATE.ENDPOINT,
+      'gen_ai.request.model': generateRequest.model,
+      'gen_ai.request.stream': generateRequest.stream,
+      'gen_ai.request.temperature': generateRequest.options?.temperature,
+      'gen_ai.request.top_p': generateRequest.options?.top_p,
       'http.timeout': Number.isNaN(Number(generateRequest?.keep_alive)) ? undefined : Number(generateRequest?.keep_alive),
-      'llm.frequency_penalty': generateRequest?.options?.frequency_penalty?.toString(),
-      'llm.presence_penalty': generateRequest?.options?.presence_penalty?.toString(),
-      'llm.response_format': generateRequest.format,
+      'gen_ai.request.frequency_penalty': generateRequest?.options?.frequency_penalty,
+      'gen_ai.request.presence_penalty': generateRequest?.options?.presence_penalty,
+      'gen_ai.request.response_format': generateRequest.format,
       ...customAttributes
     }
     const span = tracer.startSpan(APIS.GENERATE.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
@@ -100,18 +100,12 @@ export const generatePatchNonStreamed = (original: GenerateFn, tracer: Tracer, l
         try {
           const resp = await original.apply(this, [generateRequest])
           const responses = [{ content: resp.response, role: 'assistant' }]
-          span.addEvent(Event.RESPONSE, { 'llm.responses': JSON.stringify(responses) })
+          span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(responses) })
+          attributes['gen_ai.usage.prompt_tokens'] = resp?.prompt_eval_count
+          attributes['gen_ai.usage.completion_tokens'] = resp?.eval_count
+          attributes['gen_ai.response.model'] = resp.model
 
-          const inputTokens = (typeof resp?.prompt_eval_count !== 'undefined') ? resp.prompt_eval_count : 0
-          const outputTokens = (typeof resp?.eval_count !== 'undefined') ? resp.eval_count : 0
-
-          span.setAttributes({
-            'llm.token.counts': JSON.stringify({
-              input_tokens: inputTokens,
-              output_tokens: outputTokens,
-              total_tokens: inputTokens + outputTokens
-            })
-          })
+          span.setAttributes(attributes)
           span.setStatus({ code: SpanStatusCode.OK })
           return resp
         } finally {
@@ -124,24 +118,24 @@ export const generatePatchNonStreamed = (original: GenerateFn, tracer: Tracer, l
 export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: IOllamaClient, chatRequest: IChatRequest): Promise<IChatResponse> {
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
-    const prompts: Array<{ role: string, content: string }> | undefined = chatRequest.messages?.map(({ role, content }) => ({ role: role.toUpperCase(), content })) ?? undefined
+    const prompts: Array<{ role: string, content: string }> | undefined = chatRequest.messages?.map(({ role, content }) => ({ role: role.toLowerCase(), content })) ?? undefined
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': 'ollama',
-      'llm.prompts': JSON.stringify(prompts),
+      'gen_ai.prompt': JSON.stringify(prompts),
       'langtrace.service.type': 'llm',
       'langtrace.service.version': moduleVersion,
       'langtrace.version': langtraceVersion,
       'url.full': this?.config?.host,
-      'llm.api': APIS.CHAT.ENDPOINT,
-      'llm.model': chatRequest.model,
-      'llm.stream': chatRequest.stream,
-      'llm.temperature': chatRequest.options?.temperature,
-      'llm.top_p': chatRequest.options?.top_p,
+      'url.path': APIS.CHAT.ENDPOINT,
+      'gen_ai.request.model': chatRequest.model,
+      'gen_ai.request.stream': chatRequest.stream,
+      'gen_ai.request.temperature': chatRequest.options?.temperature,
+      'gen_ai.request.top_p': chatRequest.options?.top_p,
       'http.timeout': Number.isNaN(Number(chatRequest?.keep_alive)) ? undefined : Number(chatRequest?.keep_alive),
-      'llm.frequency_penalty': chatRequest?.options?.frequency_penalty?.toString(),
-      'llm.presence_penalty': chatRequest?.options?.presence_penalty?.toString(),
-      'llm.response_format': chatRequest.format,
+      'gen_ai.request.frequency_penalty': chatRequest?.options?.frequency_penalty,
+      'gen_ai.request.presence_penalty': chatRequest?.options?.presence_penalty,
+      'gen_ai.request.response_format': chatRequest.format,
       ...customAttributes
     }
     const span = tracer.startSpan(APIS.CHAT.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
@@ -150,18 +144,13 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
       async () => {
         try {
           const resp = await original.apply(this, [chatRequest])
-          const responses = [{ content: resp.message.content, role: resp.message.role }]
-          span.addEvent(Event.RESPONSE, { 'llm.responses': JSON.stringify(responses) })
+          const responses = [{ content: resp.message.content, role: resp.message.role.toLowerCase() }]
+          span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(responses) })
+          attributes['gen_ai.usage.prompt_tokens'] = resp?.prompt_eval_count
+          attributes['gen_ai.usage.completion_tokens'] = resp?.eval_count
+          attributes['gen_ai.response.model'] = resp.model
 
-          const inputTokens = (typeof resp?.prompt_eval_count !== 'undefined') ? resp.prompt_eval_count : 0
-          const outputTokens = (typeof resp?.eval_count !== 'undefined') ? resp.eval_count : 0
-          span.setAttributes({
-            'llm.token.counts': JSON.stringify({
-              input_tokens: inputTokens,
-              output_tokens: outputTokens,
-              total_tokens: inputTokens + outputTokens
-            })
-          })
+          span.setAttributes(attributes)
           span.setStatus({ code: SpanStatusCode.OK })
           return resp
         } finally {
@@ -173,24 +162,24 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
 export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: IOllamaClient, chatRequest: IChatRequest & { stream: true }): Promise<AsyncIterable<IChatResponse>> {
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
-    const prompts: Array<{ role: string, content: string }> | undefined = chatRequest.messages?.map(({ role, content }) => ({ role: role.toUpperCase(), content })) ?? undefined
+    const prompts: Array<{ role: string, content: string }> | undefined = chatRequest.messages?.map(({ role, content }) => ({ role: role.toLowerCase(), content })) ?? undefined
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': 'ollama',
-      'llm.prompts': JSON.stringify(prompts),
+      'gen_ai.prompt': JSON.stringify(prompts),
       'langtrace.service.type': 'llm',
       'langtrace.service.version': moduleVersion,
       'langtrace.version': langtraceVersion,
       'url.full': this?.config.host,
-      'llm.api': APIS.CHAT.ENDPOINT,
-      'llm.model': chatRequest.model,
-      'llm.stream': chatRequest.stream,
-      'llm.temperature': chatRequest.options?.temperature,
+      'url.path': APIS.CHAT.ENDPOINT,
+      'gen_ai.request.model': chatRequest.model,
+      'gen_ai.request.stream': chatRequest.stream,
+      'gen_ai.request.temperature': chatRequest.options?.temperature,
       'http.timeout': Number.isNaN(Number(chatRequest?.keep_alive)) ? undefined : Number(chatRequest?.keep_alive),
-      'llm.top_p': chatRequest.options?.top_p,
-      'llm.frequency_penalty': chatRequest?.options?.frequency_penalty?.toString(),
-      'llm.presence_penalty': chatRequest?.options?.presence_penalty?.toString(),
-      'llm.response_format': chatRequest.format,
+      'gen_ai.request.top_p': chatRequest.options?.top_p,
+      'gen_ai.request.frequency_penalty': chatRequest?.options?.frequency_penalty,
+      'gen_ai.request.presence_penalty': chatRequest?.options?.presence_penalty,
+      'gen_ai.request.response_format': chatRequest.format,
       ...customAttributes
     }
     const span = tracer.startSpan(APIS.CHAT.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
@@ -213,9 +202,9 @@ export const embeddingsPatch = (original: EmbeddingsFn, tracer: Tracer, langtrac
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': this.config.host,
-      'llm.api': APIS.EMBEDDINGS.ENDPOINT,
-      'llm.model': request.model,
-      'llm.embedding_inputs': JSON.stringify(request.prompt),
+      'url.path': APIS.EMBEDDINGS.ENDPOINT,
+      'gen_ai.request.model': request.model,
+      'gen_ai.request.embedding_inputs': JSON.stringify(request.prompt),
       'http.timeout': Number.isNaN(Number(request.keep_alive)) ? undefined : Number(request.keep_alive),
       ...customAttributes
     }
@@ -223,7 +212,7 @@ export const embeddingsPatch = (original: EmbeddingsFn, tracer: Tracer, langtrac
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {
         const resp = await original.apply(this, [request])
-        span.addEvent(Event.RESPONSE, { 'llm.responses': JSON.stringify(resp) })
+        span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(resp) })
         span.setAttributes(attributes)
         span.setStatus({ code: SpanStatusCode.OK })
         return resp
@@ -242,21 +231,17 @@ async function * handleChatStream (stream: AsyncIterable<any>, attributes: LLMSp
   try {
     span.addEvent(Event.STREAM_START)
     for await (const chunk of stream) {
-      span.addEvent(Event.STREAM_OUTPUT, { response: chunk.message.content ?? '' })
+      span.addEvent(Event.STREAM_OUTPUT, { 'gen_ai.completion.chunk': JSON.stringify({ content: chunk.response ?? '', role: 'assistant' }) })
       responseReconstructed.push(chunk.message.content as string ?? '')
       if (chunk.done === true) {
-        const inputTokens = (typeof chunk?.prompt_eval_count !== 'undefined') ? chunk.prompt_eval_count as number : 0
-        const outputTokens = (typeof chunk?.eval_count !== 'undefined') ? chunk.eval_count as number : 0
-        attributes['llm.token.counts'] = JSON.stringify({
-          input_tokens: inputTokens,
-          output_tokens: outputTokens,
-          total_tokens: inputTokens + outputTokens
-        })
+        attributes['gen_ai.usage.prompt_tokens'] = chunk?.prompt_eval_count
+        attributes['gen_ai.usage.completion_tokens'] = chunk?.eval_count
+        attributes['gen_ai.response.model'] = chunk.model
       }
       yield chunk
     }
     span.addEvent(Event.STREAM_END)
-    span.addEvent(Event.RESPONSE, { 'llm.responses': JSON.stringify({ role: 'assistant', content: responseReconstructed.join('') }) })
+    span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify({ role: 'assistant', content: responseReconstructed.join('') }) })
     span.setAttributes(attributes)
     span.setStatus({ code: SpanStatusCode.OK })
   } catch (error: unknown) {
@@ -272,21 +257,17 @@ async function * handleGenerateStream (stream: AsyncIterable<any>, attributes: L
   try {
     span.addEvent(Event.STREAM_START)
     for await (const chunk of stream) {
-      span.addEvent(Event.STREAM_OUTPUT, { response: chunk.response ?? '' })
+      span.addEvent(Event.STREAM_OUTPUT, { 'gen_ai.completion.chunk': JSON.stringify({ content: chunk.response ?? '', role: 'assistant' }) })
       responseReconstructed.push(chunk.response as string ?? '')
       if (chunk.done === true) {
-        const inputTokens = (typeof chunk?.prompt_eval_count !== 'undefined') ? chunk.prompt_eval_count as number : 0
-        const outputTokens = (typeof chunk?.eval_count !== 'undefined') ? chunk.eval_count as number : 0
-        attributes['llm.token.counts'] = JSON.stringify({
-          input_tokens: inputTokens,
-          output_tokens: outputTokens,
-          total_tokens: inputTokens + outputTokens
-        })
+        attributes['gen_ai.usage.prompt_tokens'] = chunk?.prompt_eval_count
+        attributes['gen_ai.usage.completion_tokens'] = chunk?.eval_count
+        attributes['gen_ai.response.model'] = chunk.model
       }
       yield chunk
     }
     span.addEvent(Event.STREAM_END)
-    span.addEvent(Event.RESPONSE, { 'llm.responses': JSON.stringify({ role: 'assistant', content: responseReconstructed.join('') }) })
+    span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify({ role: 'assistant', content: responseReconstructed.join('') }) })
     span.setAttributes(attributes)
     span.setStatus({ code: SpanStatusCode.OK })
   } catch (error: unknown) {
