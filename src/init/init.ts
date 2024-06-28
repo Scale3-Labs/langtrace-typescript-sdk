@@ -62,6 +62,7 @@ import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation
 */
 
 let isLatestSdk = false
+
 export const init: LangTraceInit = ({
   api_key = undefined,
   batch = false,
@@ -78,6 +79,11 @@ export const init: LangTraceInit = ({
   disable_latest_version_check = false,
   disable_tracing_for_functions = undefined
 }: LangtraceInitOptions = {}) => {
+  if (global.langtrace_initalized) {
+    // eslint-disable-next-line no-console
+    console.log(c.yellow('Langtrace has already been initialized. Skipping initialization. Move the "Langtrace.init()" call to the top of your file to ensure it\'s only called once.'))
+    return
+  }
   const provider = new NodeTracerProvider({ sampler: new LangtraceSampler(disable_tracing_for_functions) })
   const host = (process.env.LANGTRACE_API_HOST ?? api_host ?? LANGTRACE_REMOTE_URL)
   const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', host)
@@ -87,7 +93,6 @@ export const init: LangTraceInit = ({
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
 
   process.env.LANGTRACE_API_HOST = host.replace('/api/trace', '')
-
   diag.setLogger(logging.logger ?? new DiagConsoleLogger(), { suppressOverrideMessage: true, logLevel: logging.level })
 
   if (logging.disable === true) {
@@ -109,7 +114,7 @@ export const init: LangTraceInit = ({
     })
   }
 
-  if (api_host === LANGTRACE_REMOTE_URL) {
+  if (api_host === LANGTRACE_REMOTE_URL && !write_spans_to_console) {
     if (api_key === undefined && process.env.LANGTRACE_API_KEY === undefined) {
       diag.warn('No API key provided. Please provide an API key to start sending traces to Langtrace.')
     }
@@ -160,6 +165,7 @@ export const init: LangTraceInit = ({
     })
     registerInstrumentations({ tracerProvider: provider })
   }
+  global.langtrace_initalized = true
 }
 
 const getInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<Vendor, InstrumentationBase>): InstrumentationBase[] => {
