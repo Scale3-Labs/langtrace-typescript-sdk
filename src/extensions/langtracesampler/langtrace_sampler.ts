@@ -37,9 +37,9 @@ export class LangtraceSampler implements Sampler {
 
     // If parent span is not recorded, propagate the decision to child spans
     // None means no sampling decision has been made. If the parent span is not sampled, the child span should not be sampled.
-    const parentSpan = trace.getSpan(context)
-    const spanSourceIsUnknown = parentSpan?.isRecording() === true && parentSpan.spanContext().traceFlags === TraceFlags.NONE
-    if ((parentSpan != null) && parentSpan.spanContext().traceFlags === TraceFlags.NONE && !spanSourceIsUnknown) {
+    const childSpan = trace.getSpan(context)
+    const spanSourceIsUnknown = childSpan?.isRecording() === true && childSpan.spanContext().traceFlags === TraceFlags.NONE
+    if ((childSpan != null) && childSpan.spanContext().traceFlags === TraceFlags.NONE && !spanSourceIsUnknown) {
       return { decision: SamplingDecision.NOT_RECORD }
     }
 
