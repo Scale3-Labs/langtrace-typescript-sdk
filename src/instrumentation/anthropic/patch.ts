@@ -16,10 +16,8 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { APIS } from '@langtrace-constants/instrumentation/anthropic'
-import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
 import { createStreamProxy } from '@langtrace-utils/misc'
-import { LLMSpanAttributes } from '@langtrase/trace-attributes'
+import { APIS, LLMSpanAttributes, Vendors, Event } from '@langtrase/trace-attributes'
 
 import {
   Exception,
@@ -39,7 +37,7 @@ export function messagesCreate (
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     // Determine the service provider
-    const serviceProvider = SERVICE_PROVIDERS.ANTHROPIC
+    const serviceProvider = Vendors.ANTHROPIC
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
 
     // Get the prompt and deep copy it
@@ -61,7 +59,7 @@ export function messagesCreate (
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
       'url.full': this?._client?.baseURL,
-      'url.path': APIS.MESSAGES_CREATE.ENDPOINT,
+      'url.path': APIS.anthropic.MESSAGES_CREATE.ENDPOINT,
       'gen_ai.request.model': args[0]?.model,
       'http.max.retries': this?._client?.maxRetries,
       'http.timeout': this?._client?.timeout,
@@ -76,7 +74,7 @@ export function messagesCreate (
     }
 
     if (!(args[0].stream as boolean) || args[0].stream === false) {
-      const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+      const span = tracer.startSpan(APIS.anthropic.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
       return await context.with(
         trace.setSpan(
           context.active(),
@@ -103,7 +101,7 @@ export function messagesCreate (
         }
       )
     } else {
-      const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+      const span = tracer.startSpan(APIS.anthropic.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
       return await context.with(
         trace.setSpan(
           context.active(),

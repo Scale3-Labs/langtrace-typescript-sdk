@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { APIS } from '@langtrace-constants/instrumentation/pinecone'
 import { diag } from '@opentelemetry/api'
 import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
 import { genericPatch } from '@langtrace-instrumentation/pinecone/patch'
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
+import { APIS } from '@langtrase/trace-attributes'
 class PineconeInstrumentation extends InstrumentationBase<any> {
   constructor () {
     super(name, version)
@@ -53,14 +53,14 @@ class PineconeInstrumentation extends InstrumentationBase<any> {
   private _patch (pinecone: any, moduleVersion?: string): void {
     if (isWrapped(pinecone.Index.prototype)) {
       Object.keys(APIS).forEach((api) => {
-        this._unwrap(pinecone.Index.prototype, APIS[api as keyof typeof APIS].OPERATION)
+        this._unwrap(pinecone.Index.prototype, APIS.pinecone[api as keyof typeof APIS.pinecone].OPERATION as string)
       })
     }
 
     Object.keys(APIS).forEach((api) => {
       this._wrap(
         pinecone.Index.prototype,
-        APIS[api as keyof typeof APIS].OPERATION,
+        APIS.pinecone[api as keyof typeof APIS.pinecone].OPERATION,
         (originalMethod: (...args: any[]) => any) =>
           genericPatch(originalMethod, api, this.tracer, this.instrumentationVersion, moduleVersion)
       )
@@ -69,7 +69,7 @@ class PineconeInstrumentation extends InstrumentationBase<any> {
 
   private _unpatch (pinecone: any): void {
     Object.keys(APIS).forEach((api) => {
-      this._unwrap(pinecone.Index.prototype, APIS[api as keyof typeof APIS].OPERATION)
+      this._unwrap(pinecone.Index.prototype, APIS.pinecone[api as keyof typeof APIS.pinecone].OPERATION as string)
     })
   }
 }

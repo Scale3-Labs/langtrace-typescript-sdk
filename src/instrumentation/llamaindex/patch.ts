@@ -15,8 +15,7 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { SERVICE_PROVIDERS } from '@langtrace-constants/instrumentation/common'
-import { FrameworkSpanAttributes } from '@langtrase/trace-attributes'
+import { FrameworkSpanAttributes, Vendors } from '@langtrase/trace-attributes'
 import {
   Exception,
   SpanKind,
@@ -39,7 +38,7 @@ export function genericPatch (
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const attributes: FrameworkSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
-      'langtrace.service.name': SERVICE_PROVIDERS.LLAMAINDEX,
+      'langtrace.service.name': Vendors.LLAMAINDEX,
       'langtrace.service.type': 'framework',
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,

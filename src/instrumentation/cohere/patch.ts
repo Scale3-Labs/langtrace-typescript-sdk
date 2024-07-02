@@ -16,8 +16,6 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { APIS } from '@langtrace-constants/instrumentation/cohere'
-import { Event } from '@langtrace-constants/instrumentation/common'
 import {
   Exception,
   Span,
@@ -37,7 +35,7 @@ import {
   ICreateEmbedJobRequest,
   ICreateEmbedJobResponse
 } from '@langtrace-instrumentation/cohere/types'
-import { LLMSpanAttributes } from '@langtrase/trace-attributes'
+import { APIS, LLMSpanAttributes, Event } from '@langtrase/trace-attributes'
 import { createStreamProxy } from '@langtrace-utils/misc'
 
 export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
@@ -50,7 +48,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
-      'url.path': APIS.CHAT.ENDPOINT,
+      'url.path': APIS.cohere.CHAT.ENDPOINT,
       'gen_ai.request.model': request.model ?? 'command-r',
       'http.max.retries': requestOptions?.maxRetries,
       'gen_ai.request.temperature': request.temperature,
@@ -67,7 +65,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.CHAT.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
+    const span = tracer.startSpan(APIS.cohere.CHAT.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {
         const prompts: Array<{ role: string, content: string }> = []
@@ -116,7 +114,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
-      'url.path': APIS.CHAT.ENDPOINT,
+      'url.path': APIS.cohere.CHAT.ENDPOINT,
       'gen_ai.request.stream': true,
       'gen_ai.request.model': request.model ?? 'command-r',
       'http.max.retries': requestOptions?.maxRetries,
@@ -134,7 +132,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.CHAT_STREAM.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const span = tracer.startSpan(APIS.cohere.CHAT_STREAM.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
     return await context.with(trace.setSpan(context.active(), span), async () => {
       const prompts: Array<{ role: string, content: string }> = []
       if (request.preamble !== undefined && request.preamble !== '') {
@@ -161,7 +159,7 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
-      'url.path': APIS.EMBED.ENDPOINT,
+      'url.path': APIS.cohere.EMBED.ENDPOINT,
       'gen_ai.request.model': request.model ?? 'embed-english-v2.0',
       'http.max.retries': requestOptions?.maxRetries,
       'gen_ai.request.embedding_input_type': request.inputType,
@@ -170,7 +168,7 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.EMBED.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const span = tracer.startSpan(APIS.cohere.EMBED.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {
         const response = await original.apply(this, [request, requestOptions])
@@ -201,7 +199,7 @@ export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
-      'url.path': APIS.EMBED_JOBS.ENDPOINT,
+      'url.path': APIS.cohere.EMBED_JOBS.ENDPOINT,
       'gen_ai.request.model': request.model,
       'http.max.retries': requestOptions?.maxRetries,
       'gen_ai.request.embedding_input_type': request.inputType,
@@ -211,7 +209,7 @@ export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.EMBED_JOBS.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const span = tracer.startSpan(APIS.cohere.EMBED_JOBS.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {
         const response = await original.apply(this, [request, requestOptions])
@@ -243,7 +241,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
-      'url.path': APIS.RERANK.ENDPOINT,
+      'url.path': APIS.cohere.RERANK.ENDPOINT,
       'gen_ai.request.model': request.model,
       'http.max.retries': requestOptions?.maxRetries,
       'gen_ai.request.documents': JSON.stringify(request.documents),
@@ -251,7 +249,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.RERANK.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const span = tracer.startSpan(APIS.cohere.RERANK.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {
         const response = await original.apply(this, [request, requestOptions])
