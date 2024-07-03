@@ -1,3 +1,3 @@
-import { chatCompletion } from '@langtrace-examples/groq/basic'
+import { chatCompletionStreaming } from '@langtrace-examples/openai/chat-completion-streaming'
 
-void chatCompletion()
+void chatCompletionStreaming()

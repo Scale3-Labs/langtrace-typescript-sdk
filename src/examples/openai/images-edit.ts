@@ -12,8 +12,7 @@ const openai = new OpenAI()
 export async function imageEdit (): Promise<void> {
   const image = await openai.images.edit({
     image: fs.createReadStream('src/examples/openai/cat-clip-art.png'),
-    prompt: 'Edit the image to make it look like a painting.',
-    size: '1024x1024'
+    prompt: 'Edit the image to make it look like a painting.'
   })
 
   console.info(image.data)

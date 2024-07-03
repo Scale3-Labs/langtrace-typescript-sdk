@@ -21,7 +21,7 @@ import dotenv from 'dotenv'
 import Anthropic from '@anthropic-ai/sdk'
 dotenv.config()
 
-init({ batch: false, write_spans_to_console: true, disable_instrumentations: { all_except: ['anthropic'] } })
+init({ batch: false, write_spans_to_console: false, disable_instrumentations: { all_except: ['anthropic'] } })
 
 const anthropic = new Anthropic()
 
@@ -33,13 +33,12 @@ export async function basic (): Promise<void> {
       system: 'respond like a cat',
       messages: [{ role: 'user', content: 'Hello, Claude' }],
       model: 'claude-3-opus-20240229',
-      stream: false,
-      metadata: { user_id: '1234' }
+      stream: false
     })
 
     console.info(message.content)
     // for await (const part of message) {
-    //   // console.info(part)
+    // console.info(part)
     // }
   })
 }
