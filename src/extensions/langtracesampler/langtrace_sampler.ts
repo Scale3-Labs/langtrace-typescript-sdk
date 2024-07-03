@@ -31,13 +31,15 @@ export class LangtraceSampler implements Sampler {
     }
     // Check the specific attribute
     if (attributes['langtrace.sdk.name'] !== '@langtrase/typescript-sdk') {
-      return { decision: SamplingDecision.NOT_RECORD }
+      diag.info('Skipping sampling span(s) related to %s as it\'s not from Langtrace', spanName)
+      return { decision: SamplingDecision.RECORD }
     }
 
     // If parent span is not recorded, propagate the decision to child spans
     // None means no sampling decision has been made. If the parent span is not sampled, the child span should not be sampled.
-    const parentSpan = trace.getSpan(context)
-    if ((parentSpan != null) && parentSpan.spanContext().traceFlags === TraceFlags.NONE) {
+    const childSpan = trace.getSpan(context)
+    const spanSourceIsUnknown = childSpan?.isRecording() === true && childSpan.spanContext().traceFlags === TraceFlags.NONE
+    if ((childSpan != null) && childSpan.spanContext().traceFlags === TraceFlags.NONE && !spanSourceIsUnknown) {
       return { decision: SamplingDecision.NOT_RECORD }
     }
 
