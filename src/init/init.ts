@@ -81,8 +81,6 @@ export const init: LangTraceInit = ({
   disable_tracing_for_functions = undefined
 }: LangtraceInitOptions = {}) => {
   if (global.langtrace_initalized) {
-    // eslint-disable-next-line no-console
-    console.log(c.yellow('Langtrace has already been initialized. Skipping initialization. Move the "Langtrace.init()" call to the top of your file to ensure it\'s only called once.'))
     return
   }
   const provider = new NodeTracerProvider({ sampler: new LangtraceSampler(disable_tracing_for_functions) })
