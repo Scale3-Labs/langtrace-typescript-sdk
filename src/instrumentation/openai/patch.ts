@@ -54,20 +54,20 @@ export function imageEdit (
       'gen_ai.request.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'gen_ai.prompt': JSON.stringify(args[0]?.prompt),
       'gen_ai.request.top_k': args[0]?.n,
       'gen_ai.image.size': args[0]?.size,
       'gen_ai.response_format': args[0]?.response_format?.type ?? args[0]?.response_format,
       ...customAttributes
     }
 
-    const span = tracer.startSpan(APIS.openai.IMAGES_EDIT.METHOD, { kind: SpanKind.SERVER, attributes }, context.active())
+    const span = tracer.startSpan(APIS.openai.IMAGES_EDIT.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
     const f = await context.with(
       trace.setSpan(context.active(), span),
       async () => {
         try {
           const response = await originalMethod.apply(originalContext, args)
-          span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(response?.data?.map((data: any) => ({ content: JSON.stringify(data), role: 'assistant' }))) })
+          span.addEvent('gen_ai.content.prompt', { 'gen_ai.prompt': JSON.stringify(args[0]?.prompt) })
+          span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': JSON.stringify(response?.data?.map((data: any) => ({ content: JSON.stringify(data), role: 'assistant' }))) })
 
           span.setAttributes(attributes)
           span.setStatus({ code: SpanStatusCode.OK })
@@ -113,17 +113,17 @@ export function imagesGenerate (
       'gen_ai.request.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'gen_ai.prompt': JSON.stringify([{ role: 'user', content: args[0]?.prompt }]),
       ...customAttributes
     }
 
-    const span = tracer.startSpan(APIS.openai.IMAGES_GENERATION.METHOD, { kind: SpanKind.SERVER, attributes }, context.active())
+    const span = tracer.startSpan(APIS.openai.IMAGES_GENERATION.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
     const f = await context.with(
       trace.setSpan(context.active(), span),
       async () => {
         try {
           const response = await originalMethod.apply(originalContext, args)
-          span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(response?.data?.map((data: any) => (({ content: JSON.stringify(data), role: 'assistant' })))) })
+          span.addEvent('gen_ai.content.prompt', { 'gen_ai.prompt': JSON.stringify([{ role: 'user', content: args[0]?.prompt }]) })
+          span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': JSON.stringify(response?.data?.map((data: any) => (({ content: JSON.stringify(data), role: 'assistant' })))) })
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
           return response
@@ -168,7 +168,6 @@ export function chatCompletionCreate (
       'url.path': APIS.openai.CHAT_COMPLETION.ENDPOINT,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
-      'gen_ai.prompt': JSON.stringify(args[0]?.messages),
       'gen_ai.request.stream': args[0]?.stream,
       'gen_ai.request.temperature': args[0]?.temperature,
       'gen_ai.request.top_p': args[0]?.top_p,
@@ -204,7 +203,8 @@ export function chatCompletionCreate (
               }
               return result
             })
-            span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(responses) })
+            span.addEvent('gen_ai.content.prompt', { 'gen_ai.prompt': JSON.stringify(args[0]?.messages) })
+            span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': JSON.stringify(responses) })
             const responseAttributes: Partial<LLMSpanAttributes> = {
               'gen_ai.response.model': resp.model,
               'gen_ai.system_fingerprint': resp.system_fingerprint,
@@ -276,7 +276,7 @@ async function * handleStreamResponse (
       }
       yield chunk
     }
-    span.addEvent(Event.RESPONSE, { 'gen_ai.completion': result.length > 0 ? JSON.stringify([{ role: 'assistant', content: result.join('') }]) : undefined })
+    span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': result.length > 0 ? JSON.stringify([{ role: 'assistant', content: result.join('') }]) : undefined })
     span.setStatus({ code: SpanStatusCode.OK })
     const attributes: Partial<LLMSpanAttributes> = {
       'gen_ai.response.model': model,
@@ -328,7 +328,7 @@ export function embeddingsCreate (
       ...customAttributes
     }
 
-    const span = tracer.startSpan(APIS.openai.EMBEDDINGS_CREATE.METHOD, { kind: SpanKind.SERVER, attributes }, context.active())
+    const span = tracer.startSpan(APIS.openai.EMBEDDINGS_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
     const f = await context.with(
       trace.setSpan(context.active(), span),
       async () => {

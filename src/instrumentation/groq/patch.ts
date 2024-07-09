@@ -57,7 +57,7 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
             }
             return result
           })
-          span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(responses) })
+          span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': JSON.stringify(responses) })
           attributes['gen_ai.system_fingerprint'] = resp?.system_fingerprint
           attributes['gen_ai.response.model'] = resp.model
           attributes['gen_ai.usage.prompt_tokens'] = resp?.usage?.prompt_tokens
@@ -134,7 +134,7 @@ async function * handleStream (stream: AsyncIterable<any>, attributes: LLMSpanAt
       yield chunk
     }
     span.addEvent(Event.STREAM_END)
-    span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify([{ role: 'assistant', content: responseReconstructed.join('') }]) })
+    span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': JSON.stringify([{ role: 'assistant', content: responseReconstructed.join('') }]) })
     span.setAttributes(attributes)
     span.setStatus({ code: SpanStatusCode.OK })
   } catch (error: unknown) {
