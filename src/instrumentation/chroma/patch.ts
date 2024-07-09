@@ -15,7 +15,7 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { APIS, DatabaseSpanAttributes, Vendors } from '@langtrase/trace-attributes'
+import { APIS, DatabaseSpanAttributes, Vendors, Event } from '@langtrase/trace-attributes'
 
 import {
   Exception,
@@ -69,7 +69,7 @@ export function collectionPatch (
         try {
           // NOTE: Not tracing the response data as it can contain sensitive information
           const response = await originalMethod.apply(this, args)
-          if (response !== undefined) span.addEvent('gen_ai.content.completion', { 'db.response': JSON.stringify(response) })
+          if (response !== undefined) span.addEvent(Event.RESPONSE, { 'db.response': JSON.stringify(response) })
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
           return response

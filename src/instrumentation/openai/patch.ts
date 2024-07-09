@@ -66,8 +66,8 @@ export function imageEdit (
       async () => {
         try {
           const response = await originalMethod.apply(originalContext, args)
-          span.addEvent('gen_ai.content.prompt', { 'gen_ai.prompt': JSON.stringify(args[0]?.prompt) })
-          span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': JSON.stringify(response?.data?.map((data: any) => ({ content: JSON.stringify(data), role: 'assistant' }))) })
+          span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(args[0]?.prompt) })
+          span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(response?.data?.map((data: any) => ({ content: JSON.stringify(data), role: 'assistant' }))) })
 
           span.setAttributes(attributes)
           span.setStatus({ code: SpanStatusCode.OK })
@@ -122,8 +122,8 @@ export function imagesGenerate (
       async () => {
         try {
           const response = await originalMethod.apply(originalContext, args)
-          span.addEvent('gen_ai.content.prompt', { 'gen_ai.prompt': JSON.stringify([{ role: 'user', content: args[0]?.prompt }]) })
-          span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': JSON.stringify(response?.data?.map((data: any) => (({ content: JSON.stringify(data), role: 'assistant' })))) })
+          span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify([{ role: 'user', content: args[0]?.prompt }]) })
+          span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(response?.data?.map((data: any) => (({ content: JSON.stringify(data), role: 'assistant' })))) })
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
           return response
@@ -203,8 +203,8 @@ export function chatCompletionCreate (
               }
               return result
             })
-            span.addEvent('gen_ai.content.prompt', { 'gen_ai.prompt': JSON.stringify(args[0]?.messages) })
-            span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': JSON.stringify(responses) })
+            span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(args[0]?.messages) })
+            span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(responses) })
             const responseAttributes: Partial<LLMSpanAttributes> = {
               'gen_ai.response.model': resp.model,
               'gen_ai.system_fingerprint': resp.system_fingerprint,
@@ -225,6 +225,7 @@ export function chatCompletionCreate (
       )
     } else {
       const span = tracer.startSpan(APIS.openai.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+      span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(args[0]?.messages) })
       return await context.with(
         trace.setSpan(
           context.active(),
@@ -276,7 +277,7 @@ async function * handleStreamResponse (
       }
       yield chunk
     }
-    span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': result.length > 0 ? JSON.stringify([{ role: 'assistant', content: result.join('') }]) : undefined })
+    span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': result.length > 0 ? JSON.stringify([{ role: 'assistant', content: result.join('') }]) : undefined })
     span.setStatus({ code: SpanStatusCode.OK })
     const attributes: Partial<LLMSpanAttributes> = {
       'gen_ai.response.model': model,
