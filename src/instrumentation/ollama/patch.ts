@@ -4,9 +4,7 @@ import {
   ChatFn, ChatStreamFn, EmbeddingsFn, GenerateFn, GenerateStreamFn, IChatRequest, IChatResponse, IEmbeddingsRequest, IEmbeddingsResponse, IGenerateRequest, IGenerateResponse, IOllamaClient
 } from '@langtrace-instrumentation/ollama/types'
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { APIS } from '@langtrace-constants/instrumentation/ollama'
-import { Event } from '@langtrace-constants/instrumentation/common'
-import { LLMSpanAttributes } from '@langtrase/trace-attributes'
+import { LLMSpanAttributes, Event, APIS } from '@langtrase/trace-attributes'
 import { createStreamProxy } from '@langtrace-utils/misc'
 
 export const chatPatch = (original: ChatStreamFn | ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
@@ -41,10 +39,9 @@ export const generateStreamPatch = (original: GenerateStreamFn, tracer: Tracer, 
       'langtrace.service.name': 'ollama',
       'langtrace.service.type': 'llm',
       'langtrace.service.version': moduleVersion,
-      'gen_ai.prompt': JSON.stringify(prompts),
       'langtrace.version': langtraceVersion,
       'url.full': this?.config?.host,
-      'url.path': APIS.GENERATE.ENDPOINT,
+      'url.path': APIS.ollama.GENERATE.ENDPOINT,
       'gen_ai.request.model': generateRequest.model,
       'gen_ai.request.stream': generateRequest.stream,
       'gen_ai.request.temperature': generateRequest.options?.temperature,
@@ -55,7 +52,8 @@ export const generateStreamPatch = (original: GenerateStreamFn, tracer: Tracer, 
       'gen_ai.request.response_format': generateRequest.format,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.GENERATE.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
+    const span = tracer.startSpan(APIS.ollama.GENERATE.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
+    span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
     return await context.with(
       trace.setSpan(context.active(), span),
       async () => {
@@ -78,11 +76,10 @@ export const generatePatchNonStreamed = (original: GenerateFn, tracer: Tracer, l
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': 'ollama',
       'langtrace.service.type': 'llm',
-      'gen_ai.prompt': JSON.stringify(prompts),
       'langtrace.service.version': moduleVersion,
       'langtrace.version': langtraceVersion,
       'url.full': this?.config?.host,
-      'url.path': APIS.GENERATE.ENDPOINT,
+      'url.path': APIS.ollama.GENERATE.ENDPOINT,
       'gen_ai.request.model': generateRequest.model,
       'gen_ai.request.stream': generateRequest.stream,
       'gen_ai.request.temperature': generateRequest.options?.temperature,
@@ -93,14 +90,15 @@ export const generatePatchNonStreamed = (original: GenerateFn, tracer: Tracer, l
       'gen_ai.request.response_format': generateRequest.format,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.GENERATE.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
+    const span = tracer.startSpan(APIS.ollama.GENERATE.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
+    span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
     return await context.with(
       trace.setSpan(context.active(), span),
       async () => {
         try {
           const resp = await original.apply(this, [generateRequest])
           const responses = [{ content: resp.response, role: 'assistant' }]
-          span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(responses) })
+          span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(responses) })
           attributes['gen_ai.usage.prompt_tokens'] = resp?.prompt_eval_count
           attributes['gen_ai.usage.completion_tokens'] = resp?.eval_count
           attributes['gen_ai.response.model'] = resp.model
@@ -122,12 +120,11 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': 'ollama',
-      'gen_ai.prompt': JSON.stringify(prompts),
       'langtrace.service.type': 'llm',
       'langtrace.service.version': moduleVersion,
       'langtrace.version': langtraceVersion,
       'url.full': this?.config?.host,
-      'url.path': APIS.CHAT.ENDPOINT,
+      'url.path': APIS.ollama.CHAT.ENDPOINT,
       'gen_ai.request.model': chatRequest.model,
       'gen_ai.request.stream': chatRequest.stream,
       'gen_ai.request.temperature': chatRequest.options?.temperature,
@@ -138,14 +135,15 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
       'gen_ai.request.response_format': chatRequest.format,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.CHAT.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
+    const span = tracer.startSpan(APIS.ollama.CHAT.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
     return await context.with(
       trace.setSpan(context.active(), span),
       async () => {
         try {
           const resp = await original.apply(this, [chatRequest])
           const responses = [{ content: resp.message.content, role: resp.message.role.toLowerCase() }]
-          span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(responses) })
+          span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
+          span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(responses) })
           attributes['gen_ai.usage.prompt_tokens'] = resp?.prompt_eval_count
           attributes['gen_ai.usage.completion_tokens'] = resp?.eval_count
           attributes['gen_ai.response.model'] = resp.model
@@ -166,12 +164,11 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': 'ollama',
-      'gen_ai.prompt': JSON.stringify(prompts),
       'langtrace.service.type': 'llm',
       'langtrace.service.version': moduleVersion,
       'langtrace.version': langtraceVersion,
       'url.full': this?.config.host,
-      'url.path': APIS.CHAT.ENDPOINT,
+      'url.path': APIS.ollama.CHAT.ENDPOINT,
       'gen_ai.request.model': chatRequest.model,
       'gen_ai.request.stream': chatRequest.stream,
       'gen_ai.request.temperature': chatRequest.options?.temperature,
@@ -182,7 +179,8 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       'gen_ai.request.response_format': chatRequest.format,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.CHAT.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const span = tracer.startSpan(APIS.ollama.CHAT.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
     return await context.with(
       trace.setSpan(context.active(), span),
       async () => {
@@ -202,17 +200,17 @@ export const embeddingsPatch = (original: EmbeddingsFn, tracer: Tracer, langtrac
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': this.config.host,
-      'url.path': APIS.EMBEDDINGS.ENDPOINT,
+      'url.path': APIS.ollama.EMBEDDINGS.ENDPOINT,
       'gen_ai.request.model': request.model,
       'gen_ai.request.embedding_inputs': JSON.stringify(request.prompt),
       'http.timeout': Number.isNaN(Number(request.keep_alive)) ? undefined : Number(request.keep_alive),
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.EMBEDDINGS.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const span = tracer.startSpan(APIS.ollama.EMBEDDINGS.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {
         const resp = await original.apply(this, [request])
-        span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(resp) })
+        span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(resp) })
         span.setAttributes(attributes)
         span.setStatus({ code: SpanStatusCode.OK })
         return resp
@@ -241,7 +239,7 @@ async function * handleChatStream (stream: AsyncIterable<any>, attributes: LLMSp
       yield chunk
     }
     span.addEvent(Event.STREAM_END)
-    span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify({ role: 'assistant', content: responseReconstructed.join('') }) })
+    span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify({ role: 'assistant', content: responseReconstructed.join('') }) })
     span.setAttributes(attributes)
     span.setStatus({ code: SpanStatusCode.OK })
   } catch (error: unknown) {
@@ -267,7 +265,7 @@ async function * handleGenerateStream (stream: AsyncIterable<any>, attributes: L
       yield chunk
     }
     span.addEvent(Event.STREAM_END)
-    span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify({ role: 'assistant', content: responseReconstructed.join('') }) })
+    span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify({ role: 'assistant', content: responseReconstructed.join('') }) })
     span.setAttributes(attributes)
     span.setStatus({ code: SpanStatusCode.OK })
   } catch (error: unknown) {

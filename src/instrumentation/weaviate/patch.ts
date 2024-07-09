@@ -15,10 +15,8 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
-import { queryTypeToFunctionToProps } from '@langtrace-constants/instrumentation/weaviate'
 import { setValueFromPath, getValueFromPath } from '@langtrace-utils/misc'
-import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
+import { DatabaseSpanAttributes, queryTypeToFunctionToProps, Event, Vendors } from '@langtrase/trace-attributes'
 import { Exception, SpanKind, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api'
 
 interface PatchBuilderArgs {
@@ -68,10 +66,10 @@ export const patchBuilderFunctions = function (this: any, { clientInstance, clie
                   const attributes: DatabaseSpanAttributes = {
                     'langtrace.sdk.name': sdkName,
                     'langtrace.version': sdkVersion,
-                    'langtrace.service.name': SERVICE_PROVIDERS.WEAVIATE,
+                    'langtrace.service.name': Vendors.WEAVIATE,
                     'langtrace.service.type': 'vectordb',
                     'langtrace.service.version': moduleVersion,
-                    'db.system': SERVICE_PROVIDERS.WEAVIATE,
+                    'db.system': Vendors.WEAVIATE,
                     'server.address': clientArgs.host,
                     'db.operation': `${queryType}.${func}`,
                     'db.collection.name': getValueFromPath(functionCallInstance, collectionNameKey),

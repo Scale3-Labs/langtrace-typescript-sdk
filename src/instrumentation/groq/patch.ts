@@ -3,9 +3,7 @@ import {
   ChatFn, ChatStreamFn, IChatCompletionCreateParamsNonStreaming, IChatCompletionCreateParamsStreaming, IChatCompletionResponse, IChatCompletionResponseStreamed, IGroqClient, IRequestOptions
 } from '@langtrace-instrumentation/groq/types'
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { APIS } from '@langtrace-constants/instrumentation/groq'
-import { Event } from '@langtrace-constants/instrumentation/common'
-import { LLMSpanAttributes } from '@langtrase/trace-attributes'
+import { APIS, LLMSpanAttributes, Event } from '@langtrase/trace-attributes'
 import { createStreamProxy } from '@langtrace-utils/misc'
 
 export const chatPatch = (original: ChatStreamFn | ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
@@ -28,7 +26,7 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
       'langtrace.service.version': moduleVersion,
       'langtrace.version': langtraceVersion,
       'url.full': this?._client?.baseURL,
-      'url.path': APIS.CHAT_COMPLETION.METHOD,
+      'url.path': APIS.groq.CHAT_COMPLETION.ENDPOINT,
       'gen_ai.request.model': body.model,
       'http.max.retries': options?.maxRetries ?? this._client.maxRetries,
       'http.timeout': options?.timeout ?? this._client.timeout,
@@ -44,7 +42,7 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
       'gen_ai.request.tools': JSON.stringify(body.tools),
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
+    const span = tracer.startSpan(APIS.groq.CHAT_COMPLETION.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
     return await context.with(
       trace.setSpan(context.active(), span),
       async () => {
@@ -59,7 +57,7 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
             }
             return result
           })
-          span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(responses) })
+          span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': JSON.stringify(responses) })
           attributes['gen_ai.system_fingerprint'] = resp?.system_fingerprint
           attributes['gen_ai.response.model'] = resp.model
           attributes['gen_ai.usage.prompt_tokens'] = resp?.usage?.prompt_tokens
@@ -85,7 +83,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       'langtrace.service.version': moduleVersion,
       'langtrace.version': langtraceVersion,
       'url.full': this?._client?.baseURL,
-      'url.path': APIS.CHAT_COMPLETION.METHOD,
+      'url.path': APIS.groq.CHAT_COMPLETION.ENDPOINT,
       'gen_ai.request.model': body.model,
       'http.max.retries': options?.maxRetries ?? this._client.maxRetries,
       'http.timeout': options?.timeout ?? this._client.timeout,
@@ -101,7 +99,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       'gen_ai.request.tools': JSON.stringify(body.tools),
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const span = tracer.startSpan(APIS.groq.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
     return await context.with(
       trace.setSpan(context.active(), span),
       async () => {
@@ -136,7 +134,7 @@ async function * handleStream (stream: AsyncIterable<any>, attributes: LLMSpanAt
       yield chunk
     }
     span.addEvent(Event.STREAM_END)
-    span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify([{ role: 'assistant', content: responseReconstructed.join('') }]) })
+    span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': JSON.stringify([{ role: 'assistant', content: responseReconstructed.join('') }]) })
     span.setAttributes(attributes)
     span.setStatus({ code: SpanStatusCode.OK })
   } catch (error: unknown) {

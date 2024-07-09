@@ -1,6 +1,4 @@
-import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
-import { APIS } from '@langtrace-constants/instrumentation/pg'
-import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
+import { DatabaseSpanAttributes, Vendors, Event, APIS } from '@langtrase/trace-attributes'
 import { context, Exception, SpanKind, SpanStatusCode, trace, Tracer } from '@opentelemetry/api'
 import { stringify } from '@langtrace-utils/misc'
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
@@ -10,7 +8,7 @@ export const patchPgQuery = (original: any, tracer: Tracer, sdkName: string, lan
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const attributes: DatabaseSpanAttributes = {
       'langtrace.sdk.name': sdkName,
-      'langtrace.service.name': SERVICE_PROVIDERS.PG,
+      'langtrace.service.name': Vendors.PG,
       'langtrace.service.type': 'vectordb',
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
@@ -21,7 +19,7 @@ export const patchPgQuery = (original: any, tracer: Tracer, sdkName: string, lan
       ...customAttributes
     }
 
-    const span = tracer.startSpan(APIS.QUERY.METHOD, { kind: SpanKind.CLIENT, attributes })
+    const span = tracer.startSpan(APIS.pg.QUERY.METHOD, { kind: SpanKind.CLIENT, attributes })
     return await context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
         try {

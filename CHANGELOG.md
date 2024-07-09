@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 3.3.3
+
+### Patch Changes
+
+- Fixed a bug causing sdk to crash if init was called multiple time. Now a warning is shown. Also fixed a bug which was skipping sampling spans incorrectly
+
 ## 3.3.2
 
 ### Patch Changes
