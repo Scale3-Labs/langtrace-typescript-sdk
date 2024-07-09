@@ -82,8 +82,8 @@ export function messagesCreate (
         async () => {
           try {
             const resp = await originalMethod.apply(this, args)
-            span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': JSON.stringify(resp.content.map((c: any) => ({ content: c.text, role: 'assistant' }))) })
-            span.addEvent('gen_ai.content.prompt', { 'gen_ai.prompt': JSON.stringify(prompts) })
+            span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(resp.content.map((c: any) => ({ content: c.text, role: 'assistant' }))) })
+            span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
             const respAttributes: Partial<LLMSpanAttributes> = {
               'gen_ai.usage.completion_tokens': resp.usage.output_tokens,
               'gen_ai.usage.prompt_tokens': resp.usage.input_tokens
@@ -131,7 +131,7 @@ async function * handleStreamResponse (span: Span, stream: any, attributes: LLMS
         result.push(content as string)
       }
 
-      span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': JSON.stringify([{ content: result.join(''), role: streamStartMessage.role }]) })
+      span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify([{ content: result.join(''), role: streamStartMessage.role }]) })
       const responseAttributes: Partial<LLMSpanAttributes> = {
         'gen_ai.response.model': streamStartMessage.model,
         'gen_ai.usage.completion_tokens': streamStartMessage.usage.output_tokens,

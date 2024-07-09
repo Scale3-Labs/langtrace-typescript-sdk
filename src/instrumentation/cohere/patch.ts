@@ -84,11 +84,11 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
           'gen_ai.response_id': response.response_id,
           'gen_ai.response.tool_calls': response.toolCalls !== undefined ? JSON.stringify(response.toolCalls) : undefined
         }
-        span.addEvent('gen_ai.content.prompt', { 'gen_ai.prompt': JSON.stringify(prompts) })
+        span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
         if (response.chatHistory !== undefined) {
-          span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': JSON.stringify(response.chatHistory.map((chat) => { return { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role.toLowerCase(), content: chat.message } })) })
+          span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(response.chatHistory.map((chat) => { return { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role.toLowerCase(), content: chat.message } })) })
         } else {
-          span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': JSON.stringify([{ role: 'assistant', content: response.text }]) })
+          span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify([{ role: 'assistant', content: response.text }]) })
         }
         span.setAttributes({ ...attributes, ...responseAttributes })
         span.setStatus({ code: SpanStatusCode.OK })
@@ -142,7 +142,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
         prompts.push(...request.chatHistory.map((chat) => { return { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role.toLowerCase(), content: chat.message } }))
       }
       prompts.push({ role: 'user', content: request.message })
-      span.addEvent('gen_ai.content.prompt', { 'gen_ai.prompt': JSON.stringify(prompts) })
+      span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
       const response = await original.apply(this, [request, requestOptions])
       return createStreamProxy(response, handleStream(response, attributes, span))
     })
@@ -288,7 +288,7 @@ async function * handleStream (stream: any, attributes: LLMSpanAttributes, span:
         } else {
           response = { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role === 'SYSTEM' ? 'system' : 'user', content: chat.response.text }
         }
-        span.addEvent('gen_ai.content.completion', { 'gen_ai.completion': JSON.stringify(response) })
+        span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(response) })
         attributes['gen_ai.usage.completion_tokens'] = chat.response.meta?.billedUnits?.outputTokens
         attributes['gen_ai.usage.prompt_tokens'] = chat.response.meta?.billedUnits?.inputTokens
         attributes['gen_ai.usage.search_units'] = chat.response.meta?.billedUnits?.searchUnits

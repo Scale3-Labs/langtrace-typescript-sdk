@@ -148,7 +148,8 @@ export const init: LangTraceInit = ({
     chromadb: chromaInstrumentation,
     qdrant: qdrantInstrumentation,
     weaviate: weaviateInstrumentation,
-    pg: pgInstrumentation
+    pg: pgInstrumentation,
+    ollama: undefined
   }
 
   if (instrumentations === undefined) {
@@ -173,6 +174,9 @@ const getInstrumentations = (disable_instrumentations: { all_except?: string[], 
   }
   const instrumentations = Object.fromEntries(Object.entries(allInstrumentations)
     .filter(([key, instrumentation]) => {
+      if (instrumentation === undefined) {
+        return false
+      }
       if (disable_instrumentations.all_except !== undefined) {
         if (!disable_instrumentations.all_except.includes(key as Vendor)) {
           instrumentation.disable()
