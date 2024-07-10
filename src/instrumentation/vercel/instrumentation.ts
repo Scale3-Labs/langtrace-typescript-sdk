@@ -1,13 +1,9 @@
-/* eslint-disable no-prototype-builtins */
-/* eslint-disable no-console */
-
 /* eslint-disable no-restricted-imports */
 import { diag } from '@opentelemetry/api'
 import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation'
 import { version, name } from '../../../package.json'
 import { APIS } from '@langtrase/trace-attributes'
 import { generateTextPatch } from './patch'
-import _ from 'lodash'
 
 class VercelAIInstrumentation extends InstrumentationBase<any> {
   patchedModule: any
@@ -17,7 +13,6 @@ class VercelAIInstrumentation extends InstrumentationBase<any> {
   }
 
   public manualPatch (vercelAI: any): void {
-    diag.debug('Manually instrumenting vercel ai SDK')
     this._patch(vercelAI)
   }
 
@@ -27,11 +22,8 @@ class VercelAIInstrumentation extends InstrumentationBase<any> {
       ['>= 0.3.3'],
       (moduleExports, moduleVersion) => {
         diag.debug(`Patching Vercel AI SDK version ${moduleVersion}`)
-        this.originalModule = moduleExports
-        const patchedModule = _.cloneDeep(moduleExports)
-        this.patchedModule = patchedModule
-        this._patch(patchedModule, moduleVersion)
-        return patchedModule
+        this._patch(moduleExports, moduleVersion)
+        return this.patchedModule
       },
       (moduleExports, moduleVersion) => {
         diag.debug(`Unpatching Vercel AI SDK version ${moduleVersion}`)
@@ -44,13 +36,31 @@ class VercelAIInstrumentation extends InstrumentationBase<any> {
     return [module]
   }
 
-  private _patch (module: any, moduleVersion?: string): void {
-    module.generateText = generateTextPatch.call(this, module.generateText as (...args: any[]) => any, APIS.ai.GENERATE_TEXT.METHOD, this.tracer, version, name, moduleVersion)
+  public _patch (moduleExports: any, moduleVersion?: string): any {
+    if (moduleExports === undefined || Object.keys(moduleExports as Record<string, any>).length === 0) {
+      diag.warn('Did you forget to add \\"import * as ai from \'ai\'\\" to Langtrace.init(instrumentations: { ai: ai })?')
+      return
+    }
+    this.originalModule = Object.assign({}, moduleExports)
+    const patchedModule = Object.assign({}, moduleExports)
+    this.patchedModule = patchedModule
+    this.patchedModule.generateText = generateTextPatch.call(this, moduleExports.generateText as (...args: any[]) => any, APIS.ai.GENERATE_TEXT.METHOD, this.tracer, version, name, moduleVersion)
+    return this.patchedModule
   }
 
-  private _unpatch (module: any): void {
-    module = Object.assign(module, this.originalModule)
+  public _unpatch (module: any): void {
+    if (this.originalModule === undefined || Object.keys(this.originalModule as Record<string, any>).length === 0) {
+      diag.warn('Did you forget to add \\"import * as ai from \'ai\'\\" to Langtrace.init(instrumentations: { ai: ai })?')
+      return
+    }
+    this.patchedModule = Object.assign({}, this.originalModule)
   }
 }
-
 export const vercelAIInstrumentation = new VercelAIInstrumentation()
+
+export const getVercelAISdk = (): any => {
+  if (vercelAIInstrumentation.patchedModule === undefined) {
+    throw new Error('Vercel AI SDK is not patched. Did you forget to add "import * as ai from \'ai\'" to Langtrace.init(instrumentations: { ai })?')
+  }
+  return vercelAIInstrumentation.patchedModule
+}

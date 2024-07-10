@@ -18,6 +18,7 @@
 // Import the necessary modules
 import { init } from '@langtrace-init/init'
 import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
+import { getVercelAISdk } from '@langtrace-instrumentation/vercel/instrumentation'
 import { withLangTraceRootSpan, withAdditionalAttributes } from '@langtrace-utils/instrumentation'
 import { getPromptFromRegistry, sendUserFeedback } from '@langtrace-utils/langtrace'
 import { LangtracePrompt } from '@langtrace-utils/types'
@@ -31,5 +32,6 @@ export {
   withAdditionalAttributes,
   getPromptFromRegistry,
   LangtracePrompt,
+  getVercelAISdk,
   sendUserFeedback
 }
