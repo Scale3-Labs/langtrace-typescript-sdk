@@ -80,6 +80,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
         const responseAttributes: Partial<LLMSpanAttributes> = {
           'gen_ai.usage.prompt_tokens': response.meta?.billedUnits?.inputTokens,
           'gen_ai.usage.completion_tokens': response.meta?.billedUnits?.outputTokens,
+          'gen_ai.usage.total_tokens': Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0),
           'gen_ai.usage.search_units': response.meta?.billedUnits?.searchUnits,
           'gen_ai.response_id': response.response_id,
           'gen_ai.response.tool_calls': response.toolCalls !== undefined ? JSON.stringify(response.toolCalls) : undefined
@@ -174,6 +175,7 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
         const response = await original.apply(this, [request, requestOptions])
         attributes['gen_ai.usage.completion_tokens'] = response.meta?.billedUnits?.outputTokens
         attributes['gen_ai.usage.prompt_tokens'] = response.meta?.billedUnits?.inputTokens
+        attributes['gen_ai.usage.total_tokens'] = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['gen_ai.usage.search_units'] = response.meta?.billedUnits?.searchUnits
         span.setAttributes(attributes)
         span.setStatus({ code: SpanStatusCode.OK })
@@ -215,6 +217,7 @@ export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer
         const response = await original.apply(this, [request, requestOptions])
         attributes['gen_ai.usage.completion_tokens'] = response.meta?.billedUnits?.outputTokens
         attributes['gen_ai.usage.prompt_tokens'] = response.meta?.billedUnits?.inputTokens
+        attributes['gen_ai.usage.total_tokens'] = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['gen_ai.usage.search_units'] = response.meta?.billedUnits?.searchUnits
         span.setAttributes(attributes)
         span.setStatus({ code: SpanStatusCode.OK })
@@ -256,6 +259,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
         attributes['gen_ai.cohere.rerank.results'] = JSON.stringify(response.results)
         attributes['gen_ai.response_id'] = response.id
         attributes['gen_ai.usage.completion_tokens'] = response.meta?.billedUnits?.outputTokens
+        attributes['gen_ai.usage.total_tokens'] = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['gen_ai.usage.prompt_tokens'] = response.meta?.billedUnits?.inputTokens
         attributes['gen_ai.usage.search_units'] = response.meta?.billedUnits?.searchUnits
 
@@ -291,6 +295,7 @@ async function * handleStream (stream: any, attributes: LLMSpanAttributes, span:
         span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(response) })
         attributes['gen_ai.usage.completion_tokens'] = chat.response.meta?.billedUnits?.outputTokens
         attributes['gen_ai.usage.prompt_tokens'] = chat.response.meta?.billedUnits?.inputTokens
+        attributes['gen_ai.usage.total_tokens'] = Number(chat.response.meta?.billedUnits?.inputTokens ?? 0) + Number(chat.response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['gen_ai.usage.search_units'] = chat.response.meta?.billedUnits?.searchUnits
         attributes['gen_ai.response.tool_calls'] = chat.response.toolCalls !== undefined ? JSON.stringify(chat.response.toolCalls) : undefined
         attributes['gen_ai.response_id'] = chat.response.response_id
