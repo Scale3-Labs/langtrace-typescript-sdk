@@ -35,6 +35,7 @@ import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
 import c from 'ansi-colors'
 import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation'
 import { Vendor } from '@langtrase/trace-attributes'
+import { vercelAIInstrumentation } from '@langtrace-instrumentation/ai/instrumentation'
 
 /**
  * Initializes the LangTrace sdk with custom options.
@@ -148,12 +149,14 @@ export const init: LangTraceInit = ({
     chromadb: chromaInstrumentation,
     qdrant: qdrantInstrumentation,
     weaviate: weaviateInstrumentation,
-    pg: pgInstrumentation
+    pg: pgInstrumentation,
+    ai: vercelAIInstrumentation,
+    ollama: undefined
   }
 
   if (instrumentations === undefined) {
     registerInstrumentations({
-      instrumentations: getInstrumentations(disable_instrumentations, allInstrumentations),
+      instrumentations: Object.values(allInstrumentations).filter((instrumentation) => instrumentation !== undefined),
       tracerProvider: provider
     })
   } else {
@@ -164,15 +167,19 @@ export const init: LangTraceInit = ({
     })
     registerInstrumentations({ tracerProvider: provider })
   }
+  disableInstrumentations(disable_instrumentations, allInstrumentations)
   global.langtrace_initalized = true
 }
 
-const getInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<Vendor, InstrumentationBase>): InstrumentationBase[] => {
+const disableInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<Vendor, InstrumentationBase>): InstrumentationBase[] => {
   if (disable_instrumentations.only !== undefined && disable_instrumentations.all_except !== undefined) {
     throw new Error('Cannot specify both only and all_except in disable_instrumentations')
   }
   const instrumentations = Object.fromEntries(Object.entries(allInstrumentations)
     .filter(([key, instrumentation]) => {
+      if (instrumentation === undefined) {
+        return false
+      }
       if (disable_instrumentations.all_except !== undefined) {
         if (!disable_instrumentations.all_except.includes(key as Vendor)) {
           instrumentation.disable()

@@ -1,0 +1,99 @@
+/* eslint-disable @typescript-eslint/no-this-alias */
+import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
+import { LLMSpanAttributes, Vendors, Event, FrameworkSpanAttributes } from '@langtrase/trace-attributes'
+import { Exception, SpanKind, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api'
+
+export function generateTextPatch (
+  this: any,
+  originalMethod: (...args: any[]) => any,
+  method: string,
+  tracer: Tracer,
+  langtraceVersion: string,
+  sdkName: string,
+  version?: string
+): (...args: any[]) => any {
+  const patchThis = this
+  return async function (this: any, ...args: any[]): Promise<any> {
+    if (args[0]?.model?.config?.provider?.includes(Vendors.OPENAI) === true) {
+      return await generateTextPatchOpenAI.call(this, patchThis, args, originalMethod, method, tracer, langtraceVersion, sdkName, version)
+    }
+    const result = originalMethod.apply(this, args)
+    if (result instanceof Promise) {
+      return await result
+    }
+    return result
+  }
+}
+export async function generateTextPatchOpenAI (
+  this: any,
+  patchThis: any,
+  args: any[],
+  originalMethod: (...args: any[]) => any,
+  method: string,
+  tracer: Tracer,
+  langtraceVersion: string,
+  sdkName: string,
+  version?: string
+): Promise<(...args: any[]) => any> {
+  let url: string
+  let path: string
+  // wrap the url method to get the url and path
+  patchThis._wrap(args[0]?.model?.config, 'url', (originalMethod: (...args: any[]) => any) => {
+    return function (this: any, ...args: any[]): any {
+      const result = originalMethod.apply(this, args)
+      const uri = new URL(result as string)
+      path = uri.pathname
+      url = uri.origin
+      return result
+    }
+  })
+  const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
+  const attributes: FrameworkSpanAttributes & LLMSpanAttributes = {
+    'langtrace.sdk.name': sdkName,
+    'langtrace.service.name': Vendors.VERCEL,
+    'langtrace.service.type': 'framework',
+    'langtrace.service.version': version,
+    'langtrace.version': langtraceVersion,
+    'gen_ai.request.model': args[0]?.model?.modelId,
+    'url.full': '',
+    'url.path': '',
+    'http.max.retries': args[0]?.maxRetries,
+    'gen_ai.request.stream': args[0]?.stream,
+    'gen_ai.request.temperature': args[0]?.temperature,
+    'gen_ai.request.top_p': args[0]?.topP,
+    'gen_ai.user': args[0]?.model?.settings?.user,
+    'gen_ai.request.top_logprobs': args[0]?.model?.settings?.logprobs,
+    'gen_ai.request.logprobs': args[0]?.model?.settings?.logprobs !== undefined,
+    'gen_ai.request.logit_bias': JSON.stringify(args[0]?.model?.settings?.logitBias),
+    'gen_ai.request.max_tokens': args[0]?.maxTokens,
+    'gen_ai.request.tools': JSON.stringify(args[0]?.tools),
+    ...customAttributes
+  }
+  const span = tracer.startSpan(method, { kind: SpanKind.CLIENT, attributes }, context.active())
+  return await context.with(
+    trace.setSpan(context.active(), span),
+    async () => {
+      try {
+        const resp = await originalMethod.apply(this, args)
+        const responses = JSON.stringify(resp?.responseMessages)
+        span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(args[0]?.messages) })
+        span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': responses })
+        const responseAttributes: Partial<LLMSpanAttributes> = {
+          'url.full': url,
+          'url.path': path,
+          'gen_ai.usage.prompt_tokens': resp.usage.promptTokens,
+          'gen_ai.usage.completion_tokens': resp.usage.completionTokens
+        }
+        span.setAttributes({ ...attributes, ...responseAttributes })
+        span.setStatus({ code: SpanStatusCode.OK })
+        return resp
+      } catch (error: any) {
+        span.recordException(error as Exception)
+        span.setStatus({ code: SpanStatusCode.ERROR })
+        throw error
+      } finally {
+        span.end()
+      }
+    }
+  )
+}
