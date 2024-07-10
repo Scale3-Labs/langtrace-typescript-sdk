@@ -209,7 +209,8 @@ export function chatCompletionCreate (
               'gen_ai.response.model': resp.model,
               'gen_ai.system_fingerprint': resp.system_fingerprint,
               'gen_ai.usage.prompt_tokens': resp.usage.prompt_tokens,
-              'gen_ai.usage.completion_tokens': resp.usage.completion_tokens
+              'gen_ai.usage.completion_tokens': resp.usage.completion_tokens,
+              'gen_ai.usage.total_tokens': Number(resp.usage.prompt_tokens ?? 0) + Number(resp.usage.completion_tokens ?? 0)
             }
             span.setAttributes({ ...attributes, ...responseAttributes })
             span.setStatus({ code: SpanStatusCode.OK })
@@ -283,6 +284,7 @@ async function * handleStreamResponse (
       'gen_ai.response.model': model,
       'gen_ai.usage.prompt_tokens': promptTokens,
       'gen_ai.usage.completion_tokens': completionTokens,
+      'gen_ai.usage.total_tokens': promptTokens + completionTokens,
       ...customAttributes
     }
     span.setAttributes({ ...inputAttributes, ...attributes })
