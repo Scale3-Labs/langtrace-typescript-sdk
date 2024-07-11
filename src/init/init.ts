@@ -34,6 +34,7 @@ import { weaviateInstrumentation } from '@langtrace-instrumentation/weaviate/ins
 import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
 import c from 'ansi-colors'
 import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation'
+import { ollamaInstrumentation } from '@langtrace-instrumentation/ollama/instrumentation'
 import { Vendor } from '@langtrase/trace-attributes'
 
 /**
@@ -149,7 +150,7 @@ export const init: LangTraceInit = ({
     qdrant: qdrantInstrumentation,
     weaviate: weaviateInstrumentation,
     pg: pgInstrumentation,
-    ollama: undefined
+    ollama: ollamaInstrumentation
   }
 
   if (instrumentations === undefined) {
