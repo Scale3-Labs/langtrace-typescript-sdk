@@ -274,7 +274,7 @@ async function * handleStreamResponse (
       completionTokens += tokenCount
       result.push(content as string)
       if (chunk.choices[0]?.delta?.content !== undefined) {
-        span.addEvent(Event.STREAM_OUTPUT, { 'gen_ai.completion.chunk': JSON.stringify({ role: chunk.choices[0]?.delta?.role ?? 'assistant', content: chunk.choices[0]?.delta?.content }) })
+        span.addEvent(Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ role: chunk.choices[0]?.delta?.role ?? 'assistant', content: chunk.choices[0]?.delta?.content }) })
       }
       yield chunk
     }
