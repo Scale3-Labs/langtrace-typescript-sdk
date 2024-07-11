@@ -14,5 +14,5 @@ export async function basic (): Promise<void> {
     maxTokens: 1024,
     messages: [{ role: 'system', content: 'hi' }, { role: 'user', content: 'why is the sky blue' }]
   })
-  // console.log(text)
+  console.log(text)
 }
