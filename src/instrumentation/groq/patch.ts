@@ -122,7 +122,7 @@ async function * handleStream (stream: AsyncIterable<any>, attributes: LLMSpanAt
         role = r
       }
       if (content !== undefined) {
-        span.addEvent(Event.STREAM_OUTPUT, { 'gen_ai.completion.chunk': JSON.stringify({ role, content }) })
+        span.addEvent(Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ role, content }) })
       }
       responseReconstructed.push(chunk.choices[0].delta.content as string ?? '')
 
