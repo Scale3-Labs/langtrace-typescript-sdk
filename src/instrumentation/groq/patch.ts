@@ -57,11 +57,12 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
             }
             return result
           })
-          span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify(responses) })
+          span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(responses) })
           attributes['gen_ai.system_fingerprint'] = resp?.system_fingerprint
           attributes['gen_ai.response.model'] = resp.model
           attributes['gen_ai.usage.prompt_tokens'] = resp?.usage?.prompt_tokens
           attributes['gen_ai.usage.completion_tokens'] = resp?.usage?.completion_tokens
+          attributes['gen_ai.usage.total_tokens'] = resp?.usage?.total_tokens
 
           span.setAttributes(attributes)
           span.setStatus({ code: SpanStatusCode.OK })
@@ -121,20 +122,21 @@ async function * handleStream (stream: AsyncIterable<any>, attributes: LLMSpanAt
         role = r
       }
       if (content !== undefined) {
-        span.addEvent(Event.STREAM_OUTPUT, { 'gen_ai.completion.chunk': JSON.stringify({ role, content }) })
+        span.addEvent(Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ role, content }) })
       }
       responseReconstructed.push(chunk.choices[0].delta.content as string ?? '')
 
       if (chunk.choices[0].finish_reason === 'stop') {
         attributes['gen_ai.usage.completion_tokens'] = chunk.x_groq?.usage?.completion_tokens
         attributes['gen_ai.usage.prompt_tokens'] = chunk.x_groq?.usage?.prompt_tokens
+        attributes['gen_ai.usage.total_tokens'] = Number(chunk.x_groq?.usage?.completion_tokens ?? 0) + Number(chunk.x_groq?.usage?.prompt_tokens ?? 0)
         attributes['gen_ai.response.model'] = chunk?.model
         attributes['gen_ai.system_fingerprint'] = chunk?.system_fingerprint
       }
       yield chunk
     }
     span.addEvent(Event.STREAM_END)
-    span.addEvent(Event.RESPONSE, { 'gen_ai.completion': JSON.stringify([{ role: 'assistant', content: responseReconstructed.join('') }]) })
+    span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify([{ role: 'assistant', content: responseReconstructed.join('') }]) })
     span.setAttributes(attributes)
     span.setStatus({ code: SpanStatusCode.OK })
   } catch (error: unknown) {

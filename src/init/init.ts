@@ -34,6 +34,7 @@ import { weaviateInstrumentation } from '@langtrace-instrumentation/weaviate/ins
 import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
 import c from 'ansi-colors'
 import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation'
+import { ollamaInstrumentation } from '@langtrace-instrumentation/ollama/instrumentation'
 import { Vendor } from '@langtrase/trace-attributes'
 import { vercelAIInstrumentation } from '@langtrace-instrumentation/vercel/instrumentation'
 /**
@@ -148,7 +149,7 @@ export const init: LangTraceInit = ({
     weaviate: weaviateInstrumentation,
     pg: pgInstrumentation,
     ai: vercelAIInstrumentation,
-    ollama: undefined
+    ollama: ollamaInstrumentation
   }
 
   if (instrumentations === undefined) {

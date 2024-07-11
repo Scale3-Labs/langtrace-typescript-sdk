@@ -72,7 +72,7 @@ Langtrace.init({ custom_remote_exporter: <your_exporter>, batch:<true or false>}
 
 ## Additional Customization
 
-- `WithLangTraceRootSpan` - this function is designed to organize and relate different spans, in a hierarchical manner. When you're performing multiple operations that you want to monitor together as a unit, this function helps by establishing a "parent" (`LangtraceRootSpan` or whatever is passed to `name`) span. Then, any calls to the LLM APIs made within the given function (fn) will be considered "children" of this parent span. This setup is especially useful for tracking the performance or behavior of a group of operations collectively, rather than individually.
+- [withLangTraceRootSpan](https://docs.langtrace.ai/features/grouptraces) - this function is designed to organize and relate different spans, in a hierarchical manner. When you're performing multiple operations that you want to monitor together as a unit, this function helps by establishing a "parent" (`LangtraceRootSpan` or whatever is passed to `name`) span. Then, any calls to the LLM APIs made within the given function (fn) will be considered "children" of this parent span. This setup is especially useful for tracking the performance or behavior of a group of operations collectively, rather than individually. See [example](https://docs.langtrace.ai/features/grouptraces)
 
 ``` typescript
  /**
@@ -83,23 +83,26 @@ Langtrace.init({ custom_remote_exporter: <your_exporter>, batch:<true or false>}
  * @returns result of the function
  */
 export async function withLangTraceRootSpan<T> (
-  fn: () => Promise<T>,
+  fn: (spanId: string, traceId: string) => Promise<T>,
   name = 'LangtraceRootSpan',
   spanKind: SpanKind = SpanKind.INTERNAL
 ): Promise<T>
 ```
 
-- `withAdditionalAttributes` - this function is designed to enhance the traces by adding custom attributes to the current context. These custom attributes provide extra details about the operations being performed, making it easier to analyze and understand their behavior.
+- [withAdditionalAttributes](https://docs.langtrace.ai/features/additional_attributes) - this function is designed to enhance the traces by adding custom attributes to the current context. These custom attributes provide extra details about the operations being performed, making it easier to analyze and understand their behavior. See [example](https://docs.langtrace.ai/features/additional_attributes)
 
 ``` typescript
 /**
  *
  * @param fn function to be executed within the context with the custom attributes added to the current context
- * @param attributes custom attributes to be added to the current context
+ * @param attributes custom attributes to be added to the current context.
+ * Attributes can also be an awaited Promise<Record<string, any>>. E.g withAdditionalAttributes(()=>{// Do something}, await getAdditionalAttributes()) // Assuming you have a function called getAdditionalAttributes defined in your code
  * @returns result of the function
  */
-export async function withAdditionalAttributes <T> (fn: () => Promise<T>, attributes: Partial<LLMSpanAttributes>): Promise<T>
+export async function withAdditionalAttributes <T> (fn: () => Promise<T>, attributes: Record<string, any> | Promise<Record<string, any>>): Promise<T>
 ```
+
+- [getPromptFromRegistry](https://docs.langtrace.ai/features/manage_prompts) - Fetches either the latest prompt from the prompt registry or a specific version passed in through `options`. See [example](https://docs.langtrace.ai/features/manage_prompts)
 
 ```typescript
 /**
@@ -114,8 +117,9 @@ export async function withAdditionalAttributes <T> (fn: () => Promise<T>, attrib
 export const getPromptFromRegistry = async (promptRegistryId: string, options?: { prompt_version?: number, variables?: Record<string, string> }): Promise<LangtracePrompt>
 ```
 
-``` typescript
+- [sendUserFeedback](https://docs.langtrace.ai/features/traceuserfeedback) - Allows submission of feedback on a users LLM interaction. This function must be used in tandem with the `withLangtraceRootSpan` function. See [example](https://docs.langtrace.ai/features/traceuserfeedback)
 
+``` typescript
 /**
  *
  * @param userId id of the user giving feedback
@@ -131,18 +135,26 @@ export const sendUserFeedback = async ({ userId, userScore, traceId, spanId }: E
 
 Langtrace automatically captures traces from the following vendors:
 
-| Vendor       | Type            | Typescript SDK     | Python SDK         |
-| ------------ | --------------- | ------------------ | ------------------ |
-| OpenAI       | LLM             | :white_check_mark: | :white_check_mark: |
-| Anthropic    | LLM             | :white_check_mark: | :white_check_mark: |
-| Azure OpenAI | LLM             | :white_check_mark: | :white_check_mark: |
-| Cohere       | LLM             | :white_check_mark: | :white_check_mark: |
-| Groq         | LLM             | :white_check_mark: | :white_check_mark: |
-| Langchain    | Framework       | :x:                | :white_check_mark: |
-| LlamaIndex   | Framework       | :white_check_mark: | :white_check_mark: |
-| Pinecone     | Vector Database | :white_check_mark: | :white_check_mark: |
-| ChromaDB     | Vector Database | :white_check_mark: | :white_check_mark: |
-| QDrant       | Vector Database | :white_check_mark: | :white_check_mark: |
+| Vendor       | Type            | Typescript SDK     | Python SDK                      |
+| ------------ | --------------- | ------------------ | ------------------------------- |
+| OpenAI       | LLM             | :white_check_mark: | :white_check_mark:              |
+| Anthropic    | LLM             | :white_check_mark: | :white_check_mark:              |
+| Azure OpenAI | LLM             | :white_check_mark: | :white_check_mark:              |
+| Cohere       | LLM             | :white_check_mark: | :white_check_mark:              |
+| Groq         | LLM             | :x:                | :white_check_mark:              |
+| Perplexity   | LLM             | :white_check_mark: | :white_check_mark:              |
+| Langchain    | Framework       | :x:                | :white_check_mark:              |
+| LlamaIndex   | Framework       | :white_check_mark: | :white_check_mark:              |
+| Langgraph    | Framework       | :x:                | :white_check_mark:              |
+| DSPy         | Framework       | :x:                | :white_check_mark:              |
+| CrewAI       | Framework       | :x:                | :white_check_mark:              |
+| Ollama       | Framework       | :x:                | :white_check_mark:              |
+| Pinecone     | Vector Database | :white_check_mark: | :white_check_mark:              |
+| ChromaDB     | Vector Database | :white_check_mark: | :white_check_mark:              |
+| QDrant       | Vector Database | :white_check_mark: | :white_check_mark:              |
+| Weaviate     | Vector Database | :white_check_mark: | :white_check_mark:              |
+| PGVector     | Vector Database | :white_check_mark: | :white_check_mark: (SQLAlchemy) |
+
 
 ## Feature Requests and Issues
 

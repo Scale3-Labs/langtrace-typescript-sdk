@@ -51,6 +51,7 @@
     "eslint-plugin-unused-imports": "^2.0.0",
     "groq-sdk": "^0.3.3",
     "llamaindex": "^0.1.21",
+    "ollama": "^0.5.2",
     "openai": "^4.47.1",
     "pgvector": "^0.1.8",
     "tsc-alias": "^1.8.8",
