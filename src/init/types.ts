@@ -36,7 +36,7 @@ export interface LangtraceInitOptions {
   }
   disable_latest_version_check?: boolean
   disable_tracing_for_functions?: Partial<VendorTracedFunctions>
-  instrumentations?: { [key in Exclude<Vendor, 'ai'>]?: any }
+  instrumentations?: { [key in Vendor]?: any }
 }
 
 export type LangTraceInit = (options?: LangtraceInitOptions) => void

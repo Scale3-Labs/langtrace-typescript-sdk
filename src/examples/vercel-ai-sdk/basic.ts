@@ -1,11 +1,10 @@
 import { init } from '@langtrace-init/init'
 import { openai } from '@ai-sdk/openai' // Ensure OPENAI_API_KEY environment variable is set
-import { getTracedSdk } from '@langtrace-utils/langtrace'
+import ai from '@langtrace-module-wrappers/ai'
 
-init({ write_spans_to_console: true, disable_instrumentations: { only: ['ai'] } })
+init({ write_spans_to_console: true, instrumentations: { ai }, disable_instrumentations: { only: ['ai'] } })
 export async function basic (): Promise<void> {
-  const sdk = getTracedSdk('ai')
-  const { text } = await sdk.generateText({
+  const { text } = await ai.generateText({
     model: openai('gpt-4-turbo', { user: 'abc' }),
     system: 'You are a friendly assistant!',
     // prompt: 'Why is the sky blue?',

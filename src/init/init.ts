@@ -150,23 +150,13 @@ export const init: LangTraceInit = ({
     ai: vercelAIInstrumentation,
     ollama: undefined
   }
-  const sdkOptions = {
-    api_key,
-    batch,
-    write_spans_to_console,
-    custom_remote_exporter,
-    api_host,
-    disable_instrumentations,
-    logging,
-    disable_latest_version_check,
-    disable_tracing_for_functions,
-    instrumentations
-  }
+
   if (instrumentations === undefined) {
     registerInstrumentations({
       instrumentations: Object.values(allInstrumentations).filter((instrumentation) => instrumentation !== undefined),
       tracerProvider: provider
     })
+    disableInstrumentations(disable_instrumentations, allInstrumentations)
   } else {
     Object.entries(instrumentations).forEach(([key, value]) => {
       if (value !== undefined) {
@@ -174,23 +164,12 @@ export const init: LangTraceInit = ({
       }
     })
     registerInstrumentations({ tracerProvider: provider })
+    disableInstrumentations(disable_instrumentations, allInstrumentations, instrumentations)
   }
-  setSdkOptions(allInstrumentations, sdkOptions)
-  disableInstrumentations(disable_instrumentations, allInstrumentations)
   global.langtrace_initalized = true
 }
 
-const setSdkOptions = (instrumentations: Record<Vendor, any>, sdkOptions: LangtraceInitOptions): void => {
-  Object.values(instrumentations).forEach((instrumentation) => {
-    if (instrumentation !== undefined) {
-      if (instrumentation.setSdkOptions !== undefined) {
-        instrumentation.setSdkOptions(sdkOptions)
-      }
-    }
-  })
-}
-
-const disableInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<Vendor, any>): InstrumentationBase[] => {
+const disableInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<Vendor, any>, modules?: { [key in Vendor]?: any }): InstrumentationBase[] => {
   if (disable_instrumentations.only !== undefined && disable_instrumentations.all_except !== undefined) {
     throw new Error('Cannot specify both only and all_except in disable_instrumentations')
   }
@@ -201,13 +180,21 @@ const disableInstrumentations = (disable_instrumentations: { all_except?: string
       }
       if (disable_instrumentations.all_except !== undefined) {
         if (!disable_instrumentations.all_except.includes(key as Vendor)) {
-          instrumentation.disable()
+          if (modules !== undefined && modules[key as Vendor] !== undefined) {
+            instrumentation._unpatch(modules[key as Vendor])
+          } else {
+            instrumentation.disable()
+          }
           return false
         }
       }
       if (disable_instrumentations.only !== undefined) {
         if (disable_instrumentations.only.includes(key as Vendor)) {
-          instrumentation.disable()
+          if (modules !== undefined && modules[key as Vendor] !== undefined) {
+            instrumentation._unpatch(modules[key as Vendor])
+          } else {
+            instrumentation.disable()
+          }
         }
       }
       return true

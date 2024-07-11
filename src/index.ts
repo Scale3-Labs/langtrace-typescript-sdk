@@ -19,8 +19,9 @@
 import { init } from '@langtrace-init/init'
 import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
 import { withLangTraceRootSpan, withAdditionalAttributes } from '@langtrace-utils/instrumentation'
-import { getPromptFromRegistry, sendUserFeedback, getTracedSdk } from '@langtrace-utils/langtrace'
+import { getPromptFromRegistry, sendUserFeedback } from '@langtrace-utils/langtrace'
 import { LangtracePrompt } from '@langtrace-utils/types'
+import ai from '@langtrace-module-wrappers/ai'
 
 export {
   // Features
@@ -31,6 +32,8 @@ export {
   withAdditionalAttributes,
   getPromptFromRegistry,
   LangtracePrompt,
-  getTracedSdk,
   sendUserFeedback
 }
+
+// Export wrapped modules
+export { ai }
