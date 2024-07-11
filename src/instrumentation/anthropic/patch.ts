@@ -16,10 +16,8 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { APIS } from '@langtrace-constants/instrumentation/anthropic'
-import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
 import { createStreamProxy } from '@langtrace-utils/misc'
-import { LLMSpanAttributes } from '@langtrase/trace-attributes'
+import { APIS, LLMSpanAttributes, Vendors, Event } from '@langtrase/trace-attributes'
 
 import {
   Exception,
@@ -39,7 +37,7 @@ export function messagesCreate (
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     // Determine the service provider
-    const serviceProvider = SERVICE_PROVIDERS.ANTHROPIC
+    const serviceProvider = Vendors.ANTHROPIC
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
 
     // Get the prompt and deep copy it
@@ -61,33 +59,21 @@ export function messagesCreate (
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
       'url.full': this?._client?.baseURL,
-      'llm.api': APIS.MESSAGES_CREATE.ENDPOINT,
-      'llm.model': args[0]?.model,
+      'url.path': APIS.anthropic.MESSAGES_CREATE.ENDPOINT,
+      'gen_ai.request.model': args[0]?.model,
       'http.max.retries': this?._client?.maxRetries,
       'http.timeout': this?._client?.timeout,
-      'llm.prompts': JSON.stringify(prompts),
-      'llm.max_tokens': args[0]?.max_tokens,
+      'gen_ai.request.temperature': args[0]?.temperature,
+      'gen_ai.request.top_p': args[0]?.top_p,
+      'gen_ai.request.top_k': args[0]?.top_k,
+      'gen_ai.user': args[0]?.metadata?.user_id,
+      'gen_ai.request.max_tokens': args[0]?.max_tokens,
+      'gen_ai.response.model': args[0]?.model,
       ...customAttributes
     }
 
-    if (args[0]?.temperature !== undefined) {
-      attributes['llm.temperature'] = args[0]?.temperature
-    }
-
-    if (args[0]?.top_p !== undefined) {
-      attributes['llm.top_p'] = args[0]?.top_p
-    }
-
-    if (args[0]?.top_k !== undefined) {
-      attributes['llm.top_k'] = args[0]?.top_k
-    }
-
-    if (args[0]?.user !== undefined) {
-      attributes['llm.user'] = args[0]?.user
-    }
-
     if (!(args[0].stream as boolean) || args[0].stream === false) {
-      const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+      const span = tracer.startSpan(APIS.anthropic.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
       return await context.with(
         trace.setSpan(
           context.active(),
@@ -96,31 +82,19 @@ export function messagesCreate (
         async () => {
           try {
             const resp = await originalMethod.apply(this, args)
-
-            span.setAttributes({
-              'llm.responses': JSON.stringify(resp.content.map((c: any) => {
-                return { content: c.text, role: 'assistant' }
-              }))
-            })
-
-            if (resp?.system_fingerprint !== undefined) {
-              span.setAttributes({ 'llm.system.fingerprint': resp?.system_fingerprint })
+            span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(resp.content.map((c: any) => ({ content: c.text, role: 'assistant' }))) })
+            span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
+            const respAttributes: Partial<LLMSpanAttributes> = {
+              'gen_ai.usage.completion_tokens': resp.usage.output_tokens,
+              'gen_ai.usage.prompt_tokens': resp.usage.input_tokens,
+              'gen_ai.usage.total_tokens': Number(resp.usage.output_tokens ?? 0) + Number(resp.usage.input_tokens ?? 0)
             }
-            span.setAttributes({
-              'llm.token.counts': JSON.stringify({
-                input_tokens: (resp?.usage?.input_tokens) ?? 0,
-                output_tokens: (resp?.usage?.output_tokens) ?? 0,
-                total_tokens: Number(resp?.usage?.input_tokens) + Number(resp?.usage?.output_tokens) ?? 0
-              })
-            })
+            span.setAttributes({ ...attributes, ...respAttributes })
             span.setStatus({ code: SpanStatusCode.OK })
             return resp
           } catch (error: any) {
+            span.setStatus({ code: SpanStatusCode.ERROR })
             span.recordException(error as Exception)
-            span.setStatus({
-              code: SpanStatusCode.ERROR,
-              message: error.message
-            })
             throw error
           } finally {
             span.end()
@@ -128,7 +102,7 @@ export function messagesCreate (
         }
       )
     } else {
-      const span = tracer.startSpan(APIS.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+      const span = tracer.startSpan(APIS.anthropic.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
       return await context.with(
         trace.setSpan(
           context.active(),
@@ -147,31 +121,33 @@ async function * handleStreamResponse (span: Span, stream: any, attributes: LLMS
   const result: string[] = []
   span.addEvent(Event.STREAM_START)
   try {
-    let input_tokens = 0
-    let output_tokens = 0
+    let streamStartMessage: { role: string, model: string, usage: { input_tokens: number, output_tokens: number } } | Record<string, any> = {}
     for await (const chunk of stream) {
-      const content = chunk.delta?.text !== undefined ? ((chunk.delta.text) as string).length > 0 ? chunk.delta.text : '' : ''
-      result.push(content as string)
-      input_tokens += chunk.message?.usage?.input_tokens !== undefined ? Number(chunk.message?.usage?.input_tokens) : 0
-      output_tokens +=
-        chunk.message?.usage?.output_tokens !== undefined ? Number(chunk.message?.usage?.output_tokens) : chunk.usage?.output_tokens !== undefined ? Number(chunk.usage?.output_tokens) : 0
-      span.addEvent(Event.STREAM_OUTPUT, { response: JSON.stringify(content) })
+      if (chunk.type === 'message_start') {
+        streamStartMessage = chunk.message
+      } else {
+        const content = chunk.delta?.text !== undefined ? ((chunk.delta.text) as string).length > 0 ? chunk.delta.text : '' : ''
+        const streamAttributes: Partial<LLMSpanAttributes> = { 'gen_ai.completion.chunk': JSON.stringify({ content, role: streamStartMessage.role }) }
+        span.addEvent(Event.STREAM_OUTPUT, streamAttributes)
+        result.push(content as string)
+      }
+
+      span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify([{ content: result.join(''), role: streamStartMessage.role }]) })
+      const responseAttributes: Partial<LLMSpanAttributes> = {
+        'gen_ai.response.model': streamStartMessage.model,
+        'gen_ai.usage.completion_tokens': streamStartMessage.usage.output_tokens,
+        'gen_ai.usage.prompt_tokens': streamStartMessage.usage.input_tokens,
+        'gen_ai.usage.total_tokens': Number(streamStartMessage.usage.output_tokens ?? 0) + Number(streamStartMessage.usage.input_tokens ?? 0)
+      }
+      span.setAttributes({ ...attributes, ...responseAttributes })
       yield chunk
     }
 
     span.setStatus({ code: SpanStatusCode.OK })
-    span.setAttributes({
-      'llm.token.counts': JSON.stringify({
-        input_tokens,
-        output_tokens,
-        total_tokens: input_tokens + output_tokens
-      }),
-      'llm.responses': JSON.stringify([{ content: result.join(''), role: 'assistant' }])
-    })
     span.addEvent(Event.STREAM_END)
   } catch (error: any) {
+    span.setStatus({ code: SpanStatusCode.ERROR })
     span.recordException(error as Exception)
-    span.setStatus({ code: SpanStatusCode.ERROR, message: error.message })
     throw error
   } finally {
     span.end()
