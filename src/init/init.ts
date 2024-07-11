@@ -34,7 +34,7 @@ import { weaviateInstrumentation } from '@langtrace-instrumentation/weaviate/ins
 import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
 import c from 'ansi-colors'
 import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation'
-import { Vendor, Vendors } from '@langtrase/trace-attributes'
+import { Vendor } from '@langtrase/trace-attributes'
 import { vercelAIInstrumentation } from '@langtrace-instrumentation/vercel/instrumentation'
 /**
  * Initializes the LangTrace sdk with custom options.
@@ -150,7 +150,18 @@ export const init: LangTraceInit = ({
     ai: vercelAIInstrumentation,
     ollama: undefined
   }
-
+  const sdkOptions = {
+    api_key,
+    batch,
+    write_spans_to_console,
+    custom_remote_exporter,
+    api_host,
+    disable_instrumentations,
+    logging,
+    disable_latest_version_check,
+    disable_tracing_for_functions,
+    instrumentations
+  }
   if (instrumentations === undefined) {
     registerInstrumentations({
       instrumentations: Object.values(allInstrumentations).filter((instrumentation) => instrumentation !== undefined),
@@ -164,8 +175,19 @@ export const init: LangTraceInit = ({
     })
     registerInstrumentations({ tracerProvider: provider })
   }
+  setSdkOptions(allInstrumentations, sdkOptions)
   disableInstrumentations(disable_instrumentations, allInstrumentations)
   global.langtrace_initalized = true
+}
+
+const setSdkOptions = (instrumentations: Record<Vendor, any>, sdkOptions: LangtraceInitOptions): void => {
+  Object.values(instrumentations).forEach((instrumentation) => {
+    if (instrumentation !== undefined) {
+      if (instrumentation.setSdkOptions !== undefined) {
+        instrumentation.setSdkOptions(sdkOptions)
+      }
+    }
+  })
 }
 
 const disableInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<Vendor, any>): InstrumentationBase[] => {
@@ -179,23 +201,13 @@ const disableInstrumentations = (disable_instrumentations: { all_except?: string
       }
       if (disable_instrumentations.all_except !== undefined) {
         if (!disable_instrumentations.all_except.includes(key as Vendor)) {
-          if (key === Vendors.VERCEL) {
-            instrumentation._unpatch(instrumentation.patchedModule)
-          } else {
-            instrumentation.disable()
-          }
+          instrumentation.disable()
           return false
         }
       }
       if (disable_instrumentations.only !== undefined) {
         if (disable_instrumentations.only.includes(key as Vendor)) {
-          if (key === Vendors.VERCEL) {
-            // eslint-disable-next-line no-console
-            console.log('Unpatching vercel')
-            instrumentation._unpatch(instrumentation.patchedModule)
-          } else {
-            instrumentation.disable()
-          }
+          instrumentation.disable()
         }
       }
       return true

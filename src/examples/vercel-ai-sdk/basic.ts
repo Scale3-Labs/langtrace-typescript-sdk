@@ -1,11 +1,10 @@
 import { init } from '@langtrace-init/init'
-import * as a from 'ai'
 import { openai } from '@ai-sdk/openai' // Ensure OPENAI_API_KEY environment variable is set
-import { getVercelAISdk } from '@langtrace-instrumentation/vercel/instrumentation'
+import { getTracedSdk } from '@langtrace-utils/langtrace'
 
-init({ write_spans_to_console: true, instrumentations: { ai: a }, disable_instrumentations: { only: ['ai'] } })
+init({ write_spans_to_console: true, disable_instrumentations: { only: ['ai'] } })
 export async function basic (): Promise<void> {
-  const sdk = getVercelAISdk()
+  const sdk = getTracedSdk('ai')
   const { text } = await sdk.generateText({
     model: openai('gpt-4-turbo', { user: 'abc' }),
     system: 'You are a friendly assistant!',

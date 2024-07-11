@@ -14,7 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { getVercelAISdk } from '@langtrace-instrumentation/vercel/instrumentation'
 import { EvaluationAPIData, LangTraceEvaluation, LangtracePrompt } from '@langtrace-utils/types'
+import { Vendor } from '@langtrase/trace-attributes'
 import axios from 'axios'
 
 /**
@@ -80,5 +82,19 @@ const getEvaluation = async (spanId: string): Promise<LangTraceEvaluation | unde
     return response.data.evaluations[0] as LangTraceEvaluation
   } catch (err: any) {
     throw Error(`An error occured when trying to get the evaluation from langtrace ${process.env.LANGTRACE_API_HOST}/api/evaluation?spanId=${spanId} ${JSON.stringify(err.stack)}`)
+  }
+}
+
+/**
+ *
+ * @param vendor vendor of the sdk to be traced
+ * @returns returns the traced sdk
+ */
+export const getTracedSdk = (vendor: Extract<Vendor, 'ai'>): ReturnType<typeof getVercelAISdk> => {
+  switch (vendor) {
+    case 'ai':
+      return getVercelAISdk()
+    default:
+      throw new Error('Unsupported vendor')
   }
 }

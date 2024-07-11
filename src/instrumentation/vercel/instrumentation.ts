@@ -2,18 +2,28 @@
 import { diag } from '@opentelemetry/api'
 import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation'
 import { version, name } from '../../../package.json'
-import { APIS } from '@langtrase/trace-attributes'
+import { APIS, Vendors } from '@langtrase/trace-attributes'
 import { generateTextPatch } from './patch'
+import { LangtraceInitOptions } from '@langtrace-init/types'
+import * as ai from 'ai'
 
 class VercelAIInstrumentation extends InstrumentationBase<any> {
-  patchedModule: any
-  originalModule: any
+  sdkOptions: LangtraceInitOptions
+  patchedModule: typeof ai
+  originalModule: typeof ai
   constructor () {
     super(name, version)
+    this.sdkOptions = {}
+    this.patchedModule = ai
+    this.originalModule = ai
   }
 
-  public manualPatch (vercelAI: any): void {
-    this._patch(vercelAI)
+  public manualPatch (_: any): void {
+    // do nothing
+  }
+
+  public setSdkOptions (sdkOptions: LangtraceInitOptions): void {
+    this.sdkOptions = sdkOptions
   }
 
   init (): Array<InstrumentationModuleDefinition<any>> {
@@ -58,9 +68,11 @@ class VercelAIInstrumentation extends InstrumentationBase<any> {
 }
 export const vercelAIInstrumentation = new VercelAIInstrumentation()
 
-export const getVercelAISdk = (): any => {
-  if (vercelAIInstrumentation.patchedModule === undefined) {
-    throw new Error('Vercel AI SDK is not patched. Did you forget to add "import * as ai from \'ai\'" to Langtrace.init(instrumentations: { ai })?')
+export const getVercelAISdk = (): typeof ai => {
+  if (vercelAIInstrumentation.sdkOptions.disable_instrumentations?.only?.includes(Vendors.VERCEL) === true) {
+    vercelAIInstrumentation._unpatch(vercelAIInstrumentation.patchedModule)
+  } else {
+    vercelAIInstrumentation._patch(ai)
   }
   return vercelAIInstrumentation.patchedModule
 }
