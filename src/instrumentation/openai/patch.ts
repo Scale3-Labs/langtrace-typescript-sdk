@@ -51,7 +51,7 @@ export function imageEdit (
       'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
       'url.path': APIS.openai.IMAGES_EDIT.ENDPOINT,
-      'gen_ai.request.model': args[0]?.model,
+      'gen_ai.request.model': args[0]?.model ?? 'dall-e-2',
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
       'gen_ai.request.top_k': args[0]?.n,

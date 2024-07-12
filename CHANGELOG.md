@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 4.0.0
+
+### Major Changes
+
+- Migrate to OTEL conventions for LLM attributes, add support for ollama and bug fixes
+
 ## 3.3.3
 
 ### Patch Changes
