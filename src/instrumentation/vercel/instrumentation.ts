@@ -19,7 +19,6 @@ class VercelAIInstrumentation extends InstrumentationBase<any> {
       '../../module-wrappers/ai',
       ['*'],
       (moduleExports, moduleVersion) => {
-        // eslint-disable-next-line no-console
         diag.debug(`Patching Vercel AI SDK version ${moduleVersion}`)
         this._patch(moduleExports, moduleVersion)
         return moduleExports
