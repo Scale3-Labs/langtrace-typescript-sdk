@@ -15,9 +15,7 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
-import { APIS } from '@langtrace-constants/instrumentation/qdrant'
-import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
+import { APIS, DatabaseSpanAttributes, Event, Vendors } from '@langtrase/trace-attributes'
 import { Exception, SpanKind, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api'
 
 export function genericCollectionPatch (
@@ -29,12 +27,12 @@ export function genericCollectionPatch (
   version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]): Promise<any> {
-    const api = APIS[method as keyof typeof APIS]
+    const api = APIS.qdrant[method as keyof typeof APIS.qdrant]
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
 
     const attributes: DatabaseSpanAttributes = {
       'langtrace.sdk.name': sdkName,
-      'langtrace.service.name': SERVICE_PROVIDERS.QDRANT,
+      'langtrace.service.name': Vendors.QDRANT,
       'langtrace.service.type': 'vectordb',
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
@@ -58,10 +56,7 @@ export function genericCollectionPatch (
         } catch (error: any) {
           // If an error occurs, record the exception and end the span
           span.recordException(error as Exception)
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error.message
-          })
+          span.setStatus({ code: SpanStatusCode.ERROR })
           span.end()
           throw error
         }

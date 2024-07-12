@@ -17,11 +17,10 @@
 
 // Import the necessary modules
 import { init } from '@langtrace-init/init'
-import { LangTraceInit, LangtraceInitOptions, Vendors, Vendor, VendorTracedFunctions } from '@langtrace-init/types'
+import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
 import { withLangTraceRootSpan, withAdditionalAttributes } from '@langtrace-utils/instrumentation'
 import { getPromptFromRegistry, sendUserFeedback } from '@langtrace-utils/langtrace'
 import { LangtracePrompt } from '@langtrace-utils/types'
-import { Event, TracedFunctionsByVendor } from '@langtrace-constants/instrumentation/common'
 
 export {
   // Features
@@ -32,11 +31,5 @@ export {
   withAdditionalAttributes,
   getPromptFromRegistry,
   LangtracePrompt,
-  sendUserFeedback,
-  // Common
-  Event,
-  TracedFunctionsByVendor,
-  VendorTracedFunctions,
-  Vendor,
-  Vendors
+  sendUserFeedback
 }

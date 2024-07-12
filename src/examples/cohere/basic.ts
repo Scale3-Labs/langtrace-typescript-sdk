@@ -3,7 +3,7 @@ import * as cohere from 'cohere-ai'
 import { Tool } from 'cohere-ai/api'
 import fs from 'fs'
 
-init({ disable_instrumentations: { all_except: ['openai'] } })
+init({ disable_instrumentations: { all_except: ['cohere'] } })
 
 const c = new cohere.CohereClient()
 export const basicChat = async (): Promise<void> => {

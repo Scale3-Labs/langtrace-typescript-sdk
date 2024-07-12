@@ -19,7 +19,7 @@ import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/in
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { LangTraceExporter } from '@langtrace-extensions/langtraceexporter/langtrace_exporter'
 import { LangtraceSampler } from '@langtrace-extensions/langtracesampler/langtrace_sampler'
-import { Vendor, LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
+import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
 import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_exporter'
 import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
 import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
@@ -34,6 +34,8 @@ import { weaviateInstrumentation } from '@langtrace-instrumentation/weaviate/ins
 import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
 import c from 'ansi-colors'
 import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation'
+import { ollamaInstrumentation } from '@langtrace-instrumentation/ollama/instrumentation'
+import { Vendor } from '@langtrase/trace-attributes'
 
 /**
  * Initializes the LangTrace sdk with custom options.
@@ -147,7 +149,8 @@ export const init: LangTraceInit = ({
     chromadb: chromaInstrumentation,
     qdrant: qdrantInstrumentation,
     weaviate: weaviateInstrumentation,
-    pg: pgInstrumentation
+    pg: pgInstrumentation,
+    ollama: ollamaInstrumentation
   }
 
   if (instrumentations === undefined) {
@@ -172,6 +175,9 @@ const getInstrumentations = (disable_instrumentations: { all_except?: string[], 
   }
   const instrumentations = Object.fromEntries(Object.entries(allInstrumentations)
     .filter(([key, instrumentation]) => {
+      if (instrumentation === undefined) {
+        return false
+      }
       if (disable_instrumentations.all_except !== undefined) {
         if (!disable_instrumentations.all_except.includes(key as Vendor)) {
           instrumentation.disable()

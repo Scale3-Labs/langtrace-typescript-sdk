@@ -15,9 +15,7 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { APIS } from '@langtrace-constants/instrumentation/chroma'
-import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
-import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
+import { APIS, DatabaseSpanAttributes, Vendors, Event } from '@langtrase/trace-attributes'
 
 import {
   Exception,
@@ -36,12 +34,12 @@ export function collectionPatch (
   version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
-    const api = APIS[method as keyof typeof APIS]
     // Extract custom attributes from the current context
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
+    const api = APIS.chromadb[method as keyof typeof APIS.chromadb]
     const attributes: DatabaseSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
-      'langtrace.service.name': SERVICE_PROVIDERS.CHROMA,
+      'langtrace.service.name': Vendors.CHROMADB,
       'langtrace.service.type': 'vectordb',
       'langtrace.service.version': version ?? 'latest',
       'langtrace.version': langtraceVersion,
@@ -77,10 +75,7 @@ export function collectionPatch (
           return response
         } catch (error: any) {
           span.recordException(error as Exception)
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error.message
-          })
+          span.setStatus({ code: SpanStatusCode.ERROR })
           span.end()
           throw error
         }

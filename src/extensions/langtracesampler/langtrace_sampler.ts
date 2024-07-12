@@ -1,4 +1,4 @@
-import { VendorTracedFunctions } from '@langtrace-init/types'
+import { VendorTracedFunctions } from '@langtrase/trace-attributes/dist/constants/common'
 import { SpanKind, Attributes, Context, trace, TraceFlags, diag } from '@opentelemetry/api'
 import { Sampler, SamplingDecision, SamplingResult } from '@opentelemetry/sdk-trace-base'
 

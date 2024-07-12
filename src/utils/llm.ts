@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TIKTOKEN_MODEL_MAPPING } from '@langtrace-constants/instrumentation/common'
+import { TIKTOKEN_MODEL_MAPPING } from '@langtrase/trace-attributes'
 import { TiktokenEncoding, get_encoding } from 'tiktoken'
 
 export function estimateTokens (prompt: string): number {

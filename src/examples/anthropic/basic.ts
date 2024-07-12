@@ -38,7 +38,7 @@ export async function basic (): Promise<void> {
 
     console.info(message.content)
     // for await (const part of message) {
-    //   console.info(part)
+    // console.info(part)
     // }
   })
 }
