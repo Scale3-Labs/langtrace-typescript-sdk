@@ -14,7 +14,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4.1.7
 
       - uses: actions/setup-node@v3
         with:
@@ -42,6 +42,11 @@ jobs:
       - publish
 
     steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4.1.7
+        with:
+          ref: main
+
       - name: Slack - Success Message
         uses: DSdatsme/slack-github-action@env_support
         if: ${{ success() && needs.publish.result == 'success' }}
