@@ -1,3 +1,3 @@
-import { basic } from '@langtrace-examples/vercel-ai-sdk/basic'
+import { basicEmbed } from '@langtrace-examples/vercel/basic'
 
-void basic()
+void basicEmbed()
