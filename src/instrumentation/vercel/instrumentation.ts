@@ -1,9 +1,9 @@
-/* eslint-disable no-restricted-imports */
 import { diag } from '@opentelemetry/api'
 import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation'
+/* eslint-disable no-restricted-imports */
 import { version, name } from '../../../package.json'
 import { APIS } from '@langtrase/trace-attributes'
-import { embedPatch} from '@langtrace-instrumentation/vercel/patch'
+import { embedPatch, generateTextPatch, streamTextPatch } from '@langtrace-instrumentation/vercel/patch'
 
 class VercelAIInstrumentation extends InstrumentationBase<any> {
   constructor () {
@@ -35,12 +35,14 @@ class VercelAIInstrumentation extends InstrumentationBase<any> {
 
   public _patch (moduleExports: any, moduleVersion?: string): any {
     this._wrap(moduleExports, 'generateText', (original: any) => generateTextPatch.call(this, original as (...args: any[]) => any, APIS.ai.GENERATE_TEXT.METHOD, this.tracer, version, name, moduleVersion))
+    this._wrap(moduleExports, 'streamText', (original: any) => streamTextPatch.call(this, original as (...args: any[]) => any, APIS.ai.STREAM_TEXT.METHOD, this.tracer, version, name, moduleVersion))
     this._wrap(moduleExports, 'embed', (original: any) => embedPatch.call(this, original as (...args: any[]) => any, APIS.ai.EMBED.METHOD, this.tracer, version, name, moduleVersion))
     this._wrap(moduleExports, 'embedMany', (original: any) => embedPatch.call(this, original as (...args: any[]) => any, APIS.ai.EMBED_MANY.METHOD, this.tracer, version, name, moduleVersion))
   }
 
   public _unpatch (module: any): void {
     this._unwrap(module, 'generateText')
+    this._unwrap(module, 'streamText')
     this._unwrap(module, 'embed')
     this._unwrap(module, 'embedMany')
   }
