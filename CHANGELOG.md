@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 4.0.1
+
+### Patch Changes
+
+- Fix bug causing qdrant, pinecone and chroma instrumentation to fail
+
 ## 4.0.0
 
 ### Major Changes
