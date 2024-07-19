@@ -58,7 +58,7 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
       })
     }
 
-    Object.keys(APIS).forEach((api) => {
+    Object.keys(APIS.chromadb).forEach((api) => {
       this._wrap(
         chromadb.Collection.prototype,
         APIS.chromadb[api as keyof typeof APIS.chromadb].OPERATION,
@@ -69,7 +69,7 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
   }
 
   private _unpatch (chromadb: any): void {
-    Object.keys(APIS).forEach((api) => {
+    Object.keys(APIS.chromadb).forEach((api) => {
       this._unwrap(chromadb.Collection.prototype, APIS.chromadb[api as keyof typeof APIS.chromadb].OPERATION as string)
     })
   }
