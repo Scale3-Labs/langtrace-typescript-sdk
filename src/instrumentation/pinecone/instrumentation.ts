@@ -52,12 +52,12 @@ class PineconeInstrumentation extends InstrumentationBase<any> {
 
   private _patch (pinecone: any, moduleVersion?: string): void {
     if (isWrapped(pinecone.Index.prototype)) {
-      Object.keys(APIS).forEach((api) => {
+      Object.keys(APIS.pinecone).forEach((api) => {
         this._unwrap(pinecone.Index.prototype, APIS.pinecone[api as keyof typeof APIS.pinecone].OPERATION as string)
       })
     }
 
-    Object.keys(APIS).forEach((api) => {
+    Object.keys(APIS.pinecone).forEach((api) => {
       this._wrap(
         pinecone.Index.prototype,
         APIS.pinecone[api as keyof typeof APIS.pinecone].OPERATION,
@@ -68,7 +68,7 @@ class PineconeInstrumentation extends InstrumentationBase<any> {
   }
 
   private _unpatch (pinecone: any): void {
-    Object.keys(APIS).forEach((api) => {
+    Object.keys(APIS.pinecone).forEach((api) => {
       this._unwrap(pinecone.Index.prototype, APIS.pinecone[api as keyof typeof APIS.pinecone].OPERATION as string)
     })
   }
