@@ -54,17 +54,13 @@ class OpenAIInstrumentation extends InstrumentationBase<any> {
   }
 
   private _patch (openai: any, moduleVersion?: string): void {
-    if (isWrapped(openai.OpenAI.Chat.Completions.prototype)) {
-      this._unwrap(openai.OpenAI.Chat.Completions.prototype, 'create')
-    }
-    if (isWrapped(openai.OpenAI.Images.prototype)) {
-      this._unwrap(openai.OpenAI.Images.prototype, 'generate')
-      this._unwrap(openai.OpenAI.Images.prototype, 'edit')
-    }
-    if (isWrapped(openai.OpenAI.Embeddings.prototype)) {
-      this._unwrap(openai.OpenAI.Embeddings.prototype, 'create')
-    }
+    const wrapped = isWrapped(openai.OpenAI.Chat.Completions.prototype) ||
+      isWrapped(openai.OpenAI.Images.prototype) ||
+      isWrapped(openai.OpenAI.Embeddings.prototype)
 
+    if (wrapped) {
+      this._unpatch(openai)
+    }
     this._wrap(
       openai.OpenAI.Chat.Completions.prototype,
       'create',
