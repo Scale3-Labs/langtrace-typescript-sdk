@@ -36,7 +36,7 @@ import c from 'ansi-colors'
 import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation'
 import { ollamaInstrumentation } from '@langtrace-instrumentation/ollama/instrumentation'
 import { Vendor } from '@langtrase/trace-attributes'
-
+import { vercelAIInstrumentation } from '@langtrace-instrumentation/vercel/instrumentation'
 /**
  * Initializes the LangTrace sdk with custom options.
  *
@@ -81,9 +81,6 @@ export const init: LangTraceInit = ({
   disable_latest_version_check = false,
   disable_tracing_for_functions = undefined
 }: LangtraceInitOptions = {}) => {
-  if (global.langtrace_initalized) {
-    return
-  }
   const provider = new NodeTracerProvider({ sampler: new LangtraceSampler(disable_tracing_for_functions) })
   const host = (process.env.LANGTRACE_API_HOST ?? api_host ?? LANGTRACE_REMOTE_URL)
   const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', host)
@@ -137,8 +134,9 @@ export const init: LangTraceInit = ({
       provider.addSpanProcessor(new SimpleSpanProcessor(custom_remote_exporter))
     }
   }
-  provider.register()
-
+  if (!global.langtrace_initalized) {
+    provider.register()
+  }
   const allInstrumentations: Record<Vendor, any> = {
     openai: openAIInstrumentation,
     cohere: cohereInstrumentation,
@@ -150,14 +148,16 @@ export const init: LangTraceInit = ({
     qdrant: qdrantInstrumentation,
     weaviate: weaviateInstrumentation,
     pg: pgInstrumentation,
+    ai: vercelAIInstrumentation,
     ollama: ollamaInstrumentation
   }
 
   if (instrumentations === undefined) {
     registerInstrumentations({
-      instrumentations: getInstrumentations(disable_instrumentations, allInstrumentations),
+      instrumentations: Object.values(allInstrumentations).filter((instrumentation) => instrumentation !== undefined),
       tracerProvider: provider
     })
+    disableInstrumentations(disable_instrumentations, allInstrumentations)
   } else {
     Object.entries(instrumentations).forEach(([key, value]) => {
       if (value !== undefined) {
@@ -165,11 +165,12 @@ export const init: LangTraceInit = ({
       }
     })
     registerInstrumentations({ tracerProvider: provider })
+    disableInstrumentations(disable_instrumentations, allInstrumentations, instrumentations)
   }
   global.langtrace_initalized = true
 }
 
-const getInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<Vendor, InstrumentationBase>): InstrumentationBase[] => {
+const disableInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<Vendor, any>, modules?: { [key in Vendor]?: any }): InstrumentationBase[] => {
   if (disable_instrumentations.only !== undefined && disable_instrumentations.all_except !== undefined) {
     throw new Error('Cannot specify both only and all_except in disable_instrumentations')
   }
@@ -180,14 +181,21 @@ const getInstrumentations = (disable_instrumentations: { all_except?: string[], 
       }
       if (disable_instrumentations.all_except !== undefined) {
         if (!disable_instrumentations.all_except.includes(key as Vendor)) {
-          instrumentation.disable()
+          if (modules !== undefined && modules[key as Vendor] !== undefined) {
+            instrumentation._unpatch(modules[key as Vendor])
+          } else {
+            instrumentation.disable()
+          }
           return false
         }
       }
       if (disable_instrumentations.only !== undefined) {
         if (disable_instrumentations.only.includes(key as Vendor)) {
-          instrumentation.disable()
-          return false
+          if (modules !== undefined && modules[key as Vendor] !== undefined) {
+            instrumentation._unpatch(modules[key as Vendor])
+          } else {
+            instrumentation.disable()
+          }
         }
       }
       return true
