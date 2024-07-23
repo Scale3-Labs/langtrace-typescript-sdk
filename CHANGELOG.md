@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 4.1.0
+
+### Minor Changes
+
+- Added support for vercel AI sdk and a few bug fixes
+
 ## 4.0.1
 
 ### Patch Changes
