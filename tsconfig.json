@@ -30,6 +30,9 @@
             "@langtrace-utils/*": [
                 "utils/*"
             ],
+            "@langtrace-module-wrappers/*": [
+                "module-wrappers/*"
+            ],
         },
     },
     "include": [

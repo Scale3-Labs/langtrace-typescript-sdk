@@ -1,5 +1,3 @@
-// import { chatCompletionStreaming } from '@langtrace-examples/openai/chat-completion-streaming'
+import { basicStream } from '@langtrace-examples/vercel/basic'
 
-import { chatStreamed } from '@langtrace-examples/ollama/basic'
-
-void chatStreamed()
+void basicStream()
