@@ -32,6 +32,7 @@ export async function streamTextPatchOpenAI (
     'langtrace.sdk.name': sdkName,
     'langtrace.service.name': Vendors.VERCEL,
     'langtrace.service.type': 'framework',
+    'gen_ai.operation.name': 'chat',
     'langtrace.service.version': version,
     'langtrace.version': langtraceVersion,
     'gen_ai.request.model': args[0]?.model?.modelId,
@@ -64,7 +65,7 @@ export async function streamTextPatchOpenAI (
           get (target, prop) {
             if (prop === 'fullStream' || prop === 'textStream') {
               const promptContent: string = args[0].messages.map((message: any) => message?.content).join(' ')
-              const promptTokens = calculatePromptTokens(promptContent, attributes['gen_ai.request.model'] as string)
+              const promptTokens = calculatePromptTokens(promptContent, attributes['gen_ai.request.model'])
               return handleOpenAIStreamResponse(span, target[prop], { ...attributes, ...responseAttributes }, promptTokens)
             }
             return target[prop]
@@ -110,6 +111,7 @@ export async function generateTextPatchOpenAI (
     'langtrace.service.name': Vendors.VERCEL,
     'langtrace.service.type': 'framework',
     'langtrace.service.version': version,
+    'gen_ai.operation.name': 'chat',
     'langtrace.version': langtraceVersion,
     'gen_ai.request.model': args[0]?.model?.modelId,
     'url.full': '',
@@ -138,8 +140,8 @@ export async function generateTextPatchOpenAI (
         const responseAttributes: Partial<LLMSpanAttributes> = {
           'url.full': url,
           'url.path': path,
-          'gen_ai.usage.prompt_tokens': resp.usage.promptTokens,
-          'gen_ai.usage.completion_tokens': resp.usage.completionTokens
+          'gen_ai.usage.input_tokens': resp.usage.promptTokens,
+          'gen_ai.usage.output_tokens': resp.usage.completionTokens
         }
         span.setAttributes({ ...attributes, ...responseAttributes })
         span.setStatus({ code: SpanStatusCode.OK })
@@ -183,6 +185,7 @@ export async function embedPatchOpenAI (
     'langtrace.sdk.name': sdkName,
     'langtrace.service.name': Vendors.VERCEL,
     'langtrace.service.type': 'framework',
+    'gen_ai.operation.name': 'embed',
     'langtrace.service.version': version,
     'langtrace.version': langtraceVersion,
     'gen_ai.request.model': args[0]?.model?.modelId,
@@ -204,8 +207,8 @@ export async function embedPatchOpenAI (
           'url.full': url,
           'url.path': path,
           'gen_ai.usage.total_tokens': Number.isNaN(resp?.usage?.tokens) ? undefined : resp?.usage?.tokens,
-          'gen_ai.usage.prompt_tokens': resp.usage.promptTokens,
-          'gen_ai.usage.completion_tokens': resp.usage.completionTokens
+          'gen_ai.usage.input_tokens': resp.usage.promptTokens,
+          'gen_ai.usage.output_tokens': resp.usage.completionTokens
         }
         span.setAttributes({ ...attributes, ...responseAttributes })
         span.setStatus({ code: SpanStatusCode.OK })
@@ -236,12 +239,12 @@ async function * handleOpenAIStreamResponse (
       const content: string = chunk.textDelta ?? chunk
       completionTokens += estimateTokens(content)
       if (chunk?.type === 'finish') {
-        inputAttributes['gen_ai.usage.completion_tokens'] = chunk?.usage?.completionTokens
-        inputAttributes['gen_ai.usage.prompt_tokens'] = chunk?.usage?.promptTokens
+        inputAttributes['gen_ai.usage.output_tokens'] = chunk?.usage?.completionTokens
+        inputAttributes['gen_ai.usage.input_tokens'] = chunk?.usage?.promptTokens
         inputAttributes['gen_ai.usage.total_tokens'] = chunk?.usage?.totalTokens
       } else {
-        inputAttributes['gen_ai.usage.completion_tokens'] = completionTokens
-        inputAttributes['gen_ai.usage.prompt_tokens'] = promptTokens
+        inputAttributes['gen_ai.usage.output_tokens'] = completionTokens
+        inputAttributes['gen_ai.usage.input_tokens'] = promptTokens
         inputAttributes['gen_ai.usage.total_tokens'] = promptTokens + completionTokens
       }
       if (content !== undefined && content.length > 0) {
