@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/instrumentation'
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
@@ -31,7 +32,6 @@ import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/ins
 import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrumentation'
 import { DiagConsoleLogger, DiagLogLevel, diag } from '@opentelemetry/api'
 import { weaviateInstrumentation } from '@langtrace-instrumentation/weaviate/instrumentation'
-import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
 import c from 'ansi-colors'
 import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation'
 import { ollamaInstrumentation } from '@langtrace-instrumentation/ollama/instrumentation'

@@ -2,7 +2,7 @@
 import { init } from '@langtrace-init/init'
 import ollama from 'ollama'
 
-init({ write_spans_to_console: true })
+init({ write_spans_to_console: false })
 export const chatNonStreamed = async (): Promise<void> => {
   const response = await ollama.chat({
     model: 'llama3',

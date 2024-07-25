@@ -74,6 +74,7 @@ class OllamaInstrumentation extends InstrumentationBase<any> {
   private _unpatch (ollama: any): void {
     this._unwrap(ollama.Ollama.prototype, 'chat')
     this._unwrap(ollama.Ollama.prototype, 'generate')
+    this._unwrap(ollama.Ollama.prototype, 'embeddings')
   }
 }
 

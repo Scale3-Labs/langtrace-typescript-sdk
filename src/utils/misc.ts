@@ -18,6 +18,7 @@ import axios from 'axios'
 // eslint-disable-next-line no-restricted-imports
 import { name, version } from '../../package.json'
 import { ansiRegex } from 'ansi-colors'
+import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api'
 
 /**
  *
@@ -103,3 +104,4 @@ export function createStreamProxy (stream: any, generatorFuncResponse: any): any
     }
   })
 }
+diag.setLogger(new DiagConsoleLogger(), { logLevel: DiagLogLevel.ALL, suppressOverrideMessage: true })
