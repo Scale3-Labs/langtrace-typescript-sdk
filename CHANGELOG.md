@@ -1,11 +1,5 @@
 # @langtrase/typescript-sdk
 
-## 4.1.1
-
-### Patch Changes
-
-- Bug fixes
-
 ## 4.1.0
 
 ### Minor Changes
