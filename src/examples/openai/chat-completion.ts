@@ -5,12 +5,12 @@ import dotenv from 'dotenv'
 import OpenAI from 'openai'
 dotenv.config()
 
-init()
+init({ write_spans_to_console: false, batch: false })
 
 export async function chatCompletion (): Promise<void> {
   const openai = new OpenAI()
 
-  await withLangTraceRootSpan(async (spanId, traceId) => {
+  await withLangTraceRootSpan(async () => {
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
