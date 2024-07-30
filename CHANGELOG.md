@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 5.0.0
+
+### Major Changes
+
+- Make attributes genai compatible and bug fixes
+
 ## 4.1.0
 
 ### Minor Changes

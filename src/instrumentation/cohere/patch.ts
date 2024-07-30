@@ -45,6 +45,7 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': this._options.clientName ?? 'cohere',
       'langtrace.service.type': 'llm',
+      'gen_ai.operation.name': 'chat',
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
@@ -78,8 +79,8 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
         prompts.push({ role: 'user', content: request.message })
         const response = await original.apply(this, [request, requestOptions])
         const responseAttributes: Partial<LLMSpanAttributes> = {
-          'gen_ai.usage.prompt_tokens': response.meta?.billedUnits?.inputTokens,
-          'gen_ai.usage.completion_tokens': response.meta?.billedUnits?.outputTokens,
+          'gen_ai.usage.output_tokens': response.meta?.billedUnits?.inputTokens,
+          'gen_ai.usage.input_tokens': response.meta?.billedUnits?.outputTokens,
           'gen_ai.usage.total_tokens': Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0),
           'gen_ai.usage.search_units': response.meta?.billedUnits?.searchUnits,
           'gen_ai.response_id': response.response_id,
@@ -112,6 +113,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': this._options.clientName ?? 'cohere',
       'langtrace.service.type': 'llm',
+      'gen_ai.operation.name': 'chat',
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
@@ -157,6 +159,7 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': this._options.clientName ?? 'cohere',
       'langtrace.service.type': 'llm',
+      'gen_ai.operation.name': 'embed',
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
@@ -173,8 +176,8 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {
         const response = await original.apply(this, [request, requestOptions])
-        attributes['gen_ai.usage.completion_tokens'] = response.meta?.billedUnits?.outputTokens
-        attributes['gen_ai.usage.prompt_tokens'] = response.meta?.billedUnits?.inputTokens
+        attributes['gen_ai.usage.input_tokens'] = response.meta?.billedUnits?.outputTokens
+        attributes['gen_ai.usage.output_tokens'] = response.meta?.billedUnits?.inputTokens
         attributes['gen_ai.usage.total_tokens'] = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['gen_ai.usage.search_units'] = response.meta?.billedUnits?.searchUnits
         span.setAttributes(attributes)
@@ -215,8 +218,8 @@ export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {
         const response = await original.apply(this, [request, requestOptions])
-        attributes['gen_ai.usage.completion_tokens'] = response.meta?.billedUnits?.outputTokens
-        attributes['gen_ai.usage.prompt_tokens'] = response.meta?.billedUnits?.inputTokens
+        attributes['gen_ai.usage.input_tokens'] = response.meta?.billedUnits?.outputTokens
+        attributes['gen_ai.usage.output_tokens'] = response.meta?.billedUnits?.inputTokens
         attributes['gen_ai.usage.total_tokens'] = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['gen_ai.usage.search_units'] = response.meta?.billedUnits?.searchUnits
         span.setAttributes(attributes)
@@ -245,7 +248,8 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
       'url.path': APIS.cohere.RERANK.ENDPOINT,
-      'gen_ai.request.model': request.model,
+      'gen_ai.request.model': request.model ?? '',
+      'gen_ai.operation.name': 'rerank',
       'http.max.retries': requestOptions?.maxRetries,
       'gen_ai.request.documents': JSON.stringify(request.documents),
       'gen_ai.request.top_k': request.topN,
@@ -258,9 +262,9 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
         const response = await original.apply(this, [request, requestOptions])
         attributes['gen_ai.cohere.rerank.results'] = JSON.stringify(response.results)
         attributes['gen_ai.response_id'] = response.id
-        attributes['gen_ai.usage.completion_tokens'] = response.meta?.billedUnits?.outputTokens
+        attributes['gen_ai.usage.input_tokens'] = response.meta?.billedUnits?.outputTokens
         attributes['gen_ai.usage.total_tokens'] = Number(response.meta?.billedUnits?.inputTokens ?? 0) + Number(response.meta?.billedUnits?.outputTokens ?? 0)
-        attributes['gen_ai.usage.prompt_tokens'] = response.meta?.billedUnits?.inputTokens
+        attributes['gen_ai.usage.output_tokens'] = response.meta?.billedUnits?.inputTokens
         attributes['gen_ai.usage.search_units'] = response.meta?.billedUnits?.searchUnits
 
         span.setAttributes(attributes)
@@ -293,8 +297,8 @@ async function * handleStream (stream: any, attributes: LLMSpanAttributes, span:
           response = { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role === 'SYSTEM' ? 'system' : 'user', content: chat.response.text }
         }
         span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(response) })
-        attributes['gen_ai.usage.completion_tokens'] = chat.response.meta?.billedUnits?.outputTokens
-        attributes['gen_ai.usage.prompt_tokens'] = chat.response.meta?.billedUnits?.inputTokens
+        attributes['gen_ai.usage.input_tokens'] = chat.response.meta?.billedUnits?.outputTokens
+        attributes['gen_ai.usage.output_tokens'] = chat.response.meta?.billedUnits?.inputTokens
         attributes['gen_ai.usage.total_tokens'] = Number(chat.response.meta?.billedUnits?.inputTokens ?? 0) + Number(chat.response.meta?.billedUnits?.outputTokens ?? 0)
         attributes['gen_ai.usage.search_units'] = chat.response.meta?.billedUnits?.searchUnits
         attributes['gen_ai.response.tool_calls'] = chat.response.toolCalls !== undefined ? JSON.stringify(chat.response.toolCalls) : undefined

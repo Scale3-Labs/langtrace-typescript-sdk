@@ -46,6 +46,7 @@ export function imageEdit (
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
+      'gen_ai.operation.name': 'image_edit',
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
@@ -104,6 +105,7 @@ export function imagesGenerate (
 
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
+      'gen_ai.operation.name': 'images_generate',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
@@ -159,6 +161,7 @@ export function chatCompletionCreate (
     }
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
+      'gen_ai.operation.name': 'chat',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,
@@ -208,8 +211,8 @@ export function chatCompletionCreate (
             const responseAttributes: Partial<LLMSpanAttributes> = {
               'gen_ai.response.model': resp.model,
               'gen_ai.system_fingerprint': resp.system_fingerprint,
-              'gen_ai.usage.prompt_tokens': resp.usage.prompt_tokens,
-              'gen_ai.usage.completion_tokens': resp.usage.completion_tokens,
+              'gen_ai.usage.output_tokens': resp.usage.prompt_tokens,
+              'gen_ai.usage.input_tokens': resp.usage.completion_tokens,
               'gen_ai.usage.total_tokens': Number(resp.usage.prompt_tokens ?? 0) + Number(resp.usage.completion_tokens ?? 0)
             }
             span.setAttributes({ ...attributes, ...responseAttributes })
@@ -282,8 +285,8 @@ async function * handleStreamResponse (
     span.setStatus({ code: SpanStatusCode.OK })
     const attributes: Partial<LLMSpanAttributes> = {
       'gen_ai.response.model': model,
-      'gen_ai.usage.prompt_tokens': promptTokens,
-      'gen_ai.usage.completion_tokens': completionTokens,
+      'gen_ai.usage.output_tokens': promptTokens,
+      'gen_ai.usage.input_tokens': completionTokens,
       'gen_ai.usage.total_tokens': promptTokens + completionTokens,
       ...customAttributes
     }
@@ -315,6 +318,7 @@ export function embeddingsCreate (
     }
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
+      'gen_ai.operation.name': 'embed',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
       'langtrace.service.version': version,

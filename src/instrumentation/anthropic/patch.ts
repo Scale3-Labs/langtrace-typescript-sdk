@@ -56,6 +56,7 @@ export function messagesCreate (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
+      'gen_ai.operation.name': 'chat',
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
       'url.full': this?._client?.baseURL,
@@ -85,8 +86,8 @@ export function messagesCreate (
             span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(resp.content.map((c: any) => ({ content: c.text, role: 'assistant' }))) })
             span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
             const respAttributes: Partial<LLMSpanAttributes> = {
-              'gen_ai.usage.completion_tokens': resp.usage.output_tokens,
-              'gen_ai.usage.prompt_tokens': resp.usage.input_tokens,
+              'gen_ai.usage.input_tokens': resp.usage.output_tokens,
+              'gen_ai.usage.output_tokens': resp.usage.input_tokens,
               'gen_ai.usage.total_tokens': Number(resp.usage.output_tokens ?? 0) + Number(resp.usage.input_tokens ?? 0)
             }
             span.setAttributes({ ...attributes, ...respAttributes })
@@ -135,8 +136,8 @@ async function * handleStreamResponse (span: Span, stream: any, attributes: LLMS
       span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify([{ content: result.join(''), role: streamStartMessage.role }]) })
       const responseAttributes: Partial<LLMSpanAttributes> = {
         'gen_ai.response.model': streamStartMessage.model,
-        'gen_ai.usage.completion_tokens': streamStartMessage.usage.output_tokens,
-        'gen_ai.usage.prompt_tokens': streamStartMessage.usage.input_tokens,
+        'gen_ai.usage.input_tokens': streamStartMessage.usage.output_tokens,
+        'gen_ai.usage.output_tokens': streamStartMessage.usage.input_tokens,
         'gen_ai.usage.total_tokens': Number(streamStartMessage.usage.output_tokens ?? 0) + Number(streamStartMessage.usage.input_tokens ?? 0)
       }
       span.setAttributes({ ...attributes, ...responseAttributes })

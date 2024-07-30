@@ -37,6 +37,7 @@ export const generateStreamPatch = (original: GenerateStreamFn, tracer: Tracer, 
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': 'ollama',
+      'gen_ai.operation.name': 'generate',
       'langtrace.service.type': 'llm',
       'langtrace.service.version': moduleVersion,
       'langtrace.version': langtraceVersion,
@@ -75,6 +76,7 @@ export const generatePatchNonStreamed = (original: GenerateFn, tracer: Tracer, l
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': 'ollama',
+      'gen_ai.operation.name': 'generate',
       'langtrace.service.type': 'llm',
       'langtrace.service.version': moduleVersion,
       'langtrace.version': langtraceVersion,
@@ -99,8 +101,8 @@ export const generatePatchNonStreamed = (original: GenerateFn, tracer: Tracer, l
           const resp = await original.apply(this, [generateRequest])
           const responses = [{ content: resp.response, role: 'assistant' }]
           span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(responses) })
-          attributes['gen_ai.usage.prompt_tokens'] = resp?.prompt_eval_count
-          attributes['gen_ai.usage.completion_tokens'] = resp?.eval_count
+          attributes['gen_ai.usage.output_tokens'] = resp?.prompt_eval_count
+          attributes['gen_ai.usage.input_tokens'] = resp?.eval_count
           attributes['gen_ai.usage.total_tokens'] = Number(resp?.prompt_eval_count ?? 0) + Number(resp?.eval_count ?? 0)
           attributes['gen_ai.response.model'] = resp.model
 
@@ -121,6 +123,7 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': 'ollama',
+      'gen_ai.operation.name': 'chat',
       'langtrace.service.type': 'llm',
       'langtrace.service.version': moduleVersion,
       'langtrace.version': langtraceVersion,
@@ -145,8 +148,8 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
           const responses = [{ content: resp.message.content, role: resp.message.role.toLowerCase() }]
           span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
           span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(responses) })
-          attributes['gen_ai.usage.prompt_tokens'] = resp?.prompt_eval_count
-          attributes['gen_ai.usage.completion_tokens'] = resp?.eval_count
+          attributes['gen_ai.usage.output_tokens'] = resp?.prompt_eval_count
+          attributes['gen_ai.usage.input_tokens'] = resp?.eval_count
           attributes['gen_ai.usage.total_tokens'] = Number(resp?.prompt_eval_count ?? 0) + Number(resp?.eval_count ?? 0)
           attributes['gen_ai.response.model'] = resp.model
 
@@ -166,6 +169,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': 'ollama',
+      'gen_ai.operation.name': 'chat',
       'langtrace.service.type': 'llm',
       'langtrace.service.version': moduleVersion,
       'langtrace.version': langtraceVersion,
@@ -199,6 +203,7 @@ export const embeddingsPatch = (original: EmbeddingsFn, tracer: Tracer, langtrac
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': 'ollama',
       'langtrace.service.type': 'llm',
+      'gen_ai.operation.name': 'embed',
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': this.config.host,
@@ -234,8 +239,8 @@ async function * handleChatStream (stream: AsyncIterable<any>, attributes: LLMSp
       span.addEvent(Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ content: chunk.response ?? '', role: 'assistant' }) })
       responseReconstructed.push(chunk.message.content as string ?? '')
       if (chunk.done === true) {
-        attributes['gen_ai.usage.prompt_tokens'] = chunk?.prompt_eval_count
-        attributes['gen_ai.usage.completion_tokens'] = chunk?.eval_count
+        attributes['gen_ai.usage.output_tokens'] = chunk?.prompt_eval_count
+        attributes['gen_ai.usage.input_tokens'] = chunk?.eval_count
         attributes['gen_ai.usage.total_tokens'] = Number(chunk?.prompt_eval_count ?? 0) + Number(chunk?.eval_count ?? 0)
         attributes['gen_ai.response.model'] = chunk.model
       }
@@ -261,8 +266,8 @@ async function * handleGenerateStream (stream: AsyncIterable<any>, attributes: L
       span.addEvent(Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ content: chunk.response ?? '', role: 'assistant' }) })
       responseReconstructed.push(chunk.response as string ?? '')
       if (chunk.done === true) {
-        attributes['gen_ai.usage.prompt_tokens'] = chunk?.prompt_eval_count
-        attributes['gen_ai.usage.completion_tokens'] = chunk?.eval_count
+        attributes['gen_ai.usage.output_tokens'] = chunk?.prompt_eval_count
+        attributes['gen_ai.usage.input_tokens'] = chunk?.eval_count
         attributes['gen_ai.usage.total_tokens'] = Number(chunk?.prompt_eval_count ?? 0) + Number(chunk?.eval_count ?? 0)
         attributes['gen_ai.response.model'] = chunk.model
       }
