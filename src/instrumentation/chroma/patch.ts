@@ -15,6 +15,7 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
+import { addSpanEvent } from '@langtrace-utils/misc'
 import { APIS, DatabaseSpanAttributes, Vendors, Event } from '@langtrase/trace-attributes'
 
 import {
@@ -60,8 +61,8 @@ export function collectionPatch (
     if (this.embeddingFunction?.model !== undefined) {
       attributes['db.chromadb.embedding_model'] = this.embeddingFunction.model
     }
-
-    const span = tracer.startSpan(api.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? api.METHOD
+    const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await context.with(
       trace.setSpan(context.active(), span),
@@ -69,7 +70,7 @@ export function collectionPatch (
         try {
           // NOTE: Not tracing the response data as it can contain sensitive information
           const response = await originalMethod.apply(this, args)
-          if (response !== undefined) span.addEvent(Event.RESPONSE, { 'db.response': JSON.stringify(response) })
+          if (response !== undefined) addSpanEvent(span, Event.RESPONSE, { 'db.response': JSON.stringify(response) })
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
           return response

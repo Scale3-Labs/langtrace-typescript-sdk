@@ -45,7 +45,8 @@ export function genericPatch (
       'llamaindex.task.name': task,
       ...customAttributes
     }
-    const span = tracer.startSpan(method, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? method
+    const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
     return await context.with(
       trace.setSpan(context.active(), span),
       async () => {

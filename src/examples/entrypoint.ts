@@ -1,3 +1,3 @@
-import { basicStream } from '@langtrace-examples/vercel/basic'
+import { basic } from '@langtrace-examples/vercel/basic'
 
-void basicStream()
+void basic()
