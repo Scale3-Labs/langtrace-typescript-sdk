@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { Vendor } from '@langtrase/trace-attributes'
-import { VendorTracedFunctions } from '@langtrase/trace-attributes/dist/constants/common'
+import { FrameworkSpanAttributeNames, Vendor } from '@langtrase/trace-attributes'
+import { DatabaseSpanAttributeNames, LLMSpanAttributeNames, VendorTracedFunctions } from '@langtrase/trace-attributes/dist/constants/common'
 import { DiagLogLevel, DiagLogger } from '@opentelemetry/api'
 import { SpanExporter } from '@opentelemetry/sdk-trace-base'
 
@@ -37,6 +37,9 @@ export interface LangtraceInitOptions {
   disable_latest_version_check?: boolean
   disable_tracing_for_functions?: Partial<VendorTracedFunctions>
   instrumentations?: { [key in Vendor]?: any }
+  disable_tracing_attributes?: DropAttributes
 }
+
+type DropAttributes = typeof LLMSpanAttributeNames | typeof DatabaseSpanAttributeNames | typeof FrameworkSpanAttributeNames
 
 export type LangTraceInit = (options?: LangtraceInitOptions) => void

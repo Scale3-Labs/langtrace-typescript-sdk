@@ -15,6 +15,7 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
+import { addSpanEvent } from '@langtrace-utils/misc'
 import { APIS, DatabaseSpanAttributes, Event, Vendors } from '@langtrase/trace-attributes'
 import { Exception, SpanKind, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api'
 
@@ -41,14 +42,14 @@ export function genericCollectionPatch (
       'db.query': JSON.stringify(args),
       ...customAttributes
     }
-
-    const span = tracer.startSpan(api.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? api.METHOD
+    const span = tracer.startSpan(spanName, { attributes, kind: SpanKind.CLIENT }, context.active())
     return await context.with(
       trace.setSpan(context.active(), span),
       async () => {
         try {
           const response = await originalMethod.apply(this, args)
-          if (response !== undefined) span.addEvent(Event.RESPONSE, { 'db.response': JSON.stringify(response) })
+          if (response !== undefined) addSpanEvent(span, Event.RESPONSE, { 'db.response': JSON.stringify(response) })
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
 

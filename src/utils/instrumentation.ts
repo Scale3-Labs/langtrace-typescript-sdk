@@ -59,7 +59,7 @@ export async function withLangTraceRootSpan<T> (
  * @param attributes custom attributes to be added to the current context
  * @returns result of the function
  */
-export async function withAdditionalAttributes <T> (fn: () => Promise<T>, attributes: Record<string, any> | Promise<Record<string, any>>): Promise<T> {
+export async function withAdditionalAttributes <T> (fn: () => Promise<T>, attributes: { [key: string]: any, 'langtrace.span.name'?: string } | Promise<{ [key: string]: any, 'langtrace.span.name'?: string }>): Promise<T> {
   const currentContext = context.active()
   const contextWithAttributes = currentContext.setValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, attributes)
   if (attributes instanceof Promise) {

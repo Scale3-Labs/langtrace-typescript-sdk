@@ -36,7 +36,7 @@ import {
   ICreateEmbedJobResponse
 } from '@langtrace-instrumentation/cohere/types'
 import { APIS, LLMSpanAttributes, Event } from '@langtrase/trace-attributes'
-import { createStreamProxy } from '@langtrace-utils/misc'
+import { addSpanEvent, createStreamProxy } from '@langtrace-utils/misc'
 
 export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: ICohereClient, request: IChatRequest, requestOptions?: IRequestOptions): Promise<INonStreamedChatResponse> {
@@ -66,7 +66,8 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.cohere.CHAT.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.cohere.CHAT.METHOD
+    const span = tracer.startSpan(spanName, { attributes, kind: SpanKind.CLIENT }, context.active())
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {
         const prompts: Array<{ role: string, content: string }> = []
@@ -86,11 +87,11 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
           'gen_ai.response_id': response.response_id,
           'gen_ai.response.tool_calls': response.toolCalls !== undefined ? JSON.stringify(response.toolCalls) : undefined
         }
-        span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
+        addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
         if (response.chatHistory !== undefined) {
-          span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(response.chatHistory.map((chat) => { return { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role.toLowerCase(), content: chat.message } })) })
+          addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(response.chatHistory.map((chat) => { return { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role.toLowerCase(), content: chat.message } })) })
         } else {
-          span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify([{ role: 'assistant', content: response.text }]) })
+          addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify([{ role: 'assistant', content: response.text }]) })
         }
         span.setAttributes({ ...attributes, ...responseAttributes })
         span.setStatus({ code: SpanStatusCode.OK })
@@ -135,7 +136,8 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.cohere.CHAT_STREAM.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.cohere.CHAT_STREAM.METHOD
+    const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
     return await context.with(trace.setSpan(context.active(), span), async () => {
       const prompts: Array<{ role: string, content: string }> = []
       if (request.preamble !== undefined && request.preamble !== '') {
@@ -145,7 +147,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
         prompts.push(...request.chatHistory.map((chat) => { return { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role.toLowerCase(), content: chat.message } }))
       }
       prompts.push({ role: 'user', content: request.message })
-      span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
+      addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
       const response = await original.apply(this, [request, requestOptions])
       return createStreamProxy(response, handleStream(response, attributes, span))
     })
@@ -172,7 +174,8 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.cohere.EMBED.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.cohere.EMBED.METHOD
+    const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {
         const response = await original.apply(this, [request, requestOptions])
@@ -214,7 +217,8 @@ export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.cohere.EMBED_JOBS.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.cohere.EMBED_JOBS.METHOD
+    const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {
         const response = await original.apply(this, [request, requestOptions])
@@ -256,7 +260,8 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.cohere.RERANK.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.cohere.RERANK.METHOD
+    const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {
         const response = await original.apply(this, [request, requestOptions])
@@ -283,20 +288,20 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
 
 async function * handleStream (stream: any, attributes: LLMSpanAttributes, span: Span): any {
   try {
-    span.addEvent(Event.STREAM_START)
+    addSpanEvent(span, Event.STREAM_START)
     for await (const chat of stream) {
       if (chat.eventType === 'text-generation') {
-        span.addEvent(Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ role: 'assistant', content: chat.text }) })
+        addSpanEvent(span, Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ role: 'assistant', content: chat.text }) })
       }
       if (chat.eventType === 'stream-end') {
-        span.addEvent(Event.STREAM_END)
+        addSpanEvent(span, Event.STREAM_END)
         let response: Array<{ role: string, content: string }> | { role: string, content: string } = []
         if (chat.response.chatHistory !== undefined) {
           response = chat.response.chatHistory.map((chat: any) => { return { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role.toLowerCase(), content: chat.message } })
         } else {
           response = { role: chat.role === 'CHATBOT' ? 'assistant' : chat.role === 'SYSTEM' ? 'system' : 'user', content: chat.response.text }
         }
-        span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(response) })
+        addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(response) })
         attributes['gen_ai.usage.input_tokens'] = chat.response.meta?.billedUnits?.outputTokens
         attributes['gen_ai.usage.output_tokens'] = chat.response.meta?.billedUnits?.inputTokens
         attributes['gen_ai.usage.total_tokens'] = Number(chat.response.meta?.billedUnits?.inputTokens ?? 0) + Number(chat.response.meta?.billedUnits?.outputTokens ?? 0)
