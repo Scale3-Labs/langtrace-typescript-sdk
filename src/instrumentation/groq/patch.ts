@@ -4,7 +4,7 @@ import {
 } from '@langtrace-instrumentation/groq/types'
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { APIS, LLMSpanAttributes, Event } from '@langtrase/trace-attributes'
-import { createStreamProxy } from '@langtrace-utils/misc'
+import { addSpanEvent, createStreamProxy } from '@langtrace-utils/misc'
 
 export const chatPatch = (original: ChatStreamFn | ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: IGroqClient, body: IChatCompletionCreateParamsStreaming | IChatCompletionCreateParamsNonStreaming,
@@ -43,7 +43,8 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
       'gen_ai.request.tools': JSON.stringify(body.tools),
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.groq.CHAT_COMPLETION.METHOD, { attributes, kind: SpanKind.CLIENT }, context.active())
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.groq.CHAT_COMPLETION.METHOD
+    const span = tracer.startSpan(spanName, { attributes, kind: SpanKind.CLIENT }, context.active())
     return await context.with(
       trace.setSpan(context.active(), span),
       async () => {
@@ -58,7 +59,7 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
             }
             return result
           })
-          span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(responses) })
+          addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(responses) })
           attributes['gen_ai.system_fingerprint'] = resp?.system_fingerprint
           attributes['gen_ai.response.model'] = resp.model
           attributes['gen_ai.usage.output_tokens'] = resp?.usage?.prompt_tokens
@@ -102,7 +103,8 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
       'gen_ai.request.tools': JSON.stringify(body.tools),
       ...customAttributes
     }
-    const span = tracer.startSpan(APIS.groq.CHAT_COMPLETION.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.groq.CHAT_COMPLETION.METHOD
+    const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
     return await context.with(
       trace.setSpan(context.active(), span),
       async () => {
@@ -115,7 +117,7 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
 async function * handleStream (stream: AsyncIterable<any>, attributes: LLMSpanAttributes, span: Span): any {
   const responseReconstructed: string[] = []
   try {
-    span.addEvent(Event.STREAM_START)
+    addSpanEvent(span, Event.STREAM_START)
     let role: string | undefined
     for await (const chunk of stream) {
       const content = chunk.choices[0].delta.content as string
@@ -124,7 +126,7 @@ async function * handleStream (stream: AsyncIterable<any>, attributes: LLMSpanAt
         role = r
       }
       if (content !== undefined) {
-        span.addEvent(Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ role, content }) })
+        addSpanEvent(span, Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ role, content }) })
       }
       responseReconstructed.push(chunk.choices[0].delta.content as string ?? '')
 
@@ -137,8 +139,8 @@ async function * handleStream (stream: AsyncIterable<any>, attributes: LLMSpanAt
       }
       yield chunk
     }
-    span.addEvent(Event.STREAM_END)
-    span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify([{ role: 'assistant', content: responseReconstructed.join('') }]) })
+    addSpanEvent(span, Event.STREAM_END)
+    addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify([{ role: 'assistant', content: responseReconstructed.join('') }]) })
     span.setAttributes(attributes)
     span.setStatus({ code: SpanStatusCode.OK })
   } catch (error: unknown) {

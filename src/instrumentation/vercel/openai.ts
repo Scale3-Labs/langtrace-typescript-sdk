@@ -1,5 +1,6 @@
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { calculatePromptTokens, estimateTokens } from '@langtrace-utils/llm'
+import { addSpanEvent } from '@langtrace-utils/misc'
 import { FrameworkSpanAttributes, LLMSpanAttributes, Vendors, Event } from '@langtrase/trace-attributes'
 import { Tracer, context, SpanKind, trace, Exception, SpanStatusCode, Span } from '@opentelemetry/api'
 
@@ -50,13 +51,14 @@ export async function streamTextPatchOpenAI (
     'gen_ai.request.tools': JSON.stringify(args[0]?.tools),
     ...customAttributes
   }
-  const span = tracer.startSpan(method, { kind: SpanKind.CLIENT, attributes }, context.active())
+  const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? method
+  const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
   return await context.with(
     trace.setSpan(context.active(), span),
     async () => {
       try {
         const resp: any = await originalMethod.apply(this, args)
-        span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(args[0]?.messages) })
+        addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(args[0]?.messages) })
         const responseAttributes: Partial<LLMSpanAttributes> = {
           'url.full': url,
           'url.path': path
@@ -128,15 +130,16 @@ export async function generateTextPatchOpenAI (
     'gen_ai.request.tools': JSON.stringify(args[0]?.tools),
     ...customAttributes
   }
-  const span = tracer.startSpan(method, { kind: SpanKind.CLIENT, attributes }, context.active())
+  const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? method
+  const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
   return await context.with(
     trace.setSpan(context.active(), span),
     async () => {
       try {
         const resp = await originalMethod.apply(this, args)
         const responses = JSON.stringify(resp?.responseMessages)
-        span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(args[0]?.messages) })
-        span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': responses })
+        addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(args[0]?.messages) })
+        addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': responses })
         const responseAttributes: Partial<LLMSpanAttributes> = {
           'url.full': url,
           'url.path': path,
@@ -197,7 +200,8 @@ export async function embedPatchOpenAI (
     'gen_ai.user': args[0]?.model?.settings?.user,
     ...customAttributes
   }
-  const span = tracer.startSpan(method, { kind: SpanKind.CLIENT, attributes }, context.active())
+  const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? method
+  const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
   return await context.with(
     trace.setSpan(context.active(), span),
     async () => {
@@ -233,7 +237,7 @@ async function * handleOpenAIStreamResponse (
   const result: string[] = []
   let completionTokens = 0
   const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
-  span.addEvent(Event.STREAM_START)
+  addSpanEvent(span, Event.STREAM_START)
   try {
     for await (const chunk of stream) {
       const content: string = chunk.textDelta ?? chunk
@@ -249,12 +253,12 @@ async function * handleOpenAIStreamResponse (
       }
       if (content !== undefined && content.length > 0) {
         result.push(content)
-        span.addEvent(Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ role: 'assistant', content }) })
+        addSpanEvent(span, Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ role: 'assistant', content }) })
       }
       yield chunk
     }
-    span.addEvent(Event.STREAM_END)
-    span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': result.length > 0 ? JSON.stringify([{ role: 'assistant', content: result.join('') }]) : undefined })
+    addSpanEvent(span, Event.STREAM_END)
+    addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': result.length > 0 ? JSON.stringify([{ role: 'assistant', content: result.join('') }]) : undefined })
     span.setStatus({ code: SpanStatusCode.OK })
     span.setAttributes({ ...inputAttributes, ...customAttributes })
   } catch (error: any) {
