@@ -15,7 +15,7 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { setValueFromPath, getValueFromPath } from '@langtrace-utils/misc'
+import { setValueFromPath, getValueFromPath, addSpanEvent } from '@langtrace-utils/misc'
 import { DatabaseSpanAttributes, queryTypeToFunctionToProps, Event, Vendors } from '@langtrase/trace-attributes'
 import { Exception, SpanKind, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api'
 
@@ -76,13 +76,14 @@ export const patchBuilderFunctions = function (this: any, { clientInstance, clie
                     'db.query': JSON.stringify(queryObj),
                     ...customAttributes
                   }
-                  const span = tracer.startSpan(`${queryType}.${func}.do`, { kind: SpanKind.CLIENT, attributes }, context.active())
+                  const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? `${queryType}.${func}.do`
+                  const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
                   return await context.with(
                     trace.setSpan(context.active(), span),
                     async () => {
                       try {
                         const resp = await originalDo.apply(this, doArgs)
-                        if (resp !== undefined) span.addEvent(Event.RESPONSE, { 'db.response': JSON.stringify(resp) })
+                        if (resp !== undefined) addSpanEvent(span, Event.RESPONSE, { 'db.response': JSON.stringify(resp) })
                         span.setStatus({ code: SpanStatusCode.OK })
                         span.end()
                         return resp

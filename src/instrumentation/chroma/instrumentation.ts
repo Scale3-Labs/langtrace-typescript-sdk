@@ -59,6 +59,9 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
     }
 
     Object.keys(APIS.chromadb).forEach((api) => {
+      if (isWrapped(chromadb.Collection.prototype)) {
+        this._unpatch(chromadb)
+      }
       this._wrap(
         chromadb.Collection.prototype,
         APIS.chromadb[api as keyof typeof APIS.chromadb].OPERATION,

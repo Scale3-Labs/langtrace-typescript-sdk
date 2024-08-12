@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
 /*
  * Copyright (c) 2024 Scale3 Labs
  *
@@ -18,6 +19,7 @@ import axios from 'axios'
 // eslint-disable-next-line no-restricted-imports
 import { name, version } from '../../package.json'
 import { ansiRegex } from 'ansi-colors'
+import { Attributes, diag, DiagConsoleLogger, DiagLogLevel, Span, TimeInput } from '@opentelemetry/api'
 
 /**
  *
@@ -103,3 +105,31 @@ export function createStreamProxy (stream: any, generatorFuncResponse: any): any
     }
   })
 }
+
+/**
+ *
+ * @param span span to add event to
+ * @param name name of the event
+ * @param attributesOrStartTime attributes or start time
+ * @param startTime  start time
+ * @returns span
+ */
+export function addSpanEvent (span: Span, name: string, attributesOrStartTime?: Attributes | TimeInput, startTime?: TimeInput): Span {
+  if (process.env.TRACE_PROMPT_COMPLETION_DATA === 'true' && typeof attributesOrStartTime === 'object') {
+    delete attributesOrStartTime['gen_ai.completion' as keyof typeof attributesOrStartTime]
+    delete attributesOrStartTime['gen_ai.completion.chunk' as keyof typeof attributesOrStartTime]
+    delete attributesOrStartTime['gen_ai.prompt' as keyof typeof attributesOrStartTime]
+  }
+  for (const attribute of global.langtrace_options?.disable_tracing_attributes ?? []) {
+    if (typeof attributesOrStartTime === 'object') {
+      delete attributesOrStartTime[attribute as keyof typeof attributesOrStartTime]
+    }
+  }
+  if (typeof attributesOrStartTime === 'object' && Object.keys(attributesOrStartTime).length === 0) {
+    return span
+  }
+  span.addEvent(name, attributesOrStartTime, startTime)
+  return span
+}
+
+diag.setLogger(new DiagConsoleLogger(), { logLevel: DiagLogLevel.ALL, suppressOverrideMessage: true })

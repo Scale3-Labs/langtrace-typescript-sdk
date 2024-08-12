@@ -15,7 +15,7 @@
  */
 
 import { diag } from '@opentelemetry/api'
-import { InstrumentationBase, InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation'
+import { InstrumentationBase, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
 import { messagesCreate } from '@langtrace-instrumentation/anthropic/patch'
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
@@ -50,6 +50,9 @@ class AnthropicInstrumentation extends InstrumentationBase<any> {
   }
 
   private _patch (anthropic: any, moduleVersion?: string): void {
+    if (isWrapped(anthropic.Anthropic.Messages.prototype)) {
+      this._unpatch(anthropic)
+    }
     this._wrap(
       anthropic.Anthropic.Messages.prototype,
       'create',
