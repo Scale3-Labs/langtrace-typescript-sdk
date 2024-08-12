@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
 import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/instrumentation'
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
@@ -31,12 +32,12 @@ import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/ins
 import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrumentation'
 import { DiagConsoleLogger, DiagLogLevel, diag } from '@opentelemetry/api'
 import { weaviateInstrumentation } from '@langtrace-instrumentation/weaviate/instrumentation'
-import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
 import c from 'ansi-colors'
 import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation'
 import { ollamaInstrumentation } from '@langtrace-instrumentation/ollama/instrumentation'
 import { Vendor } from '@langtrase/trace-attributes'
 import { vercelAIInstrumentation } from '@langtrace-instrumentation/vercel/instrumentation'
+import { DropAttributesProcessor } from '@langtrace-extensions/spanprocessors/DropAttributesProcessor'
 /**
  * Initializes the LangTrace sdk with custom options.
  *
@@ -61,6 +62,7 @@ import { vercelAIInstrumentation } from '@langtrace-instrumentation/vercel/instr
  *  - disable: Whether to disable logging.
  * @param disable_latest_version_check Whether to disable the check for the latest version of the sdk.
  * @param disable_tracing_for_functions Functions per vendor to disable tracing for.
+ * @param disable_tracing_attributes Attributes to drop from spans.
 */
 
 let isLatestSdk = false
@@ -79,7 +81,8 @@ export const init: LangTraceInit = ({
     disable: false
   },
   disable_latest_version_check = false,
-  disable_tracing_for_functions = undefined
+  disable_tracing_for_functions = undefined,
+  disable_tracing_attributes = []
 }: LangtraceInitOptions = {}) => {
   const provider = new NodeTracerProvider({ sampler: new LangtraceSampler(disable_tracing_for_functions) })
   const host = (process.env.LANGTRACE_API_HOST ?? api_host ?? LANGTRACE_REMOTE_URL)
@@ -134,6 +137,7 @@ export const init: LangTraceInit = ({
       provider.addSpanProcessor(new SimpleSpanProcessor(custom_remote_exporter))
     }
   }
+  provider.addSpanProcessor(new DropAttributesProcessor(disable_tracing_attributes))
   if (!global.langtrace_initalized) {
     provider.register()
   }
@@ -151,7 +155,19 @@ export const init: LangTraceInit = ({
     ai: vercelAIInstrumentation,
     ollama: ollamaInstrumentation
   }
-
+  const initOptions: LangtraceInitOptions = {
+    api_key,
+    batch,
+    write_spans_to_console,
+    custom_remote_exporter,
+    instrumentations,
+    api_host,
+    disable_instrumentations,
+    logging,
+    disable_latest_version_check,
+    disable_tracing_for_functions,
+    disable_tracing_attributes
+  }
   if (instrumentations === undefined) {
     registerInstrumentations({
       instrumentations: Object.values(allInstrumentations).filter((instrumentation) => instrumentation !== undefined),
@@ -168,6 +184,7 @@ export const init: LangTraceInit = ({
     disableInstrumentations(disable_instrumentations, allInstrumentations, instrumentations)
   }
   global.langtrace_initalized = true
+  global.langtrace_options = initOptions
 }
 
 const disableInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<Vendor, any>, modules?: { [key in Vendor]?: any }): InstrumentationBase[] => {

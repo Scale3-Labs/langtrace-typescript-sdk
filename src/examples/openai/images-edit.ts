@@ -5,7 +5,7 @@ import OpenAI from 'openai'
 import fs from 'fs'
 dotenv.config()
 
-init({ write_spans_to_console: true, batch: false })
+init({ write_spans_to_console: false, batch: false })
 
 const openai = new OpenAI()
 

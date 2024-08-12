@@ -16,7 +16,7 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { createStreamProxy } from '@langtrace-utils/misc'
+import { addSpanEvent, createStreamProxy } from '@langtrace-utils/misc'
 import { APIS, LLMSpanAttributes, Vendors, Event } from '@langtrase/trace-attributes'
 
 import {
@@ -56,6 +56,7 @@ export function messagesCreate (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'langtrace.service.name': serviceProvider,
       'langtrace.service.type': 'llm',
+      'gen_ai.operation.name': 'chat',
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
       'url.full': this?._client?.baseURL,
@@ -73,7 +74,8 @@ export function messagesCreate (
     }
 
     if (!(args[0].stream as boolean) || args[0].stream === false) {
-      const span = tracer.startSpan(APIS.anthropic.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+      const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.anthropic.MESSAGES_CREATE.METHOD
+      const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
       return await context.with(
         trace.setSpan(
           context.active(),
@@ -82,11 +84,11 @@ export function messagesCreate (
         async () => {
           try {
             const resp = await originalMethod.apply(this, args)
-            span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(resp.content.map((c: any) => ({ content: c.text, role: 'assistant' }))) })
-            span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
+            addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(resp.content.map((c: any) => ({ content: c.text, role: 'assistant' }))) })
+            addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
             const respAttributes: Partial<LLMSpanAttributes> = {
-              'gen_ai.usage.completion_tokens': resp.usage.output_tokens,
-              'gen_ai.usage.prompt_tokens': resp.usage.input_tokens,
+              'gen_ai.usage.input_tokens': resp.usage.output_tokens,
+              'gen_ai.usage.output_tokens': resp.usage.input_tokens,
               'gen_ai.usage.total_tokens': Number(resp.usage.output_tokens ?? 0) + Number(resp.usage.input_tokens ?? 0)
             }
             span.setAttributes({ ...attributes, ...respAttributes })
@@ -102,7 +104,8 @@ export function messagesCreate (
         }
       )
     } else {
-      const span = tracer.startSpan(APIS.anthropic.MESSAGES_CREATE.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+      const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.anthropic.MESSAGES_CREATE.METHOD
+      const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
       return await context.with(
         trace.setSpan(
           context.active(),
@@ -119,7 +122,7 @@ export function messagesCreate (
 
 async function * handleStreamResponse (span: Span, stream: any, attributes: LLMSpanAttributes): any {
   const result: string[] = []
-  span.addEvent(Event.STREAM_START)
+  addSpanEvent(span, Event.STREAM_START)
   try {
     let streamStartMessage: { role: string, model: string, usage: { input_tokens: number, output_tokens: number } } | Record<string, any> = {}
     for await (const chunk of stream) {
@@ -128,15 +131,15 @@ async function * handleStreamResponse (span: Span, stream: any, attributes: LLMS
       } else {
         const content = chunk.delta?.text !== undefined ? ((chunk.delta.text) as string).length > 0 ? chunk.delta.text : '' : ''
         const streamAttributes: Partial<LLMSpanAttributes> = { 'gen_ai.completion.chunk': JSON.stringify({ content, role: streamStartMessage.role }) }
-        span.addEvent(Event.GEN_AI_COMPLETION_CHUNK, streamAttributes)
+        addSpanEvent(span, Event.GEN_AI_COMPLETION_CHUNK, streamAttributes)
         result.push(content as string)
       }
 
-      span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify([{ content: result.join(''), role: streamStartMessage.role }]) })
+      addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify([{ content: result.join(''), role: streamStartMessage.role }]) })
       const responseAttributes: Partial<LLMSpanAttributes> = {
         'gen_ai.response.model': streamStartMessage.model,
-        'gen_ai.usage.completion_tokens': streamStartMessage.usage.output_tokens,
-        'gen_ai.usage.prompt_tokens': streamStartMessage.usage.input_tokens,
+        'gen_ai.usage.input_tokens': streamStartMessage.usage.output_tokens,
+        'gen_ai.usage.output_tokens': streamStartMessage.usage.input_tokens,
         'gen_ai.usage.total_tokens': Number(streamStartMessage.usage.output_tokens ?? 0) + Number(streamStartMessage.usage.input_tokens ?? 0)
       }
       span.setAttributes({ ...attributes, ...responseAttributes })
@@ -144,7 +147,7 @@ async function * handleStreamResponse (span: Span, stream: any, attributes: LLMS
     }
 
     span.setStatus({ code: SpanStatusCode.OK })
-    span.addEvent(Event.STREAM_END)
+    addSpanEvent(span, Event.STREAM_END)
   } catch (error: any) {
     span.setStatus({ code: SpanStatusCode.ERROR })
     span.recordException(error as Exception)
