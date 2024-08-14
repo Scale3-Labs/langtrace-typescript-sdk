@@ -118,18 +118,7 @@ async function * handleStream (stream: AsyncIterable<any>, attributes: LLMSpanAt
   const responseReconstructed: string[] = []
   try {
     addSpanEvent(span, Event.STREAM_START)
-    let role: string | undefined
     for await (const chunk of stream) {
-      const content = chunk.choices[0].delta.content as string
-      const r = chunk.choices[0].delta.role
-      if (r !== undefined) {
-        role = r
-      }
-      if (content !== undefined) {
-        addSpanEvent(span, Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ role, content }) })
-      }
-      responseReconstructed.push(chunk.choices[0].delta.content as string ?? '')
-
       if (chunk.choices[0].finish_reason === 'stop') {
         attributes['gen_ai.usage.input_tokens'] = chunk.x_groq?.usage?.prompt_tokens
         attributes['gen_ai.usage.output_tokens'] = chunk.x_groq?.usage?.completion_tokens

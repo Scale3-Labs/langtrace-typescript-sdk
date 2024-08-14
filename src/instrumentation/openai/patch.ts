@@ -278,9 +278,6 @@ async function * handleStreamResponse (
       const tokenCount = estimateTokens(content as string)
       completionTokens += tokenCount
       result.push(content as string)
-      if (chunk.choices[0]?.delta?.content !== undefined) {
-        addSpanEvent(span, Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ role: chunk.choices[0]?.delta?.role ?? 'assistant', content: chunk.choices[0]?.delta?.content }) })
-      }
       yield chunk
     }
     addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': result.length > 0 ? JSON.stringify([{ role: 'assistant', content: result.join('') }]) : undefined })
