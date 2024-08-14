@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 5.0.1
+
+### Patch Changes
+
+- Fixed the gen_ai input and output token attr to proper values for openai groq.
+
 ## 5.0.0
 
 ### Major Changes
