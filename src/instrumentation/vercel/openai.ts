@@ -253,7 +253,6 @@ async function * handleOpenAIStreamResponse (
       }
       if (content !== undefined && content.length > 0) {
         result.push(content)
-        addSpanEvent(span, Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ role: 'assistant', content }) })
       }
       yield chunk
     }

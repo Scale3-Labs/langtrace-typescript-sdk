@@ -290,9 +290,6 @@ async function * handleStream (stream: any, attributes: LLMSpanAttributes, span:
   try {
     addSpanEvent(span, Event.STREAM_START)
     for await (const chat of stream) {
-      if (chat.eventType === 'text-generation') {
-        addSpanEvent(span, Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ role: 'assistant', content: chat.text }) })
-      }
       if (chat.eventType === 'stream-end') {
         addSpanEvent(span, Event.STREAM_END)
         let response: Array<{ role: string, content: string }> | { role: string, content: string } = []

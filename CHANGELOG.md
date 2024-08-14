@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 5.0.2
+
+### Patch Changes
+
+- Remove adding chunks for streaming to events
+
 ## 5.0.1
 
 ### Patch Changes
