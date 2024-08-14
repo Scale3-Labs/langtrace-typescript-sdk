@@ -212,8 +212,8 @@ export function chatCompletionCreate (
             const responseAttributes: Partial<LLMSpanAttributes> = {
               'gen_ai.response.model': resp.model,
               'gen_ai.system_fingerprint': resp.system_fingerprint,
-              'gen_ai.usage.output_tokens': resp.usage.prompt_tokens,
-              'gen_ai.usage.input_tokens': resp.usage.completion_tokens,
+              'gen_ai.usage.input_tokens': resp.usage.prompt_tokens,
+              'gen_ai.usage.output_tokens': resp.usage.completion_tokens,
               'gen_ai.usage.total_tokens': Number(resp.usage.prompt_tokens ?? 0) + Number(resp.usage.completion_tokens ?? 0)
             }
             span.setAttributes({ ...attributes, ...responseAttributes })

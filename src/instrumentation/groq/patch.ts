@@ -62,8 +62,8 @@ export const chatPatchNonStreamed = (original: ChatFn, tracer: Tracer, langtrace
           addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(responses) })
           attributes['gen_ai.system_fingerprint'] = resp?.system_fingerprint
           attributes['gen_ai.response.model'] = resp.model
-          attributes['gen_ai.usage.output_tokens'] = resp?.usage?.prompt_tokens
-          attributes['gen_ai.usage.input_tokens'] = resp?.usage?.completion_tokens
+          attributes['gen_ai.usage.input_tokens'] = resp?.usage?.prompt_tokens
+          attributes['gen_ai.usage.output_tokens'] = resp?.usage?.completion_tokens
           attributes['gen_ai.usage.total_tokens'] = resp?.usage?.total_tokens
 
           span.setAttributes(attributes)
@@ -131,8 +131,8 @@ async function * handleStream (stream: AsyncIterable<any>, attributes: LLMSpanAt
       responseReconstructed.push(chunk.choices[0].delta.content as string ?? '')
 
       if (chunk.choices[0].finish_reason === 'stop') {
-        attributes['gen_ai.usage.input_tokens'] = chunk.x_groq?.usage?.completion_tokens
-        attributes['gen_ai.usage.output_tokens'] = chunk.x_groq?.usage?.prompt_tokens
+        attributes['gen_ai.usage.input_tokens'] = chunk.x_groq?.usage?.prompt_tokens
+        attributes['gen_ai.usage.output_tokens'] = chunk.x_groq?.usage?.completion_tokens
         attributes['gen_ai.usage.total_tokens'] = Number(chunk.x_groq?.usage?.completion_tokens ?? 0) + Number(chunk.x_groq?.usage?.prompt_tokens ?? 0)
         attributes['gen_ai.response.model'] = chunk?.model
         attributes['gen_ai.system_fingerprint'] = chunk?.system_fingerprint
