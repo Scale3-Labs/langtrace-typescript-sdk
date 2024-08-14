@@ -241,7 +241,6 @@ async function * handleChatStream (stream: AsyncIterable<any>, attributes: LLMSp
   try {
     addSpanEvent(span, Event.STREAM_START)
     for await (const chunk of stream) {
-      addSpanEvent(span, Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ content: chunk.response ?? '', role: 'assistant' }) })
       responseReconstructed.push(chunk.message.content as string ?? '')
       if (chunk.done === true) {
         attributes['gen_ai.usage.output_tokens'] = chunk?.prompt_eval_count
@@ -268,7 +267,6 @@ async function * handleGenerateStream (stream: AsyncIterable<any>, attributes: L
   try {
     addSpanEvent(span, Event.STREAM_START)
     for await (const chunk of stream) {
-      addSpanEvent(span, Event.GEN_AI_COMPLETION_CHUNK, { 'gen_ai.completion.chunk': JSON.stringify({ content: chunk.response ?? '', role: 'assistant' }) })
       responseReconstructed.push(chunk.response as string ?? '')
       if (chunk.done === true) {
         attributes['gen_ai.usage.output_tokens'] = chunk?.prompt_eval_count

@@ -117,7 +117,6 @@ export function createStreamProxy (stream: any, generatorFuncResponse: any): any
 export function addSpanEvent (span: Span, name: string, attributesOrStartTime?: Attributes | TimeInput, startTime?: TimeInput): Span {
   if (process.env.TRACE_PROMPT_COMPLETION_DATA === 'true' && typeof attributesOrStartTime === 'object') {
     delete attributesOrStartTime['gen_ai.completion' as keyof typeof attributesOrStartTime]
-    delete attributesOrStartTime['gen_ai.completion.chunk' as keyof typeof attributesOrStartTime]
     delete attributesOrStartTime['gen_ai.prompt' as keyof typeof attributesOrStartTime]
   }
   for (const attribute of global.langtrace_options?.disable_tracing_attributes ?? []) {
