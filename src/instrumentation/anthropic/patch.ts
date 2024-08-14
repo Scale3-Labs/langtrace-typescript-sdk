@@ -130,8 +130,6 @@ async function * handleStreamResponse (span: Span, stream: any, attributes: LLMS
         streamStartMessage = chunk.message
       } else {
         const content = chunk.delta?.text !== undefined ? ((chunk.delta.text) as string).length > 0 ? chunk.delta.text : '' : ''
-        const streamAttributes: Partial<LLMSpanAttributes> = { 'gen_ai.completion.chunk': JSON.stringify({ content, role: streamStartMessage.role }) }
-        addSpanEvent(span, Event.GEN_AI_COMPLETION_CHUNK, streamAttributes)
         result.push(content as string)
       }
 
