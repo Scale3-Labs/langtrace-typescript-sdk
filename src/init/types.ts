@@ -34,6 +34,7 @@ export interface LangtraceInitOptions {
     logger?: DiagLogger
     disable?: boolean
   }
+  service_name?: string
   disable_latest_version_check?: boolean
   disable_tracing_for_functions?: Partial<VendorTracedFunctions>
   instrumentations?: { [key in Vendor]?: any }
