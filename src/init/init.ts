@@ -16,6 +16,7 @@
 
 import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
+import { Resource } from '@opentelemetry/resources'
 import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/instrumentation'
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { LangTraceExporter } from '@langtrace-extensions/langtraceexporter/langtrace_exporter'
@@ -69,6 +70,7 @@ let isLatestSdk = false
 
 export const init: LangTraceInit = ({
   api_key = undefined,
+  service_name = undefined,
   batch = false,
   write_spans_to_console = false,
   custom_remote_exporter = undefined,
@@ -84,7 +86,11 @@ export const init: LangTraceInit = ({
   disable_tracing_for_functions = undefined,
   disable_tracing_attributes = []
 }: LangtraceInitOptions = {}) => {
-  const provider = new NodeTracerProvider({ sampler: new LangtraceSampler(disable_tracing_for_functions) })
+  const provider = new NodeTracerProvider({
+    sampler: new LangtraceSampler(disable_tracing_for_functions),
+    resource: new Resource({ 'service.name': process.env.OTEL_SERVICE_NAME ?? service_name ?? __filename ?? 'unknown' })
+  }
+  )
   const host = (process.env.LANGTRACE_API_HOST ?? api_host ?? LANGTRACE_REMOTE_URL)
   const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', host)
   const consoleExporter = new ConsoleSpanExporter()

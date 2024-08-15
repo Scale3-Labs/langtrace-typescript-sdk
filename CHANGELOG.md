@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 5.0.3
+
+### Patch Changes
+
+- Add service_name option and support for otel env var
+
 ## 5.0.2
 
 ### Patch Changes
