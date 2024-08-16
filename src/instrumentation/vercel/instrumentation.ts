@@ -47,6 +47,8 @@ class VercelAIInstrumentation extends InstrumentationBase<any> {
     this._unwrap(module, 'streamText')
     this._unwrap(module, 'embed')
     this._unwrap(module, 'embedMany')
+    this._unwrap(module, 'generateObject')
+    this._unwrap(module, 'streamObject')
   }
 }
 export const vercelAIInstrumentation = new VercelAIInstrumentation()

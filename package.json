@@ -1,6 +1,6 @@
 {
   "name": "@langtrase/typescript-sdk",
-  "version": "5.0.4",
+  "version": "5.0.5",
   "description": "A typescript SDK for Langtrace",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
