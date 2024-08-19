@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 5.0.4
+
+### Patch Changes
+
+- Bug fix where response_format was not following genai conventions for openai instrumentation
+
 ## 5.0.3
 
 ### Patch Changes

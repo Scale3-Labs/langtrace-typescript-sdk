@@ -57,7 +57,7 @@ export function imageEdit (
       'http.timeout': originalContext?._client?.timeout,
       'gen_ai.request.top_k': args[0]?.n,
       'gen_ai.image.size': args[0]?.size,
-      'gen_ai.response_format': args[0]?.response_format?.type ?? args[0]?.response_format,
+      'gen_ai.request.response_format': args[0]?.response_format?.type ?? args[0]?.response_format,
       ...customAttributes
     }
     const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.openai.IMAGES_EDIT.METHOD
