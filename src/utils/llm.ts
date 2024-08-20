@@ -15,7 +15,7 @@
  */
 
 import { TIKTOKEN_MODEL_MAPPING } from '@langtrase/trace-attributes'
-import { TiktokenEncoding, get_encoding } from 'tiktoken'
+import { TiktokenEncoding, get_encoding } from '@dqbd/tiktoken'
 
 export function estimateTokens (prompt: string): number {
   if (prompt.length > 0) {

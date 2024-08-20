@@ -1,8 +1,8 @@
 # @langtrase/typescript-sdk
 
-## 5.0.5
+## 5.1.0
 
-### Patch Changes
+### Minor Changes
 
 - Added support for Vercel AI Anthropic model.
 
