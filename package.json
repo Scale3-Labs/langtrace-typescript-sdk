@@ -1,6 +1,6 @@
 {
   "name": "@langtrase/typescript-sdk",
-  "version": "5.1.1",
+  "version": "5.1.2",
   "description": "A typescript SDK for Langtrace",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -21,7 +21,6 @@
   "author": "Scale3 Labs",
   "license": "Apache-2.0",
   "dependencies": {
-    "@dqbd/tiktoken": "^1.0.16",
     "@langtrase/trace-attributes": "7.1.1",
     "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/instrumentation": "^0.49.1",
@@ -30,6 +29,7 @@
     "@types/webpack": "^5.28.5",
     "ansi-colors": "^4.1.3",
     "axios": "^1.6.7",
+    "js-tiktoken": "^1.0.14",
     "node-loader": "^2.0.0",
     "npm": "^10.8.2"
   },
