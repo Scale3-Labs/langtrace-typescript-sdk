@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 5.1.2
+
+### Patch Changes
+
+- Fix previous tiktoken fix causing same issue on nextjs
+
 ## 5.1.1
 
 ### Patch Changes
