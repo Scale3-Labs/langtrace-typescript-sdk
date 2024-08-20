@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 5.1.1
+
+### Patch Changes
+
+- Switch tiktoken library to make it wasm compatible
+
 ## 5.1.0
 
 ### Minor Changes
