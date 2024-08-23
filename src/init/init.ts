@@ -26,6 +26,7 @@ import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_ex
 import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
 import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
 import { cohereInstrumentation } from '@langtrace-instrumentation/cohere/instrumentation'
+import { geminiInstrumentation } from '@langtrace-instrumentation/gemini/instrumentation'
 import { groqInstrumentation } from '@langtrace-instrumentation/groq/instrumentation'
 import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex/instrumentation'
 import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
@@ -151,6 +152,7 @@ export const init: LangTraceInit = ({
     openai: openAIInstrumentation,
     cohere: cohereInstrumentation,
     anthropic: anthropicInstrumentation,
+    gemini: geminiInstrumentation,
     groq: groqInstrumentation,
     pinecone: pineconeInstrumentation,
     llamaindex: llamaIndexInstrumentation,
