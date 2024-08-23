@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 5.2.0
+
+### Minor Changes
+
+- Add support for Gemini tracing.
+
 ## 5.1.2
 
 ### Patch Changes
