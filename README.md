@@ -149,15 +149,15 @@ Langtrace automatically captures traces from the following vendors:
 | Cohere       | LLM             | :white_check_mark: | :white_check_mark:              |
 | Groq         | LLM             | :x:                | :white_check_mark:              |
 | Perplexity   | LLM             | :white_check_mark: | :white_check_mark:              |
-| Gemini       | LLM             | :x:                | :white_check_mark:              |
+| Gemini       | LLM             | :white_check_mark: | :white_check_mark:              |
 | Langchain    | Framework       | :x:                | :white_check_mark:              |
 | LlamaIndex   | Framework       | :white_check_mark: | :white_check_mark:              |
 | Langgraph    | Framework       | :x:                | :white_check_mark:              |
 | DSPy         | Framework       | :x:                | :white_check_mark:              |
 | CrewAI       | Framework       | :x:                | :white_check_mark:              |
 | Ollama       | Framework       | :white_check_mark: | :white_check_mark:              |
-| VertexAI     | Framework       | :x:                | :white_check_mark:              |
-| VercelAI     | Framework       | :white_check_mark: | :x:              |
+| VertexAI     | Framework       | :white_check_mark: | :white_check_mark:              |
+| VercelAI     | Framework       | :white_check_mark: | :white_check_mark:              |
 | Pinecone     | Vector Database | :white_check_mark: | :white_check_mark:              |
 | ChromaDB     | Vector Database | :white_check_mark: | :white_check_mark:              |
 | QDrant       | Vector Database | :white_check_mark: | :white_check_mark:              |

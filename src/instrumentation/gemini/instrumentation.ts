@@ -26,7 +26,6 @@ class GeminiInstrumentation extends InstrumentationBase<any> {
   }
 
   init (): Array<InstrumentationNodeModuleDefinition<any>> {
-    diag.debug('init GeminiInstrumentation')
     const module = new InstrumentationNodeModuleDefinition<any>(
       '@google/generative-ai',
       ['>=0.1.3'],
