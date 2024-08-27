@@ -16,6 +16,13 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
+import {
+  Candidate,
+  CandidateContent,
+  CandidateContentPart,
+  Resp,
+  Response
+} from '@langtrace-instrumentation/vertexai/types'
 import { calculatePromptTokens, estimateTokens } from '@langtrace-utils/llm'
 import { addSpanEvent, createStreamProxy } from '@langtrace-utils/misc'
 import {
@@ -33,40 +40,6 @@ import {
   trace,
   Tracer
 } from '@opentelemetry/api'
-
-interface CandidateContentPart {
-  text: string
-}
-
-interface CandidateContent {
-  role: string
-  parts: CandidateContentPart[]
-}
-
-interface Candidate {
-  content: CandidateContent
-  finishReason: string
-  safetyRatings: any[] // You can replace 'any' with a more specific type if needed
-  avgLogprobs: number
-  index: number
-}
-
-interface UsageMetadata {
-  promptTokenCount: number
-  candidatesTokenCount: number
-  totalTokenCount: number
-}
-
-interface Response {
-  text?: any
-  candidates: Candidate[]
-  usageMetadata: UsageMetadata
-}
-
-interface Resp {
-  stream?: any
-  response: Response
-}
 
 export function generateContentPatch (
   originalMethod: (...args: any[]) => any,

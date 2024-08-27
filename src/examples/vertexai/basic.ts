@@ -59,17 +59,17 @@ export const basicVertexAIStartChat = async (): Promise<void> => {
 }
 
 export const basicVertexAIStartChatStream = async (): Promise<void> => {
-  const chat = generativeModel.startChat();
-  const chatInput = "How can I learn more about Node.js?";
-  const result = await chat.sendMessageStream(chatInput);
+  const chat = generativeModel.startChat()
+  const chatInput = 'How can I learn more about Node.js?'
+  const result = await chat.sendMessageStream(chatInput)
   for await (const item of result.stream) {
-    const text = item.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (text) {
-      console.log("Stream chunk: ", text);
+    const text = item.candidates?.[0]?.content?.parts?.[0]?.text
+    if (text === undefined || text === null) {
+      console.log('Stream chunk: ', text)
     } else {
-      console.log("Stream chunk: No text available");
+      console.log('Stream chunk: No text available')
     }
   }
-  const aggregatedResponse = await result.response;
-  console.log('Aggregated response: ', JSON.stringify(aggregatedResponse));
+  const aggregatedResponse = await result.response
+  console.log('Aggregated response: ', JSON.stringify(aggregatedResponse))
 }

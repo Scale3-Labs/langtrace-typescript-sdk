@@ -40,6 +40,7 @@ export function embedPatch (
   version?: string
 ): (...args: any[]) => any {
   const patchThis = this
+
   return async function (this: any, ...args: any[]): Promise<any> {
     if (args[0]?.model?.config?.provider?.includes(Vendors.OPENAI) === true) {
       return await embedPatchOpenAI.call(this, patchThis, args, originalMethod, method, tracer, langtraceVersion, sdkName, version)
