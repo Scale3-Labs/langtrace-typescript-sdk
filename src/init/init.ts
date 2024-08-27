@@ -41,7 +41,7 @@ import { Vendor } from '@langtrase/trace-attributes'
 import { vercelAIInstrumentation } from '@langtrace-instrumentation/vercel/instrumentation'
 import { DropAttributesProcessor } from '@langtrace-extensions/spanprocessors/DropAttributesProcessor'
 import { vertexAIInstrumentation } from '@langtrace-instrumentation/vertexai/instrumentation'
-// import { vertexAIInstrumentation } from '@langtrace-instrumentation/vertexai/instrumentation'
+
 /**
  * Initializes the LangTrace sdk with custom options.
  *
