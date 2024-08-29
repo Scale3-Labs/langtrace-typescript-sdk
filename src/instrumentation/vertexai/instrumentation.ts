@@ -26,6 +26,11 @@ class VertexAIInstrumentation extends InstrumentationBase<any> {
     super(name, version)
   }
 
+  public manualPatch (vertexai: any): void {
+    diag.debug('Manually instrumenting Vertex AI SDK')
+    this._patch(vertexai)
+  }
+
   init (): Array<InstrumentationNodeModuleDefinition<any>> {
     const module = new InstrumentationNodeModuleDefinition<any>(
       '@google-cloud/vertexai',
