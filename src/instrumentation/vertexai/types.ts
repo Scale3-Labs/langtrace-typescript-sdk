@@ -1,5 +1,6 @@
 export interface CandidateContentPart {
   text: string
+  functionCall: any
 }
 
 export interface CandidateContent {
