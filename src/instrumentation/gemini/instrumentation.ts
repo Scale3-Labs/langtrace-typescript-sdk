@@ -25,6 +25,11 @@ class GeminiInstrumentation extends InstrumentationBase<any> {
     super(name, version)
   }
 
+  public manualPatch (gemini: any): void {
+    diag.debug('Manually instrumenting Gemini SDK')
+    this._patch(gemini)
+  }
+
   init (): Array<InstrumentationNodeModuleDefinition<any>> {
     const module = new InstrumentationNodeModuleDefinition<any>(
       '@google/generative-ai',
