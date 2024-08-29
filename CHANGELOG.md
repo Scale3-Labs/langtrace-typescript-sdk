@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 5.3.0
+
+### Minor Changes
+
+- Add support for Vertex AI tracing.
+
 ## 5.2.0
 
 ### Minor Changes
