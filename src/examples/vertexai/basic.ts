@@ -1,6 +1,6 @@
 import { init } from '@langtrace-init/init'
 import dotenv from 'dotenv'
-import { VertexAI } from '@google-cloud/vertexai'
+import { VertexAI, FunctionDeclarationSchemaType } from '@google-cloud/vertexai'
 
 dotenv.config()
 init({ batch: false, write_spans_to_console: true })
@@ -12,6 +12,38 @@ const textModel = 'gemini-1.5-flash'
 const vertexAI = new VertexAI({ project, location })
 
 const generativeModel = vertexAI.getGenerativeModel({ model: textModel })
+
+const functionDeclarations = [
+  {
+    functionDeclarations: [
+      {
+        name: 'get_current_weather',
+        description: 'get weather in a given location',
+        parameters: {
+          type: FunctionDeclarationSchemaType.OBJECT,
+          properties: {
+            location: { type: FunctionDeclarationSchemaType.STRING },
+            unit: {
+              type: FunctionDeclarationSchemaType.STRING,
+              enum: ['celsius', 'fahrenheit']
+            }
+          },
+          required: ['location']
+        }
+      }
+    ]
+  }
+]
+
+const functionResponseParts = [
+  {
+    functionResponse: {
+      name: 'get_current_weather',
+      response:
+        { name: 'get_current_weather', content: { weather: 'super nice' } }
+    }
+  }
+]
 
 export const basicVertexAIChat = async (): Promise<void> => {
   const request = { contents: [{ role: 'user', parts: [{ text: 'How are you doing today?' }] }] }
@@ -65,11 +97,59 @@ export const basicVertexAIStartChatStream = async (): Promise<void> => {
   for await (const item of result.stream) {
     const text = item.candidates?.[0]?.content?.parts?.[0]?.text
     if (text === undefined || text === null) {
-      console.log('Stream chunk: ', text)
-    } else {
       console.log('Stream chunk: No text available')
+    } else {
+      console.log('Stream chunk: ', text)
     }
   }
   const aggregatedResponse = await result.response
   console.log('Aggregated response: ', JSON.stringify(aggregatedResponse))
+}
+
+export const basicVertexAIStartChatWithToolRequest = async (): Promise<void> => {
+  const request = {
+    contents: [
+      { role: 'user', parts: [{ text: 'What is the weather in Boston?' }] },
+      { role: 'model', parts: [{ functionCall: { name: 'get_current_weather', args: { location: 'Boston' } } }] },
+      { role: 'user', parts: functionResponseParts }
+    ],
+    tools: functionDeclarations
+  }
+  const streamingResult =
+    await generativeModel.generateContentStream(request)
+  for await (const item of streamingResult.stream) {
+    if (item?.candidates !== undefined) {
+      console.log(item.candidates[0])
+    }
+  }
+}
+
+export const basicVertexAIStartChatWithToolResponse = async (): Promise<void> => {
+  // Create a chat session and pass your function declarations
+  const chat = generativeModel.startChat({ tools: functionDeclarations })
+
+  const chatInput1 = 'What is the weather in Boston?'
+
+  // This should include a functionCall response from the model
+  const streamingResult1 = await chat.sendMessageStream(chatInput1)
+  for await (const item of streamingResult1.stream) {
+    if (item?.candidates !== undefined) {
+      console.log(item.candidates[0])
+    }
+  }
+  const response1 = await streamingResult1.response
+  console.log('first aggregated response: ', JSON.stringify(response1))
+
+  // Send a follow up message with a FunctionResponse
+  const streamingResult2 = await chat.sendMessageStream(functionResponseParts)
+  for await (const item of streamingResult2.stream) {
+    if (item?.candidates !== undefined) {
+      console.log(item.candidates[0])
+    }
+  }
+
+  // This should include a text response from the model using the response content
+  // provided above
+  const response2 = await streamingResult2.response
+  console.log('second aggregated response: ', JSON.stringify(response2))
 }

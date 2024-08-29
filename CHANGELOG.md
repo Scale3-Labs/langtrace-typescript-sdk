@@ -1,5 +1,12 @@
 # @langtrase/typescript-sdk
 
+
+## 5.3.2
+
+### Patch Changes
+
+- Add Vertex AI tools and funcition tracing support
+
 ## 5.3.1
 
 ### Patch Changes
