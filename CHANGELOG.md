@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 5.3.1
+
+### Patch Changes
+
+- Fix allowing manual patch for Gemini and Vertex AI.
+
 ## 5.3.0
 
 ### Minor Changes
