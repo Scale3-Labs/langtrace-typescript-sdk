@@ -196,6 +196,8 @@ export const init: LangTraceInit = ({
   }
   global.langtrace_initalized = true
   global.langtrace_options = initOptions
+
+  diag.info('⭐ Leave our github a star to stay on top of our updates - https://github.com/Scale3-Labs/langtrace')
 }
 
 const disableInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<Vendor, any>, modules?: { [key in Vendor]?: any }): InstrumentationBase[] => {
