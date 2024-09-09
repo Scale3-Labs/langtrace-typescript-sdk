@@ -76,7 +76,6 @@ export function chatComplete (
         trace.setSpan(context.active(), span),
         async () => {
           try {
-            // eslint-disable-next-line no-console
             const resp = await originalMethod.apply(this, args)
             const responses = resp?.choices?.map((choice: any) => {
               const result = {

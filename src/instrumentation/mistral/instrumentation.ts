@@ -68,6 +68,14 @@ class MistralInstrumentation extends InstrumentationBase<any> {
     )
 
     this._wrap(
+      mistral.Mistral.prototype.chat,
+      'stream',
+      (originalMethod: (...args: any[]) => any) => {
+        return chatComplete(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion, true)
+      }
+    )
+
+    this._wrap(
       mistral.Mistral.prototype.embeddings,
       'create',
       (originalMethod: (...args: any[]) => any) =>
@@ -75,11 +83,10 @@ class MistralInstrumentation extends InstrumentationBase<any> {
     )
   }
 
-  private _unpatch (openai: any): void {
-    this._unwrap(openai.OpenAI.Chat.Completions.prototype, 'create')
-    this._unwrap(openai.OpenAI.Images.prototype, 'generate')
-    this._unwrap(openai.OpenAI.Images.prototype, 'edit')
-    this._unwrap(openai.OpenAI.Embeddings.prototype, 'create')
+  private _unpatch (mistral: any): void {
+    this._unwrap(mistral.Mistral.prototype.chat, 'complete')
+    this._unwrap(mistral.Mistral.prototype.chat, 'stream')
+    this._unwrap(mistral.Mistral.prototype.embeddings, 'create')
   }
 }
 
