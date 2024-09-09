@@ -23,6 +23,7 @@ import axios from 'axios'
 export class LangTraceExporter implements SpanExporter {
   private readonly apiKey: string
   private readonly apiHost: string
+  private readonly headers: Record<string, string>
 
   /**
    *
@@ -30,9 +31,10 @@ export class LangTraceExporter implements SpanExporter {
    * @param apiHost The host of the LangTrace API. Default is https://langtrace.ai/api/trace. If set a POST request will be made to this URL with an array of ReadableSpan objects.
    * See https://github.com/open-telemetry/opentelemetry-js/blob/3c8c29ac8fdd71cd1ef78d2b35c65ced81db16f4/packages/opentelemetry-sdk-trace-base/src/export/ReadableSpan.ts#L29
    */
-  constructor (apiKey: string, apiHost: string) {
+  constructor (apiKey: string, apiHost: string, headers?: Record<string, string>) {
     this.apiKey = apiKey
     this.apiHost = apiHost === LANGTRACE_REMOTE_URL ? `${LANGTRACE_REMOTE_URL}/api/trace` : apiHost
+    this.headers = headers ?? {}
   }
 
   async export (spans: ReadableSpan[], resultCallback: (result: ExportResult) => void): Promise<void> {
@@ -65,7 +67,8 @@ export class LangTraceExporter implements SpanExporter {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      'User-Agent': 'LangTraceExporter'
+      'User-Agent': 'LangTraceExporter',
+      ...this.headers
     }
     if (this.apiKey.length > 0) {
       headers['x-api-key'] = this.apiKey

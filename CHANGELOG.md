@@ -1,5 +1,10 @@
 # @langtrase/typescript-sdk
 
+## 5.4.0
+
+### Minor Changes
+
+- Support OTEL_EXPORTER_OTLP_ENDPOINT and OTEL_EXPORTER_OTLP_HEADERS env vars
 
 ## 5.3.2
 

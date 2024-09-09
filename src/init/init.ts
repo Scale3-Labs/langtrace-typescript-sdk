@@ -94,8 +94,15 @@ export const init: LangTraceInit = ({
     resource: new Resource({ 'service.name': process.env.OTEL_SERVICE_NAME ?? service_name ?? __filename ?? 'unknown' })
   }
   )
-  const host = (process.env.LANGTRACE_API_HOST ?? api_host ?? LANGTRACE_REMOTE_URL)
-  const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', host)
+  const host = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? process.env.LANGTRACE_API_HOST ?? api_host ?? LANGTRACE_REMOTE_URL
+  const otelHttpHeaders = process.env.OTEL_EXPORTER_OTLP_HEADERS?.split(',')
+    .reduce((acc, header) => {
+      const [key, value] = header.split('=')
+      acc[key] = value
+      return acc
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    }, {} as Record<string, string>)
+  const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', host, otelHttpHeaders)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
