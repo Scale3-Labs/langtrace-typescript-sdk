@@ -1,3 +1,3 @@
-import { basic } from '@langtrace-examples/vercel/basic'
+import { chatCompletion } from '@langtrace-examples/mistral/chat-complete'
 
-void basic()
+void chatCompletion()
