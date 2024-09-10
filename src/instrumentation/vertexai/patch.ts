@@ -53,19 +53,62 @@ export function generateContentPatch (
     const serviceProvider = Vendors.VERTEXAI
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
 
-    const prompts = args.flatMap((arg: string | { contents: CandidateContent[] }) => {
-      if (typeof arg === 'string') {
+    let argTools: any[] = []
+    const prompts = args.flatMap((arg: string | { contents?: CandidateContent[], tools?: any, functionResponse?: any }) => {
+      if (Array.isArray(arg)) {
+        // Handle the case where `arg` is an array (like [ { functionResponse: ... } ])
+        return arg.flatMap(innerArg => {
+          if (Array.isArray(innerArg.tools)) argTools = argTools.concat(innerArg.tools)
+          if (innerArg.functionResponse != null) {
+            return [{ role: 'model', content: JSON.stringify(innerArg.functionResponse) }]
+          } else if (innerArg.contents != null) {
+            return innerArg.contents.map((content: CandidateContent) => ({
+              role: content.role,
+              content: content.parts.map((part: CandidateContentPart) => {
+                if (typeof part.text === 'string') {
+                  return part.text
+                } else if ('functionCall' in part) {
+                  return JSON.stringify((part as any).functionCall)
+                } else if (typeof part === 'object') {
+                  return JSON.stringify(part)
+                } else {
+                  return ''
+                }
+              }).join('')
+            }))
+          } else {
+            return []
+          }
+        })
+      } else if (typeof arg === 'string') {
         // Handle the case where `arg` is a string
         return [{ role: 'user', content: arg }]
-      } else {
+      } else if (arg.contents != null) {
+        if (Array.isArray(arg.tools)) argTools = argTools.concat(arg.tools)
         // Handle the case where `arg` has the `contents` structure
         return arg.contents.map(content => ({
           role: content.role,
-          content: content.parts.map(part => part.text).join('')
+          content: content.parts.map((part: CandidateContentPart) => {
+            if (typeof part.text === 'string') {
+              return part.text
+            } else if ('functionCall' in part) {
+              return JSON.stringify((part as any).functionCall)
+            } else if (typeof part === 'object') {
+              return JSON.stringify(part)
+            } else {
+              return ''
+            }
+          }).join('')
         }))
+      } else if (arg.functionResponse != null) {
+        // Handle the case where `arg` has a `functionResponse` structure
+        return [{ role: 'model', content: JSON.stringify(arg.functionResponse) }]
+      } else {
+        return []
       }
     })
 
+    const allTools = argTools.concat(this?.tools ?? [])
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': sdkName,
       'langtrace.service.name': serviceProvider,
@@ -73,9 +116,20 @@ export function generateContentPatch (
       'gen_ai.operation.name': 'chat',
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
-      'url.full': '',
-      'url.path': this?.publisherModelEndpoint,
-      'gen_ai.request.model': this?.model,
+      'url.full': this?.apiEndpoint,
+      'url.path': this?.publisherModelEndpoint ?? this?.resourcePath ?? undefined,
+      'gen_ai.request.model': (() => {
+        if (this?.model !== undefined && this.model !== null) {
+          return this.model
+        }
+        if (typeof this?.resourcePath === 'string') {
+          return this.resourcePath.split('/').pop()
+        }
+        if (typeof this?.publisherModelEndpoint === 'string') {
+          return this.publisherModelEndpoint.split('/').pop()
+        }
+        return undefined
+      })(),
       'http.max.retries': this?._client?.maxRetries,
       'http.timeout': this?._client?.timeout,
       'gen_ai.request.temperature': this?.generationConfig?.temperature,
@@ -86,6 +140,7 @@ export function generateContentPatch (
       'gen_ai.request.frequency_penalty': this?.generationConfig?.frequencyPenalty,
       'gen_ai.request.presence_penalty': this?.generationConfig?.presencePenalty,
       'gen_ai.request.seed': this?.generationConfig?.seed,
+      'gen_ai.request.tools': allTools.length > 0 ? JSON.stringify(allTools) : undefined,
       ...customAttributes
     }
 
@@ -179,7 +234,17 @@ async function * handleStreamResponse (
       const { content } = chunk.candidates.map((candidate: Candidate) => {
         return {
           role: candidate.content.role,
-          content: candidate.content.parts.map((part: CandidateContentPart) => part.text).join('')
+          content: candidate.content.parts.map((part: CandidateContentPart) => {
+            if (typeof part.text === 'string') {
+              return part.text
+            } else if ('functionCall' in part) {
+              return JSON.stringify(part.functionCall)
+            } else if (typeof part === 'object') {
+              return JSON.stringify(part)
+            } else {
+              return ''
+            }
+          }).join('')
         }
       })[0]
       const tokenCount = estimateTokens(content)
