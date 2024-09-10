@@ -41,6 +41,7 @@ import { Vendor } from '@langtrase/trace-attributes'
 import { vercelAIInstrumentation } from '@langtrace-instrumentation/vercel/instrumentation'
 import { DropAttributesProcessor } from '@langtrace-extensions/spanprocessors/DropAttributesProcessor'
 import { vertexAIInstrumentation } from '@langtrace-instrumentation/vertexai/instrumentation'
+import { mistralInstrumentation } from '@langtrace-instrumentation/mistral/instrumentation'
 
 /**
  * Initializes the LangTrace sdk with custom options.
@@ -155,6 +156,7 @@ export const init: LangTraceInit = ({
     cohere: cohereInstrumentation,
     anthropic: anthropicInstrumentation,
     gemini: geminiInstrumentation,
+    mistral: mistralInstrumentation,
     groq: groqInstrumentation,
     pinecone: pineconeInstrumentation,
     llamaindex: llamaIndexInstrumentation,
