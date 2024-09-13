@@ -5,10 +5,10 @@ import dotenv from 'dotenv'
 import OpenAI from 'openai'
 import { withLangTraceRootSpan } from '@langtrace-utils/instrumentation'
 dotenv.config()
+init({ batch: false, write_spans_to_console: false, disable_instrumentations: { all_except: ['openai', 'pinecone'] } })
 
 const pc = new Pinecone()
 const openai = new OpenAI()
-init({ batch: false, write_spans_to_console: false, disable_instrumentations: { all_except: ['openai', 'pinecone'] } })
 
 export async function basic (): Promise<void> {
   await withLangTraceRootSpan(async () => {

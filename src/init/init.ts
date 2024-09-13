@@ -41,6 +41,9 @@ import { Vendor } from '@langtrase/trace-attributes'
 import { vercelAIInstrumentation } from '@langtrace-instrumentation/vercel/instrumentation'
 import { DropAttributesProcessor } from '@langtrace-extensions/spanprocessors/DropAttributesProcessor'
 import { vertexAIInstrumentation } from '@langtrace-instrumentation/vertexai/instrumentation'
+import * as Sentry from '@sentry/node'
+import { SENTRY_DSN } from '@langtrace-constants/common'
+import { nodeProfilingIntegration } from '@sentry/profiling-node'
 import { mistralInstrumentation } from '@langtrace-instrumentation/mistral/instrumentation'
 
 /**
@@ -195,6 +198,21 @@ export const init: LangTraceInit = ({
     })
     registerInstrumentations({ tracerProvider: provider })
     disableInstrumentations(disable_instrumentations, allInstrumentations, instrumentations)
+  }
+  const enableErrorReporting = process.env.LANGTRACE_ERROR_REPORTING ?? 'True'
+  if (enableErrorReporting === 'True') {
+    Sentry.init({
+      dsn: SENTRY_DSN,
+      tracesSampleRate: 1.0,
+      profilesSampleRate: 1.0,
+      skipOpenTelemetrySetup: true,
+      integrations: [nodeProfilingIntegration()]
+    })
+    const context = Object.entries(initOptions).reduce<Record<string, string>>((acc, [key, value]) => {
+      acc[key] = JSON.stringify(value)
+      return acc
+    }, {})
+    Sentry.setContext('sdk_init_options', context)
   }
   global.langtrace_initalized = true
   global.langtrace_options = initOptions
