@@ -1,3 +1,3 @@
-import { chatCompletion } from '@langtrace-examples/mistral/chat-complete'
+import { basic } from '@langtrace-examples/llamaindex/basic'
 
-void chatCompletion()
+void basic()
