@@ -16,6 +16,7 @@
  */
 import { EvaluationAPIData, LangTraceEvaluation, LangtracePrompt } from '@langtrace-utils/types'
 import axios from 'axios'
+import { LangtraceSdkError } from 'errors/sdk_error'
 
 /**
  * Fetches a prompt from the registry.
@@ -40,7 +41,7 @@ export const getPromptFromRegistry = async (promptRegistryId: string, options?: 
     const response = await axios.get(`${process.env.LANGTRACE_API_HOST}/api/promptset?${queryParams.toString()}`, { headers: { 'x-api-key': process.env.LANGTRACE_API_KEY } })
     return response.data.prompts[0] as LangtracePrompt
   } catch (err: any) {
-    throw Error(`An error occured when trying to get the prompt from registry ${process.env.LANGTRACE_API_HOST}/api/promptset?${queryParams.toString()} ${JSON.stringify(err.stack)}`)
+    throw new LangtraceSdkError(`An error occured when trying to get the prompt from registry ${process.env.LANGTRACE_API_HOST}/api/promptset?${queryParams.toString()} ${JSON.stringify(err.stack)}`)
   }
 }
 
@@ -65,7 +66,7 @@ export const sendUserFeedback = async ({ userId, userScore, traceId, spanId }: E
       await axios.post(`${process.env.LANGTRACE_API_HOST}/api/evaluation`, { userId, userScore, spanId, traceId }, { headers: { 'x-api-key': process.env.LANGTRACE_API_KEY } })
     }
   } catch (err: any) {
-    throw Error(`An error occured while sending user feedback to langtrace ${process.env.LANGTRACE_API_HOST}/api/evaluation ${JSON.stringify(err.stack)}`)
+    throw new LangtraceSdkError(`An error occured while sending user feedback to langtrace ${process.env.LANGTRACE_API_HOST}/api/evaluation ${JSON.stringify(err.stack)}`)
   }
 }
 
@@ -79,6 +80,6 @@ const getEvaluation = async (spanId: string): Promise<LangTraceEvaluation | unde
     const response = await axios.get(`${process.env.LANGTRACE_API_HOST}/api/evaluation?spanId=${spanId}`, { headers: { 'x-api-key': process.env.LANGTRACE_API_KEY } })
     return response.data.evaluations[0] as LangTraceEvaluation
   } catch (err: any) {
-    throw Error(`An error occured when trying to get the evaluation from langtrace ${process.env.LANGTRACE_API_HOST}/api/evaluation?spanId=${spanId} ${JSON.stringify(err.stack)}`)
+    throw new LangtraceSdkError(`An error occured when trying to get the evaluation from langtrace ${process.env.LANGTRACE_API_HOST}/api/evaluation?spanId=${spanId} ${JSON.stringify(err.stack)}`)
   }
 }

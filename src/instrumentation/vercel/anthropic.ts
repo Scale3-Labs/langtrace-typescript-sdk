@@ -16,6 +16,7 @@ import {
 
 import { calculatePromptTokens, estimateTokens } from '@langtrace-utils/llm'
 import { addSpanEvent } from '@langtrace-utils/misc'
+import { LangtraceSdkError } from 'errors/sdk_error'
 
 export async function generateTextPatchAnthropic (
   this: any,
@@ -87,7 +88,7 @@ export async function generateTextPatchAnthropic (
     } catch (error: any) {
       span.recordException(error as Exception)
       span.setStatus({ code: SpanStatusCode.ERROR })
-      throw error
+      throw new LangtraceSdkError(error.message as string, error.stack as string)
     } finally {
       span.end()
     }
@@ -174,7 +175,7 @@ export async function streamTextPatchAnthropic (
       span.recordException(error as Exception)
       span.setStatus({ code: SpanStatusCode.ERROR })
       span.end()
-      throw error
+      throw new LangtraceSdkError(error.message as string, error.stack as string)
     }
   })
 }
@@ -249,7 +250,7 @@ export async function generateObjectPatchAnthropic (
     } catch (error: any) {
       span.recordException(error as Exception)
       span.setStatus({ code: SpanStatusCode.ERROR })
-      throw error
+      throw new LangtraceSdkError(error.message as string, error.stack as string)
     } finally {
       span.end()
     }
@@ -336,7 +337,7 @@ export async function streamObjectPatchAnthropic (
       span.recordException(error as Exception)
       span.setStatus({ code: SpanStatusCode.ERROR })
       span.end()
-      throw error
+      throw new LangtraceSdkError(error.message as string, error.stack as string)
     }
   })
 }
@@ -383,7 +384,7 @@ async function * handleAnthropicStreamResponse (
   } catch (error: any) {
     span.recordException(error as Exception)
     span.setStatus({ code: SpanStatusCode.ERROR })
-    throw error
+    throw new LangtraceSdkError(error.message as string, error.stack as string)
   } finally {
     span.end()
   }

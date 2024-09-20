@@ -37,6 +37,7 @@ import {
 } from '@langtrace-instrumentation/cohere/types'
 import { APIS, LLMSpanAttributes, Event } from '@langtrase/trace-attributes'
 import { addSpanEvent, createStreamProxy } from '@langtrace-utils/misc'
+import { LangtraceSdkError } from 'errors/sdk_error'
 
 export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: ICohereClient, request: IChatRequest, requestOptions?: IRequestOptions): Promise<INonStreamedChatResponse> {
@@ -97,10 +98,10 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
         span.setStatus({ code: SpanStatusCode.OK })
         return response
       })
-    } catch (e: unknown) {
-      span.recordException(e as Exception)
+    } catch (error: any) {
+      span.recordException(error as Exception)
       span.setStatus({ code: SpanStatusCode.ERROR })
-      throw e
+      throw new LangtraceSdkError(error.message as string, error.stack as string)
     } finally {
       span.end()
     }
@@ -187,10 +188,10 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
         span.setStatus({ code: SpanStatusCode.OK })
         return response
       })
-    } catch (e: unknown) {
-      span.recordException(e as Exception)
+    } catch (error: any) {
+      span.recordException(error as Exception)
       span.setStatus({ code: SpanStatusCode.ERROR })
-      throw e
+      throw new LangtraceSdkError(error.message as string, error.stack as string)
     } finally {
       span.end()
     }
@@ -230,10 +231,10 @@ export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer
         span.setStatus({ code: SpanStatusCode.OK })
         return response
       })
-    } catch (e: any) {
+    } catch (error: any) {
       span.setStatus({ code: SpanStatusCode.ERROR })
-      span.recordException(e as Exception)
-      throw e
+      span.recordException(error as Exception)
+      throw new LangtraceSdkError(error.message as string, error.stack as string)
     } finally {
       span.end()
     }
@@ -276,10 +277,10 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
         span.setStatus({ code: SpanStatusCode.OK })
         return response
       })
-    } catch (e: unknown) {
-      span.recordException(e as Exception)
+    } catch (error: any) {
+      span.recordException(error as Exception)
       span.setStatus({ code: SpanStatusCode.ERROR })
-      throw e
+      throw new LangtraceSdkError(error.message as string, error.stack as string)
     } finally {
       span.end()
     }
@@ -311,10 +312,10 @@ async function * handleStream (stream: any, attributes: LLMSpanAttributes, span:
 
     span.setAttributes(attributes)
     span.setStatus({ code: SpanStatusCode.OK })
-  } catch (error: unknown) {
+  } catch (error: any) {
     span.recordException(error as Exception)
     span.setStatus({ code: SpanStatusCode.ERROR })
-    throw error
+    throw new LangtraceSdkError(error.message as string, error.stack as string)
   } finally {
     span.end()
   }
