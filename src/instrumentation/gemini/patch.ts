@@ -34,6 +34,7 @@ import {
   trace,
   Tracer
 } from '@opentelemetry/api'
+import { LangtraceSdkError } from 'errors/sdk_error'
 
 export function generateContentPatch (
   originalMethod: (...args: any[]) => any,
@@ -131,7 +132,7 @@ export function generateContentPatch (
         } catch (error: any) {
           span.setStatus({ code: SpanStatusCode.ERROR })
           span.recordException(error as Exception)
-          throw error
+          throw new LangtraceSdkError(error.message as string, error.stack as string)
         }
       }
     )
@@ -179,7 +180,7 @@ async function * handleStreamResponse (
   } catch (error: any) {
     span.recordException(error as Exception)
     span.setStatus({ code: SpanStatusCode.ERROR })
-    throw error
+    throw new LangtraceSdkError(error.message as string, error.stack as string)
   } finally {
     span.end()
   }

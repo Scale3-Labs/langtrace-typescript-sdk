@@ -26,6 +26,7 @@ import {
   context,
   trace
 } from '@opentelemetry/api'
+import { LangtraceSdkError } from 'errors/sdk_error'
 
 export function collectionPatch (
   originalMethod: (...args: any[]) => any,
@@ -78,7 +79,7 @@ export function collectionPatch (
           span.recordException(error as Exception)
           span.setStatus({ code: SpanStatusCode.ERROR })
           span.end()
-          throw error
+          throw new LangtraceSdkError(error.message as string, error.stack as string)
         }
       }
     )

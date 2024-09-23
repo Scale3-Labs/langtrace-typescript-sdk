@@ -1,11 +1,12 @@
 /* eslint-disable no-console */
-import { Span, SpanKind, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api'
+import { Exception, Span, SpanKind, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api'
 import {
   ChatFn, ChatStreamFn, EmbeddingsFn, GenerateFn, GenerateStreamFn, IChatRequest, IChatResponse, IEmbeddingsRequest, IEmbeddingsResponse, IGenerateRequest, IGenerateResponse, IOllamaClient
 } from '@langtrace-instrumentation/ollama/types'
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { LLMSpanAttributes, Event, APIS } from '@langtrase/trace-attributes'
 import { addSpanEvent, createStreamProxy } from '@langtrace-utils/misc'
+import { LangtraceSdkError } from 'errors/sdk_error'
 
 export const chatPatch = (original: ChatStreamFn | ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: IOllamaClient, chatRequest: IChatRequest): Promise<IChatResponse | AsyncIterable<IChatResponse>> {
@@ -227,9 +228,10 @@ export const embeddingsPatch = (original: EmbeddingsFn, tracer: Tracer, langtrac
         span.setStatus({ code: SpanStatusCode.OK })
         return resp
       })
-    } catch (e: unknown) {
-      span.setStatus({ code: SpanStatusCode.ERROR, message: (e as Error).message })
-      throw e
+    } catch (error: any) {
+      span.setStatus({ code: SpanStatusCode.ERROR })
+      span.recordException(error as Exception)
+      throw new LangtraceSdkError(error.message as string, error.stack as string)
     } finally {
       span.end()
     }
@@ -254,9 +256,10 @@ async function * handleChatStream (stream: AsyncIterable<any>, attributes: LLMSp
     addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify({ role: 'assistant', content: responseReconstructed.join('') }) })
     span.setAttributes(attributes)
     span.setStatus({ code: SpanStatusCode.OK })
-  } catch (error: unknown) {
-    span.setStatus({ code: SpanStatusCode.ERROR, message: (error as Error).message })
-    throw error
+  } catch (error: any) {
+    span.setStatus({ code: SpanStatusCode.ERROR })
+    span.recordException(error as Exception)
+    throw new LangtraceSdkError(error.message as string, error.stack as string)
   } finally {
     span.end()
   }
@@ -280,9 +283,10 @@ async function * handleGenerateStream (stream: AsyncIterable<any>, attributes: L
     addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify({ role: 'assistant', content: responseReconstructed.join('') }) })
     span.setAttributes(attributes)
     span.setStatus({ code: SpanStatusCode.OK })
-  } catch (error: unknown) {
-    span.setStatus({ code: SpanStatusCode.ERROR, message: (error as Error).message })
-    throw error
+  } catch (error: any) {
+    span.setStatus({ code: SpanStatusCode.ERROR })
+    span.recordException(error as Exception)
+    throw new LangtraceSdkError(error.message as string, error.stack as string)
   } finally {
     span.end()
   }
