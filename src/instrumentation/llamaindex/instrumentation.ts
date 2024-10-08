@@ -26,8 +26,20 @@ import {
 import { version, name } from '../../../package.json'
 
 class LlamaIndexInstrumentation extends InstrumentationBase<any> {
+  private readonly methodsToPatch: string[]
   constructor () {
     super(name, version)
+    this.methodsToPatch =
+    [
+      'query', 'retrieve', 'chat',
+      'call', 'extract', 'loadData',
+      'run', 'evaluateResponse',
+      'evaluate', '_getPrompts', '_updatePrompts',
+      'transform', 'fromDocuments',
+      'getNodesFromDocuments',
+      'synthesize', 'validatePrompts',
+      'splitText'
+    ]
   }
 
   public manualPatch (llamaIndex: any): void {
@@ -56,119 +68,29 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
   }
 
   private _patch (llama: any, moduleVersion?: string): void {
-    // Note: Instrumenting only the core concepts of LlamaIndex SDK
     // https://github.com/run-llama/LlamaIndexTS?tab=readme-ov-file
-
     for (const key in llama) {
       const cls = (llama)[key]
       if (cls.prototype !== undefined) {
-        if (cls.prototype.query !== undefined) {
-          if (isWrapped(cls.prototype)) {
-            this._unwrap(cls.prototype, 'query')
+        for (const method of this.methodsToPatch) {
+          if (cls.prototype[method] !== undefined) {
+            if (isWrapped(cls.prototype)) {
+              this._unwrap(cls.prototype, method)
+            }
+            this._wrap(
+              cls.prototype,
+              method,
+              (originalMethod: (...args: any[]) => any) =>
+                genericPatch(
+                  originalMethod,
+                  `llamaindex.${key}.${method}`,
+                  method,
+                  this.tracer,
+                  this.instrumentationVersion,
+                  moduleVersion
+                )
+            )
           }
-          this._wrap(
-            cls.prototype,
-            'query',
-            (originalMethod: (...args: any[]) => any) =>
-              genericPatch(
-                originalMethod,
-                `llamaindex.${key}.query`,
-                'query',
-                this.tracer,
-                this.instrumentationVersion,
-                moduleVersion
-              )
-          )
-        }
-        if (cls.prototype.retrieve !== undefined) {
-          if (isWrapped(cls.prototype)) {
-            this._unwrap(cls.prototype, 'retrieve')
-          }
-          this._wrap(
-            cls.prototype,
-            'retrieve',
-            (originalMethod: (...args: any[]) => any) =>
-              genericPatch(
-                originalMethod,
-                `llamaindex.${key}.retrieve`,
-                'retrieve_data',
-                this.tracer,
-                this.instrumentationVersion,
-                moduleVersion
-              )
-          )
-        }
-        if (cls.prototype.chat !== undefined) {
-          if (isWrapped(cls.prototype)) {
-            this._unwrap(cls.prototype, 'chat')
-          }
-          this._wrap(
-            cls.prototype,
-            'chat',
-            (originalMethod: (...args: any[]) => any) =>
-              genericPatch(
-                originalMethod,
-                `llamaindex.${key}.chat`,
-                'chat',
-                this.tracer,
-                this.instrumentationVersion,
-                moduleVersion
-              )
-          )
-        }
-        if (cls.prototype.call !== undefined) {
-          if (isWrapped(cls.prototype)) {
-            this._unwrap(cls.prototype, 'call')
-          }
-          this._wrap(
-            cls.prototype,
-            'call',
-            (originalMethod: (...args: any[]) => any) =>
-              genericPatch(
-                originalMethod,
-                `llamaindex.${key}.call`,
-                'prompt',
-                this.tracer,
-                this.instrumentationVersion,
-                moduleVersion
-              )
-          )
-        }
-        if (cls.prototype.extract !== undefined) {
-          if (isWrapped(cls.prototype)) {
-            this._unwrap(cls.prototype, 'extract')
-          }
-          this._wrap(
-            cls.prototype,
-            'extract',
-            (originalMethod: (...args: any[]) => any) =>
-              genericPatch(
-                originalMethod,
-                `llamaindex.${key}.extract`,
-                'extract_data',
-                this.tracer,
-                this.instrumentationVersion,
-                moduleVersion
-              )
-          )
-        }
-        if (cls.prototype.loadData !== undefined) {
-          if (isWrapped(cls.prototype)) {
-            this._unwrap(cls.prototype, 'loadData')
-          }
-          this._wrap(
-            cls.prototype,
-            'loadData',
-            (originalMethod: (...args: any[]) => any) =>
-              genericPatch(
-                originalMethod,
-                `llamaindex.${key}.loadData`,
-                'load_data',
-                this.tracer,
-                this.instrumentationVersion,
-                moduleVersion
-              )
-          )
         }
       }
     }
@@ -178,23 +100,10 @@ class LlamaIndexInstrumentation extends InstrumentationBase<any> {
     for (const key in llama) {
       const cls = (llama)[key]
       if (cls.prototype !== undefined) {
-        if (cls.prototype.query !== undefined) {
-          this._unwrap(cls.prototype, 'query')
-        }
-        if (cls.prototype.retrieve !== undefined) {
-          this._unwrap(cls.prototype, 'retrieve')
-        }
-        if (cls.prototype.chat !== undefined) {
-          this._unwrap(cls.prototype, 'chat')
-        }
-        if (cls.prototype.call !== undefined) {
-          this._unwrap(cls.prototype, 'call')
-        }
-        if (cls.prototype.extract !== undefined) {
-          this._unwrap(cls.prototype, 'extract')
-        }
-        if (cls.prototype.loadData !== undefined) {
-          this._unwrap(cls.prototype, 'loadData')
+        for (const method of this.methodsToPatch) {
+          if (isWrapped(cls.prototype)) {
+            this._unwrap(cls.prototype, method)
+          }
         }
       }
     }

@@ -16,6 +16,7 @@
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { SpanKind, trace, context, SpanStatusCode } from '@opentelemetry/api'
+import { LangtraceSdkError } from 'errors/sdk_error'
 /**
  *
  * @param fn  The function to be executed within the context of the root span. The function should accept the spanId and traceId as arguments
@@ -45,7 +46,7 @@ export async function withLangTraceRootSpan<T> (
         code: SpanStatusCode.ERROR,
         message: error.message
       })
-      throw error
+      throw new LangtraceSdkError(error.message as string, error.stack as string)
     } finally {
       // Ensure the root span is ended after function execution
       rootSpan.end()

@@ -19,6 +19,7 @@ import { APIS, DatabaseSpanAttributes, Event, Vendors } from '@langtrase/trace-a
 import { Tracer, context, trace, SpanKind, SpanStatusCode, Exception } from '@opentelemetry/api'
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { addSpanEvent } from '@langtrace-utils/misc'
+import { LangtraceSdkError } from 'errors/sdk_error'
 
 export function genericPatch (
   originalMethod: (...args: any[]) => any,
@@ -76,7 +77,7 @@ export function genericPatch (
           span.recordException(error as Exception)
           span.setStatus({ code: SpanStatusCode.ERROR })
           span.end()
-          throw error
+          throw new LangtraceSdkError(error.message as string, error.stack as string)
         }
       }
     )
