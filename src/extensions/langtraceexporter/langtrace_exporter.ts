@@ -28,7 +28,7 @@ export class LangTraceExporter implements SpanExporter {
   /**
    *
    * @param apiKey Your API key. If not set, the value will be read from the LANGTRACE_API_KEY environment variable
-   * @param apiHost The host of the LangTrace API. Default is https://langtrace.ai/api/trace. If set a POST request will be made to this URL with an array of ReadableSpan objects.
+   * @param apiHost The host of the LangTrace API. Default is https://app.langtrace.ai/api/trace. If set a POST request will be made to this URL with an array of ReadableSpan objects.
    * See https://github.com/open-telemetry/opentelemetry-js/blob/3c8c29ac8fdd71cd1ef78d2b35c65ced81db16f4/packages/opentelemetry-sdk-trace-base/src/export/ReadableSpan.ts#L29
    */
   constructor (apiKey: string, apiHost: string, headers?: Record<string, string>) {

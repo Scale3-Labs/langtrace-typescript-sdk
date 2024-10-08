@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-export const LANGTRACE_REMOTE_URL = 'https://langtrace.ai'
+export const LANGTRACE_REMOTE_URL = 'https://app.langtrace.ai'
