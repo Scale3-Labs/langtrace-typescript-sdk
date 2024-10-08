@@ -15,10 +15,8 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
-import { queryTypeToFunctionToProps } from '@langtrace-constants/instrumentation/weaviate'
-import { setValueFromPath, getValueFromPath } from '@langtrace-utils/misc'
-import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
+import { setValueFromPath, getValueFromPath, addSpanEvent } from '@langtrace-utils/misc'
+import { DatabaseSpanAttributes, queryTypeToFunctionToProps, Event, Vendors } from '@langtrase/trace-attributes'
 import { Exception, SpanKind, SpanStatusCode, Tracer, context, trace } from '@opentelemetry/api'
 
 interface PatchBuilderArgs {
@@ -68,32 +66,30 @@ export const patchBuilderFunctions = function (this: any, { clientInstance, clie
                   const attributes: DatabaseSpanAttributes = {
                     'langtrace.sdk.name': sdkName,
                     'langtrace.version': sdkVersion,
-                    'langtrace.service.name': SERVICE_PROVIDERS.WEAVIATE,
+                    'langtrace.service.name': Vendors.WEAVIATE,
                     'langtrace.service.type': 'vectordb',
                     'langtrace.service.version': moduleVersion,
-                    'db.system': SERVICE_PROVIDERS.WEAVIATE,
+                    'db.system': Vendors.WEAVIATE,
                     'server.address': clientArgs.host,
                     'db.operation': `${queryType}.${func}`,
                     'db.collection.name': getValueFromPath(functionCallInstance, collectionNameKey),
                     'db.query': JSON.stringify(queryObj),
                     ...customAttributes
                   }
-                  const span = tracer.startSpan(`${queryType}.${func}.do`, { kind: SpanKind.CLIENT, attributes }, context.active())
+                  const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? `${queryType}.${func}.do`
+                  const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
                   return await context.with(
                     trace.setSpan(context.active(), span),
                     async () => {
                       try {
                         const resp = await originalDo.apply(this, doArgs)
-                        if (resp !== undefined) span.addEvent(Event.RESPONSE, { 'db.response': JSON.stringify(resp) })
+                        if (resp !== undefined) addSpanEvent(span, Event.RESPONSE, { 'db.response': JSON.stringify(resp) })
                         span.setStatus({ code: SpanStatusCode.OK })
                         span.end()
                         return resp
                       } catch (error: any) {
                         span.recordException(error as Exception)
-                        span.setStatus({
-                          code: SpanStatusCode.ERROR,
-                          message: error.message
-                        })
+                        span.setStatus({ code: SpanStatusCode.ERROR })
                         span.end()
                         throw error
                       }

@@ -10,4 +10,7 @@ export const chatCompletion = async (): Promise<void> => {
     model: 'mixtral-8x7b-32768'
   }, { timeout: 1000 })
   console.info(chatCompletion.choices[0])
+  // for await (const chunk of chatCompletion) {
+  //   // process.stdout.write(chunk.choices[0]?.delta?.content ?? '')
+  // }
 }

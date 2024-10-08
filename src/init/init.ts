@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
+import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
+import { Resource } from '@opentelemetry/resources'
 import { InstrumentationBase, registerInstrumentations } from '@opentelemetry/instrumentation'
 import { ConsoleSpanExporter, BatchSpanProcessor, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base'
 import { LangTraceExporter } from '@langtrace-extensions/langtraceexporter/langtrace_exporter'
 import { LangtraceSampler } from '@langtrace-extensions/langtracesampler/langtrace_sampler'
-import { InstrumentationType, LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
+import { LangTraceInit, LangtraceInitOptions } from '@langtrace-init/types'
 import { LANGTRACE_REMOTE_URL } from '@langtrace-constants/exporter/langtrace_exporter'
 import { anthropicInstrumentation } from '@langtrace-instrumentation/anthropic/instrumentation'
 import { chromaInstrumentation } from '@langtrace-instrumentation/chroma/instrumentation'
 import { cohereInstrumentation } from '@langtrace-instrumentation/cohere/instrumentation'
+import { geminiInstrumentation } from '@langtrace-instrumentation/gemini/instrumentation'
 import { groqInstrumentation } from '@langtrace-instrumentation/groq/instrumentation'
 import { llamaIndexInstrumentation } from '@langtrace-instrumentation/llamaindex/instrumentation'
 import { openAIInstrumentation } from '@langtrace-instrumentation/openai/instrumentation'
@@ -31,9 +34,13 @@ import { pineconeInstrumentation } from '@langtrace-instrumentation/pinecone/ins
 import { qdrantInstrumentation } from '@langtrace-instrumentation/qdrant/instrumentation'
 import { DiagConsoleLogger, DiagLogLevel, diag } from '@opentelemetry/api'
 import { weaviateInstrumentation } from '@langtrace-instrumentation/weaviate/instrumentation'
-import { getCurrentAndLatestVersion, boxText } from '@langtrace-utils/misc'
 import c from 'ansi-colors'
 import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation'
+import { ollamaInstrumentation } from '@langtrace-instrumentation/ollama/instrumentation'
+import { Vendor } from '@langtrase/trace-attributes'
+import { vercelAIInstrumentation } from '@langtrace-instrumentation/vercel/instrumentation'
+import { DropAttributesProcessor } from '@langtrace-extensions/spanprocessors/DropAttributesProcessor'
+import { vertexAIInstrumentation } from '@langtrace-instrumentation/vertexai/instrumentation'
 
 /**
  * Initializes the LangTrace sdk with custom options.
@@ -59,11 +66,14 @@ import { pgInstrumentation } from '@langtrace-instrumentation/pg/instrumentation
  *  - disable: Whether to disable logging.
  * @param disable_latest_version_check Whether to disable the check for the latest version of the sdk.
  * @param disable_tracing_for_functions Functions per vendor to disable tracing for.
+ * @param disable_tracing_attributes Attributes to drop from spans.
 */
 
 let isLatestSdk = false
+
 export const init: LangTraceInit = ({
   api_key = undefined,
+  service_name = undefined,
   batch = false,
   write_spans_to_console = false,
   custom_remote_exporter = undefined,
@@ -76,9 +86,14 @@ export const init: LangTraceInit = ({
     disable: false
   },
   disable_latest_version_check = false,
-  disable_tracing_for_functions = undefined
+  disable_tracing_for_functions = undefined,
+  disable_tracing_attributes = []
 }: LangtraceInitOptions = {}) => {
-  const provider = new NodeTracerProvider({ sampler: new LangtraceSampler(disable_tracing_for_functions) })
+  const provider = new NodeTracerProvider({
+    sampler: new LangtraceSampler(disable_tracing_for_functions),
+    resource: new Resource({ 'service.name': process.env.OTEL_SERVICE_NAME ?? service_name ?? __filename ?? 'unknown' })
+  }
+  )
   const host = (process.env.LANGTRACE_API_HOST ?? api_host ?? LANGTRACE_REMOTE_URL)
   const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', host)
   const consoleExporter = new ConsoleSpanExporter()
@@ -87,7 +102,6 @@ export const init: LangTraceInit = ({
   const simpleProcessorConsole = new SimpleSpanProcessor(consoleExporter)
 
   process.env.LANGTRACE_API_HOST = host.replace('/api/trace', '')
-
   diag.setLogger(logging.logger ?? new DiagConsoleLogger(), { suppressOverrideMessage: true, logLevel: logging.level })
 
   if (logging.disable === true) {
@@ -109,7 +123,7 @@ export const init: LangTraceInit = ({
     })
   }
 
-  if (api_host === LANGTRACE_REMOTE_URL) {
+  if (api_host === LANGTRACE_REMOTE_URL && !write_spans_to_console) {
     if (api_key === undefined && process.env.LANGTRACE_API_KEY === undefined) {
       diag.warn('No API key provided. Please provide an API key to start sending traces to Langtrace.')
     }
@@ -132,52 +146,84 @@ export const init: LangTraceInit = ({
       provider.addSpanProcessor(new SimpleSpanProcessor(custom_remote_exporter))
     }
   }
-  provider.register()
-
-  const allInstrumentations: Record<InstrumentationType, any> = {
+  provider.addSpanProcessor(new DropAttributesProcessor(disable_tracing_attributes))
+  if (!global.langtrace_initalized) {
+    provider.register()
+  }
+  const allInstrumentations: Record<Vendor, any> = {
     openai: openAIInstrumentation,
     cohere: cohereInstrumentation,
     anthropic: anthropicInstrumentation,
+    gemini: geminiInstrumentation,
     groq: groqInstrumentation,
     pinecone: pineconeInstrumentation,
     llamaindex: llamaIndexInstrumentation,
     chromadb: chromaInstrumentation,
     qdrant: qdrantInstrumentation,
     weaviate: weaviateInstrumentation,
-    pg: pgInstrumentation
+    pg: pgInstrumentation,
+    ai: vercelAIInstrumentation,
+    ollama: ollamaInstrumentation,
+    vertexai: vertexAIInstrumentation
   }
-
+  const initOptions: LangtraceInitOptions = {
+    api_key,
+    batch,
+    write_spans_to_console,
+    custom_remote_exporter,
+    instrumentations,
+    api_host,
+    disable_instrumentations,
+    logging,
+    disable_latest_version_check,
+    disable_tracing_for_functions,
+    disable_tracing_attributes
+  }
   if (instrumentations === undefined) {
     registerInstrumentations({
-      instrumentations: getInstrumentations(disable_instrumentations, allInstrumentations),
+      instrumentations: Object.values(allInstrumentations).filter((instrumentation) => instrumentation !== undefined),
       tracerProvider: provider
     })
+    disableInstrumentations(disable_instrumentations, allInstrumentations)
   } else {
     Object.entries(instrumentations).forEach(([key, value]) => {
       if (value !== undefined) {
-        allInstrumentations[key as InstrumentationType].manualPatch(value)
+        allInstrumentations[key as Vendor].manualPatch(value)
       }
     })
     registerInstrumentations({ tracerProvider: provider })
+    disableInstrumentations(disable_instrumentations, allInstrumentations, instrumentations)
   }
+  global.langtrace_initalized = true
+  global.langtrace_options = initOptions
 }
 
-const getInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<InstrumentationType, InstrumentationBase>): InstrumentationBase[] => {
+const disableInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<Vendor, any>, modules?: { [key in Vendor]?: any }): InstrumentationBase[] => {
   if (disable_instrumentations.only !== undefined && disable_instrumentations.all_except !== undefined) {
     throw new Error('Cannot specify both only and all_except in disable_instrumentations')
   }
   const instrumentations = Object.fromEntries(Object.entries(allInstrumentations)
     .filter(([key, instrumentation]) => {
+      if (instrumentation === undefined) {
+        return false
+      }
       if (disable_instrumentations.all_except !== undefined) {
-        if (!disable_instrumentations.all_except.includes(key as InstrumentationType)) {
-          instrumentation.disable()
+        if (!disable_instrumentations.all_except.includes(key as Vendor)) {
+          if (modules !== undefined && modules[key as Vendor] !== undefined) {
+            instrumentation._unpatch(modules[key as Vendor])
+          } else {
+            instrumentation.disable()
+          }
           return false
         }
       }
       if (disable_instrumentations.only !== undefined) {
-        if (disable_instrumentations.only.includes(key as InstrumentationType)) {
-          instrumentation.disable()
-          return false
+        if (disable_instrumentations.only.includes(key as Vendor)) {
+          if (modules !== undefined && modules[key as Vendor] !== undefined) {
+            instrumentation._unpatch(modules[key as Vendor])
+          } else {
+            instrumentation.disable()
+          }
         }
       }
       return true

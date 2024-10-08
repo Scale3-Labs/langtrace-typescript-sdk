@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation'
+import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
 import { diag } from '@opentelemetry/api'
@@ -51,6 +51,9 @@ class PgInstrumentation extends InstrumentationBase<any> {
   }
 
   private _patch (module: any, moduleVersion?: string): void {
+    if (isWrapped(module.Client.prototype)) {
+      this._unpatch(module)
+    }
     this._wrap(module.Client.prototype, 'query', (original) => {
       return patchPgQuery(original, this.tracer, name, version, moduleVersion)
     })

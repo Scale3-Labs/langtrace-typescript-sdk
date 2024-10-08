@@ -1,8 +1,6 @@
-import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
-import { APIS } from '@langtrace-constants/instrumentation/pg'
-import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
+import { DatabaseSpanAttributes, Vendors, Event, APIS } from '@langtrase/trace-attributes'
 import { context, Exception, SpanKind, SpanStatusCode, trace, Tracer } from '@opentelemetry/api'
-import { stringify } from '@langtrace-utils/misc'
+import { addSpanEvent, stringify } from '@langtrace-utils/misc'
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 
 export const patchPgQuery = (original: any, tracer: Tracer, sdkName: string, langtraceVersion: string, version?: string): any => {
@@ -10,7 +8,7 @@ export const patchPgQuery = (original: any, tracer: Tracer, sdkName: string, lan
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const attributes: DatabaseSpanAttributes = {
       'langtrace.sdk.name': sdkName,
-      'langtrace.service.name': SERVICE_PROVIDERS.PG,
+      'langtrace.service.name': Vendors.PG,
       'langtrace.service.type': 'vectordb',
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
@@ -20,8 +18,8 @@ export const patchPgQuery = (original: any, tracer: Tracer, sdkName: string, lan
       'db.query': stringify({ queryOrTextConfig, values }),
       ...customAttributes
     }
-
-    const span = tracer.startSpan(APIS.QUERY.METHOD, { kind: SpanKind.CLIENT, attributes })
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.pg.QUERY.METHOD
+    const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes })
     return await context.with(
       trace.setSpan(context.active(), trace.getSpan(context.active()) ?? span), async () => {
         try {
@@ -29,16 +27,13 @@ export const patchPgQuery = (original: any, tracer: Tracer, sdkName: string, lan
           attributes['db.operation'] = resp.command
           attributes['db.top_k'] = resp.rowCount
           span.setAttributes(attributes)
-          if (resp !== undefined) span.addEvent(Event.RESPONSE, { 'db.response': stringify(resp) })
+          if (resp !== undefined) addSpanEvent(span, Event.RESPONSE, { 'db.response': stringify(resp) })
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
           return resp
         } catch (error: any) {
           span.recordException(error as Exception)
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error.message
-          })
+          span.setStatus({ code: SpanStatusCode.ERROR })
           span.end()
           throw error
         }

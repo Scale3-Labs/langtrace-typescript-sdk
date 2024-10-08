@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { APIS } from '@langtrace-constants/instrumentation/chroma'
 import { diag } from '@opentelemetry/api'
 import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
 import { collectionPatch } from '@langtrace-instrumentation/chroma/patch'
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
+import { APIS } from '@langtrase/trace-attributes'
 
 class ChromaInstrumentation extends InstrumentationBase<any> {
   constructor () {
@@ -53,15 +53,18 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
 
   private _patch (chromadb: any, moduleVersion?: string): void {
     if (isWrapped(chromadb.Collection.prototype)) {
-      Object.keys(APIS).forEach((api) => {
-        this._unwrap(chromadb.Collection.prototype, APIS[api as keyof typeof APIS].OPERATION)
+      Object.keys(APIS.chromadb).forEach((api) => {
+        this._unwrap(chromadb.Collection.prototype, APIS.chromadb[api as keyof typeof APIS.chromadb].OPERATION as string)
       })
     }
 
-    Object.keys(APIS).forEach((api) => {
+    Object.keys(APIS.chromadb).forEach((api) => {
+      if (isWrapped(chromadb.Collection.prototype)) {
+        this._unpatch(chromadb)
+      }
       this._wrap(
         chromadb.Collection.prototype,
-        APIS[api as keyof typeof APIS].OPERATION,
+        APIS.chromadb[api as keyof typeof APIS.chromadb].OPERATION,
         (originalMethod: (...args: any[]) => any) =>
           collectionPatch(originalMethod, api, this.tracer, this.instrumentationVersion, moduleVersion)
       )
@@ -69,8 +72,8 @@ class ChromaInstrumentation extends InstrumentationBase<any> {
   }
 
   private _unpatch (chromadb: any): void {
-    Object.keys(APIS).forEach((api) => {
-      this._unwrap(chromadb.Collection.prototype, APIS[api as keyof typeof APIS].OPERATION)
+    Object.keys(APIS.chromadb).forEach((api) => {
+      this._unwrap(chromadb.Collection.prototype, APIS.chromadb[api as keyof typeof APIS.chromadb].OPERATION as string)
     })
   }
 }

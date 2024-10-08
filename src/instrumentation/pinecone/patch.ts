@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-import { APIS } from '@langtrace-constants/instrumentation/pinecone'
-import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
-import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
+import { APIS, DatabaseSpanAttributes, Event, Vendors } from '@langtrase/trace-attributes'
 import { Tracer, context, trace, SpanKind, SpanStatusCode, Exception } from '@opentelemetry/api'
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
+import { addSpanEvent } from '@langtrace-utils/misc'
 
 export function genericPatch (
   originalMethod: (...args: any[]) => any,
@@ -31,11 +30,11 @@ export function genericPatch (
   return async function (this: any, ...args: any[]): Promise<any> {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const originalContext = this
-    const api = APIS[method as keyof typeof APIS]
+    const api = APIS.pinecone[method as keyof typeof APIS.pinecone]
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const attributes: DatabaseSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
-      'langtrace.service.name': SERVICE_PROVIDERS.PINECONE,
+      'langtrace.service.name': Vendors.PINECONE,
       'langtrace.service.type': 'vectordb',
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
@@ -44,8 +43,8 @@ export function genericPatch (
       'db.query': JSON.stringify(args),
       ...customAttributes
     }
-
-    const span = tracer.startSpan(api.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? api.METHOD
+    const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
     return await context.with(
       trace.setSpan(context.active(), span),
       async () => {
@@ -67,7 +66,7 @@ export function genericPatch (
           // NOTE: Not tracing the response data as it can contain sensitive information
           const response = await originalMethod.apply(originalContext, args)
           if (response !== undefined) {
-            span.addEvent(Event.RESPONSE, { 'db.response': JSON.stringify(response) })
+            addSpanEvent(span, Event.RESPONSE, { 'db.response': JSON.stringify(response) })
           }
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
@@ -75,10 +74,7 @@ export function genericPatch (
         } catch (error: any) {
           // If an error occurs, record the exception and end the span
           span.recordException(error as Exception)
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error.message
-          })
+          span.setStatus({ code: SpanStatusCode.ERROR })
           span.end()
           throw error
         }

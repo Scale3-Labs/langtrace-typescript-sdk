@@ -15,9 +15,8 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { APIS } from '@langtrace-constants/instrumentation/chroma'
-import { SERVICE_PROVIDERS, Event } from '@langtrace-constants/instrumentation/common'
-import { DatabaseSpanAttributes } from '@langtrase/trace-attributes'
+import { addSpanEvent } from '@langtrace-utils/misc'
+import { APIS, DatabaseSpanAttributes, Vendors, Event } from '@langtrase/trace-attributes'
 
 import {
   Exception,
@@ -36,12 +35,12 @@ export function collectionPatch (
   version?: string
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
-    const api = APIS[method as keyof typeof APIS]
     // Extract custom attributes from the current context
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
+    const api = APIS.chromadb[method as keyof typeof APIS.chromadb]
     const attributes: DatabaseSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
-      'langtrace.service.name': SERVICE_PROVIDERS.CHROMA,
+      'langtrace.service.name': Vendors.CHROMADB,
       'langtrace.service.type': 'vectordb',
       'langtrace.service.version': version ?? 'latest',
       'langtrace.version': langtraceVersion,
@@ -62,8 +61,8 @@ export function collectionPatch (
     if (this.embeddingFunction?.model !== undefined) {
       attributes['db.chromadb.embedding_model'] = this.embeddingFunction.model
     }
-
-    const span = tracer.startSpan(api.METHOD, { kind: SpanKind.CLIENT, attributes }, context.active())
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? api.METHOD
+    const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return await context.with(
       trace.setSpan(context.active(), span),
@@ -71,16 +70,13 @@ export function collectionPatch (
         try {
           // NOTE: Not tracing the response data as it can contain sensitive information
           const response = await originalMethod.apply(this, args)
-          if (response !== undefined) span.addEvent(Event.RESPONSE, { 'db.response': JSON.stringify(response) })
+          if (response !== undefined) addSpanEvent(span, Event.RESPONSE, { 'db.response': JSON.stringify(response) })
           span.setStatus({ code: SpanStatusCode.OK })
           span.end()
           return response
         } catch (error: any) {
           span.recordException(error as Exception)
-          span.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: error.message
-          })
+          span.setStatus({ code: SpanStatusCode.ERROR })
           span.end()
           throw error
         }

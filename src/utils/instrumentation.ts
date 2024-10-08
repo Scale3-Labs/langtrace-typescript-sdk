@@ -15,7 +15,6 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { LLMSpanAttributes } from '@langtrase/trace-attributes'
 import { SpanKind, trace, context, SpanStatusCode } from '@opentelemetry/api'
 /**
  *
@@ -60,10 +59,12 @@ export async function withLangTraceRootSpan<T> (
  * @param attributes custom attributes to be added to the current context
  * @returns result of the function
  */
-export async function withAdditionalAttributes <T> (fn: () => Promise<T>, attributes: Partial<LLMSpanAttributes>): Promise<T> {
+export async function withAdditionalAttributes <T> (fn: () => Promise<T>, attributes: { [key: string]: any, 'langtrace.span.name'?: string } | Promise<{ [key: string]: any, 'langtrace.span.name'?: string }>): Promise<T> {
   const currentContext = context.active()
   const contextWithAttributes = currentContext.setValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, attributes)
-
+  if (attributes instanceof Promise) {
+    attributes = await attributes
+  }
   // Execute the function within the context that has the custom attributes
   return await context.with(contextWithAttributes, fn)
 }

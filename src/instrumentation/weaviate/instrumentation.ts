@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation'
+import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
 import { diag } from '@opentelemetry/api'
@@ -52,6 +52,9 @@ class WeaviateInstrumentation extends InstrumentationBase<any> {
   }
 
   private _patch (weaviate: any, moduleVersion?: string): void {
+    if (isWrapped(weaviate.default)) {
+      this._unpatch(weaviate)
+    }
     this._wrap(weaviate.default, 'client', (original) => {
       return (params: Record<string, any>) => {
         const clientInstance = original.apply(this, [params])

@@ -1,5 +1,108 @@
 # @langtrase/typescript-sdk
 
+
+## 5.3.2
+
+### Patch Changes
+
+- Add Vertex AI tools and funcition tracing support
+
+## 5.3.1
+
+### Patch Changes
+
+- Fix allowing manual patch for Gemini and Vertex AI.
+
+## 5.3.0
+
+### Minor Changes
+
+- Add support for Vertex AI tracing.
+
+## 5.2.0
+
+### Minor Changes
+
+- Add support for Gemini tracing.
+
+## 5.1.2
+
+### Patch Changes
+
+- Fix previous tiktoken fix causing same issue on nextjs
+
+## 5.1.1
+
+### Patch Changes
+
+- Switch tiktoken library to make it wasm compatible
+
+## 5.1.0
+
+### Minor Changes
+
+- Added support for Vercel AI Anthropic model.
+
+## 5.0.4
+
+### Patch Changes
+
+- Bug fix where response_format was not following genai conventions for openai instrumentation
+
+## 5.0.3
+
+### Patch Changes
+
+- Add service_name option and support for otel env var
+
+## 5.0.2
+
+### Patch Changes
+
+- Remove adding chunks for streaming to events
+
+## 5.0.1
+
+### Patch Changes
+
+- Fixed the gen_ai input and output token attr to proper values for openai groq.
+
+## 5.0.0
+
+### Major Changes
+
+- Make attributes genai compatible and bug fixes
+
+## 4.1.0
+
+### Minor Changes
+
+- Added support for vercel AI sdk and a few bug fixes
+
+## 4.0.1
+
+### Patch Changes
+
+- Fix bug causing qdrant, pinecone and chroma instrumentation to fail
+
+## 4.0.0
+
+### Major Changes
+
+- Migrate to OTEL conventions for LLM attributes, add support for ollama and bug fixes
+
+## 3.3.3
+
+### Patch Changes
+
+- Fixed a bug causing sdk to crash if init was called multiple time. Now a warning is shown. Also fixed a bug which was skipping sampling spans incorrectly
+
+## 3.3.2
+
+### Patch Changes
+
+- Export constants vendors, TracedFunctionsByVendor and their corresponding types
+
 ## 3.3.1
 
 ### Patch Changes

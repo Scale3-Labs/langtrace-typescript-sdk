@@ -14,20 +14,10 @@
  * limitations under the License.
  */
 
-import { AnthropicFunctions } from '@langtrace-constants/instrumentation/anthropic'
-import { ChromadbFunctions } from '@langtrace-constants/instrumentation/chroma'
-import { CohereFunctions } from '@langtrace-constants/instrumentation/cohere'
-import { GroqFunctions } from '@langtrace-constants/instrumentation/groq'
-import { LlamaIndexFunctions } from '@langtrace-constants/instrumentation/llamaindex'
-import { OpenAIFunctions } from '@langtrace-constants/instrumentation/openai'
-import { PgFunctions } from '@langtrace-constants/instrumentation/pg'
-import { PineConeFunctions } from '@langtrace-constants/instrumentation/pinecone'
-import { QdrantFunctions } from '@langtrace-constants/instrumentation/qdrant'
-import { WeaviateFunctions } from '@langtrace-constants/instrumentation/weaviate'
+import { FrameworkSpanAttributeNames, Vendor } from '@langtrase/trace-attributes'
+import { DatabaseSpanAttributeNames, LLMSpanAttributeNames, VendorTracedFunctions } from '@langtrase/trace-attributes/dist/constants/common'
 import { DiagLogLevel, DiagLogger } from '@opentelemetry/api'
 import { SpanExporter } from '@opentelemetry/sdk-trace-base'
-
-export type InstrumentationType = 'openai' | 'cohere' | 'anthropic' | 'groq' | 'pinecone' | 'llamaindex' | 'chromadb' | 'qdrant' | 'weaviate' | 'pg'
 
 export interface LangtraceInitOptions {
   api_key?: string
@@ -36,35 +26,21 @@ export interface LangtraceInitOptions {
   custom_remote_exporter?: SpanExporter
   api_host?: string
   disable_instrumentations?: {
-    all_except?: InstrumentationType[]
-    only?: InstrumentationType[]
+    all_except?: Vendor[]
+    only?: Vendor[]
   }
   logging?: {
     level?: DiagLogLevel
     logger?: DiagLogger
     disable?: boolean
   }
+  service_name?: string
   disable_latest_version_check?: boolean
-  disable_tracing_for_functions?: Partial<TracedFunctions>
-  instrumentations?: { [key in InstrumentationType]?: any }
+  disable_tracing_for_functions?: Partial<VendorTracedFunctions>
+  instrumentations?: { [key in Vendor]?: any }
+  disable_tracing_attributes?: DropAttributes
 }
 
-interface InstrumentationFunctions {
-  openai: OpenAIFunctions[]
-  cohere: CohereFunctions[]
-  anthropic: AnthropicFunctions[]
-  groq: GroqFunctions[]
-  pinecone: PineConeFunctions[]
-  llamaindex: LlamaIndexFunctions[]
-  chromadb: ChromadbFunctions[]
-  qdrant: QdrantFunctions[]
-  weaviate: WeaviateFunctions[]
-  pg: PgFunctions[]
-}
-
-// DisableTracing interface that enforces keys to match InstrumentationType
-export type TracedFunctions = {
-  [key in InstrumentationType]: InstrumentationFunctions[key]
-}
+type DropAttributes = typeof LLMSpanAttributeNames | typeof DatabaseSpanAttributeNames | typeof FrameworkSpanAttributeNames
 
 export type LangTraceInit = (options?: LangtraceInitOptions) => void

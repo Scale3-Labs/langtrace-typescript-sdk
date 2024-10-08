@@ -12,7 +12,7 @@ export async function chatCompletion (): Promise<void> {
 
   await withLangTraceRootSpan(async () => {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: 'Talk like a pirate' },
         { role: 'user', content: 'Tell me a story in 3 sentences or less.' }

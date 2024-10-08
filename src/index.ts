@@ -23,5 +23,13 @@ import { getPromptFromRegistry, sendUserFeedback } from '@langtrace-utils/langtr
 import { LangtracePrompt } from '@langtrace-utils/types'
 
 export {
-  init, withLangTraceRootSpan, LangTraceInit, LangtraceInitOptions, withAdditionalAttributes, getPromptFromRegistry, LangtracePrompt, sendUserFeedback
+  // Features
+  init,
+  withLangTraceRootSpan,
+  LangTraceInit,
+  LangtraceInitOptions,
+  withAdditionalAttributes,
+  getPromptFromRegistry,
+  LangtracePrompt,
+  sendUserFeedback
 }

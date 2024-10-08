@@ -18,8 +18,8 @@ import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNo
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
 import { diag } from '@opentelemetry/api'
-import { APIS } from '@langtrace-constants/instrumentation/qdrant'
 import { genericCollectionPatch } from '@langtrace-instrumentation/qdrant/patch'
+import { APIS } from '@langtrase/trace-attributes'
 
 class QdrantInstrumentation extends InstrumentationBase<any> {
   constructor () {
@@ -53,14 +53,14 @@ class QdrantInstrumentation extends InstrumentationBase<any> {
 
   private _patch (qdrant: any, moduleVersion?: string): void {
     if (isWrapped(qdrant.QdrantClient.prototype)) {
-      Object.keys(APIS).forEach((api) => {
-        this._unwrap(qdrant.QdrantClient.prototype, APIS[api as keyof typeof APIS].OPERATION)
+      Object.keys(APIS.qdrant).forEach((api) => {
+        this._unwrap(qdrant.QdrantClient.prototype, APIS.qdrant[api as keyof typeof APIS.qdrant].OPERATION as string)
       })
     }
-    Object.keys(APIS).forEach((api) => {
+    Object.keys(APIS.qdrant).forEach((api) => {
       this._wrap(
         qdrant.QdrantClient.prototype,
-        APIS[api as keyof typeof APIS].OPERATION,
+        APIS.qdrant[api as keyof typeof APIS.qdrant].OPERATION,
         (originalMethod: (...args: any[]) => any) =>
           genericCollectionPatch(originalMethod, api, this.tracer, this.instrumentationVersion, name, moduleVersion)
       )
@@ -68,8 +68,8 @@ class QdrantInstrumentation extends InstrumentationBase<any> {
   }
 
   private _unpatch (qdrant: any): void {
-    Object.keys(APIS).forEach((api) => {
-      this._unwrap(qdrant.QdrantClient.prototype, APIS[api as keyof typeof APIS].OPERATION)
+    Object.keys(APIS.qdrant).forEach((api) => {
+      this._unwrap(qdrant.QdrantClient.prototype, APIS.qdrant[api as keyof typeof APIS.qdrant].OPERATION as string)
     })
   }
 }

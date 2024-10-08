@@ -1,11 +1,11 @@
-import { TracedFunctions } from '@langtrace-init/types'
+import { VendorTracedFunctions } from '@langtrase/trace-attributes/dist/constants/common'
 import { SpanKind, Attributes, Context, trace, TraceFlags, diag } from '@opentelemetry/api'
 import { Sampler, SamplingDecision, SamplingResult } from '@opentelemetry/sdk-trace-base'
 
 export class LangtraceSampler implements Sampler {
   private readonly _disabled_function_names: Set<string>
 
-  constructor (disabled_functions: Partial<TracedFunctions> | undefined) {
+  constructor (disabled_functions: Partial<VendorTracedFunctions> | undefined) {
     this._disabled_function_names = new Set<string>()
     for (const key in disabled_functions) {
       if (disabled_functions[key as keyof typeof disabled_functions] !== undefined) {
@@ -31,13 +31,15 @@ export class LangtraceSampler implements Sampler {
     }
     // Check the specific attribute
     if (attributes['langtrace.sdk.name'] !== '@langtrase/typescript-sdk') {
-      return { decision: SamplingDecision.NOT_RECORD }
+      diag.info('Skipping sampling span(s) related to %s as it\'s not from Langtrace', spanName)
+      return { decision: SamplingDecision.RECORD }
     }
 
     // If parent span is not recorded, propagate the decision to child spans
     // None means no sampling decision has been made. If the parent span is not sampled, the child span should not be sampled.
-    const parentSpan = trace.getSpan(context)
-    if ((parentSpan != null) && parentSpan.spanContext().traceFlags === TraceFlags.NONE) {
+    const childSpan = trace.getSpan(context)
+    const spanSourceIsUnknown = childSpan?.isRecording() === true && childSpan.spanContext().traceFlags === TraceFlags.NONE
+    if ((childSpan != null) && childSpan.spanContext().traceFlags === TraceFlags.NONE && !spanSourceIsUnknown) {
       return { decision: SamplingDecision.NOT_RECORD }
     }
 
