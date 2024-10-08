@@ -2,6 +2,7 @@ import { DatabaseSpanAttributes, Vendors, Event, APIS } from '@langtrase/trace-a
 import { context, Exception, SpanKind, SpanStatusCode, trace, Tracer } from '@opentelemetry/api'
 import { addSpanEvent, stringify } from '@langtrace-utils/misc'
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
+import { LangtraceSdkError } from 'errors/sdk_error'
 
 export const patchPgQuery = (original: any, tracer: Tracer, sdkName: string, langtraceVersion: string, version?: string): any => {
   return async function (this: any, queryOrTextConfig: any, values: any, callback: any) {
@@ -35,7 +36,7 @@ export const patchPgQuery = (original: any, tracer: Tracer, sdkName: string, lan
           span.recordException(error as Exception)
           span.setStatus({ code: SpanStatusCode.ERROR })
           span.end()
-          throw error
+          throw new LangtraceSdkError(error.message as string, error.stack as string)
         }
       })
   }

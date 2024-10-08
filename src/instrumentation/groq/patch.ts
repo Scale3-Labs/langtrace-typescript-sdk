@@ -5,6 +5,7 @@ import {
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { APIS, LLMSpanAttributes, Event } from '@langtrase/trace-attributes'
 import { addSpanEvent, createStreamProxy } from '@langtrace-utils/misc'
+import { LangtraceSdkError } from 'errors/sdk_error'
 
 export const chatPatch = (original: ChatStreamFn | ChatFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: IGroqClient, body: IChatCompletionCreateParamsStreaming | IChatCompletionCreateParamsNonStreaming,
@@ -132,10 +133,10 @@ async function * handleStream (stream: AsyncIterable<any>, attributes: LLMSpanAt
     addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify([{ role: 'assistant', content: responseReconstructed.join('') }]) })
     span.setAttributes(attributes)
     span.setStatus({ code: SpanStatusCode.OK })
-  } catch (error: unknown) {
+  } catch (error: any) {
     span.recordException(error as Error)
     span.setStatus({ code: SpanStatusCode.ERROR })
-    throw error
+    throw new LangtraceSdkError(error.message as string, error.stack as string)
   } finally {
     span.end()
   }

@@ -3,6 +3,7 @@ import { calculatePromptTokens, estimateTokens } from '@langtrace-utils/llm'
 import { addSpanEvent } from '@langtrace-utils/misc'
 import { FrameworkSpanAttributes, LLMSpanAttributes, Vendors, Event } from '@langtrase/trace-attributes'
 import { Tracer, context, SpanKind, trace, Exception, SpanStatusCode, Span } from '@opentelemetry/api'
+import { LangtraceSdkError } from 'errors/sdk_error'
 
 export async function streamTextPatchOpenAI (
   this: any,
@@ -78,7 +79,7 @@ export async function streamTextPatchOpenAI (
         span.recordException(error as Exception)
         span.setStatus({ code: SpanStatusCode.ERROR })
         span.end()
-        throw error
+        throw new LangtraceSdkError(error.message as string, error.stack as string)
       }
     }
   )
@@ -152,7 +153,7 @@ export async function generateTextPatchOpenAI (
       } catch (error: any) {
         span.recordException(error as Exception)
         span.setStatus({ code: SpanStatusCode.ERROR })
-        throw error
+        throw new LangtraceSdkError(error.message as string, error.stack as string)
       } finally {
         span.end()
       }
@@ -220,7 +221,7 @@ export async function embedPatchOpenAI (
       } catch (error: any) {
         span.recordException(error as Exception)
         span.setStatus({ code: SpanStatusCode.ERROR })
-        throw error
+        throw new LangtraceSdkError(error.message as string, error.stack as string)
       } finally {
         span.end()
       }
@@ -263,7 +264,7 @@ async function * handleOpenAIStreamResponse (
   } catch (error: any) {
     span.recordException(error as Exception)
     span.setStatus({ code: SpanStatusCode.ERROR })
-    throw error
+    throw new LangtraceSdkError(error.message as string, error.stack as string)
   } finally {
     span.end()
   }

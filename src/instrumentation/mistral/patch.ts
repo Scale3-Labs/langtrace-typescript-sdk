@@ -15,7 +15,6 @@
  */
 
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
-import { calculatePromptTokens, estimateTokens } from '@langtrace-utils/llm'
 import { addSpanEvent, createStreamProxy } from '@langtrace-utils/misc'
 import { APIS, LLMSpanAttributes, Event, Vendors } from '@langtrase/trace-attributes'
 import {
@@ -29,137 +28,19 @@ import {
 } from '@opentelemetry/api'
 import { LangtraceSdkError } from 'errors/sdk_error'
 
-export function imageEdit (
+export function chatComplete (
   originalMethod: (...args: any[]) => any,
   tracer: Tracer,
   langtraceVersion: string,
-  version?: string
+  version?: string,
+  stream = false
 ): (...args: any[]) => any {
   return async function (this: any, ...args: any[]) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const originalContext = this
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     // Determine the service provider
-    let serviceProvider: string = Vendors.OPENAI
-    if (originalContext?._client?.baseURL?.includes('azure') === true) {
-      serviceProvider = 'azure'
-    }
-    const attributes: LLMSpanAttributes = {
-      'langtrace.sdk.name': '@langtrase/typescript-sdk',
-      'langtrace.service.name': serviceProvider,
-      'gen_ai.operation.name': 'image_edit',
-      'langtrace.service.type': 'llm',
-      'langtrace.service.version': version,
-      'langtrace.version': langtraceVersion,
-      'url.full': originalContext?._client?.baseURL,
-      'url.path': APIS.openai.IMAGES_EDIT.ENDPOINT,
-      'gen_ai.request.model': args[0]?.model ?? 'dall-e-2',
-      'http.max.retries': originalContext?._client?.maxRetries,
-      'http.timeout': originalContext?._client?.timeout,
-      'gen_ai.request.top_k': args[0]?.n,
-      'gen_ai.image.size': args[0]?.size,
-      'gen_ai.request.response_format': args[0]?.response_format?.type ?? args[0]?.response_format,
-      ...customAttributes
-    }
-    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.openai.IMAGES_EDIT.METHOD
-    const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
-    const f = await context.with(
-      trace.setSpan(context.active(), span),
-      async () => {
-        try {
-          const response = await originalMethod.apply(originalContext, args)
-          addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(args[0]?.prompt) })
-          addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(response?.data?.map((data: any) => ({ content: JSON.stringify(data), role: 'assistant' }))) })
-
-          span.setAttributes(attributes)
-          span.setStatus({ code: SpanStatusCode.OK })
-          span.end()
-          return response
-        } catch (error: any) {
-          span.recordException(error as Exception)
-          span.setStatus({ code: SpanStatusCode.ERROR })
-          span.end()
-          throw new LangtraceSdkError(error.message as string, error.stack as string)
-        }
-      }
-    )
-    return f
-  }
-}
-
-export function imagesGenerate (
-  originalMethod: (...args: any[]) => any,
-  tracer: Tracer,
-  langtraceVersion: string,
-  version?: string
-): (...args: any[]) => any {
-  return async function (this: any, ...args: any[]) {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const originalContext = this
-
-    // Determine the service provider
-    let serviceProvider: string = Vendors.OPENAI
-    if (originalContext?._client?.baseURL?.includes('azure') === true) {
-      serviceProvider = 'azure'
-    }
-    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
-
-    const attributes: LLMSpanAttributes = {
-      'langtrace.sdk.name': '@langtrase/typescript-sdk',
-      'gen_ai.operation.name': 'images_generate',
-      'langtrace.service.name': serviceProvider,
-      'langtrace.service.type': 'llm',
-      'langtrace.service.version': version,
-      'langtrace.version': langtraceVersion,
-      'url.full': originalContext?._client?.baseURL,
-      'url.path': APIS.openai.IMAGES_GENERATION.ENDPOINT,
-      'gen_ai.request.model': args[0]?.model,
-      'http.max.retries': originalContext?._client?.maxRetries,
-      'http.timeout': originalContext?._client?.timeout,
-      ...customAttributes
-    }
-    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.openai.IMAGES_GENERATION.METHOD
-    const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
-    const f = await context.with(
-      trace.setSpan(context.active(), span),
-      async () => {
-        try {
-          const response = await originalMethod.apply(originalContext, args)
-          addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify([{ role: 'user', content: args[0]?.prompt }]) })
-          addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(response?.data?.map((data: any) => (({ content: JSON.stringify(data), role: 'assistant' })))) })
-          span.setStatus({ code: SpanStatusCode.OK })
-          span.end()
-          return response
-        } catch (error: any) {
-          span.recordException(error as Exception)
-          span.setStatus({ code: SpanStatusCode.ERROR })
-          span.end()
-          throw new LangtraceSdkError(error.message as string, error.stack as string)
-        }
-      }
-    )
-
-    return f
-  }
-}
-
-export function chatCompletionCreate (
-  originalMethod: (...args: any[]) => any,
-  tracer: Tracer,
-  langtraceVersion: string,
-  version?: string
-): (...args: any[]) => any {
-  return async function (this: any, ...args: any[]) {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const originalContext = this
-    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
-    // Determine the service provider
-    let serviceProvider: string = Vendors.OPENAI
-    if (originalContext?._client?.baseURL?.includes('azure') === true) {
-      serviceProvider = 'azure'
-    } else if (originalContext?._client?.baseURL?.includes('perplexity') === true) {
-      serviceProvider = 'perplexity'
-    }
+    const serviceProvider: string = Vendors.MISTRAL
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'gen_ai.operation.name': 'chat',
@@ -169,7 +50,7 @@ export function chatCompletionCreate (
       'langtrace.version': langtraceVersion,
       'gen_ai.request.model': args[0]?.model,
       'url.full': originalContext?._client?.baseURL,
-      'url.path': APIS.openai.CHAT_COMPLETION.ENDPOINT,
+      'url.path': APIS.mistral.CHAT_COMPLETE.ENDPOINT,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
       'gen_ai.request.stream': args[0]?.stream,
@@ -189,8 +70,8 @@ export function chatCompletionCreate (
       })
       attributes['gen_ai.request.tools'] = JSON.stringify(functionsToTools)
     }
-    if (!(args[0].stream as boolean) || args[0].stream === false) {
-      const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.openai.CHAT_COMPLETION.METHOD
+    if (!stream) {
+      const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.mistral.CHAT_COMPLETE.METHOD
       const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
       return await context.with(
         trace.setSpan(context.active(), span),
@@ -212,10 +93,9 @@ export function chatCompletionCreate (
             addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(responses) })
             const responseAttributes: Partial<LLMSpanAttributes> = {
               'gen_ai.response.model': resp.model,
-              'gen_ai.system_fingerprint': resp.system_fingerprint,
               'gen_ai.usage.input_tokens': resp.usage.prompt_tokens,
               'gen_ai.usage.output_tokens': resp.usage.completion_tokens,
-              'gen_ai.usage.total_tokens': Number(resp.usage.prompt_tokens ?? 0) + Number(resp.usage.completion_tokens ?? 0)
+              'gen_ai.usage.total_tokens': resp.usage.total_tokens
             }
             span.setAttributes({ ...attributes, ...responseAttributes })
             span.setStatus({ code: SpanStatusCode.OK })
@@ -230,7 +110,7 @@ export function chatCompletionCreate (
         }
       )
     } else {
-      const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.openai.CHAT_COMPLETION.METHOD
+      const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.mistral.CHAT_STREAM.METHOD
       const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
       addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(args[0]?.messages) })
       return await context.with(
@@ -239,17 +119,10 @@ export function chatCompletionCreate (
           span
         ),
         async () => {
-          const model = args[0].model
-
-          // iterate over messages and calculate tokens
-          const promptContent: string = args[0].messages.map((message: any) => message?.content).join(' ')
-          const promptTokens = calculatePromptTokens(promptContent, model as string)
-
           const resp = await originalMethod.apply(this, args)
           return createStreamProxy(resp, handleStreamResponse(
             span,
             resp,
-            promptTokens,
             attributes
           ))
         }
@@ -261,23 +134,23 @@ export function chatCompletionCreate (
 async function * handleStreamResponse (
   span: Span,
   stream: any,
-  promptTokens: number,
   inputAttributes: Partial<LLMSpanAttributes>
 ): any {
-  let completionTokens = 0
   const result: string[] = []
   const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
   addSpanEvent(span, Event.STREAM_START)
   try {
     let model = ''
+    let completionTokens = 0
+    let promptTokens = 0
     for await (const chunk of stream) {
       if (model === '') {
-        model = chunk.model
+        model = chunk.data.model
       }
       // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-      const content = chunk.choices[0]?.delta?.content || ''
-      const tokenCount = estimateTokens(content as string)
-      completionTokens += tokenCount
+      const content = chunk.data.choices[0]?.delta?.content || ''
+      promptTokens = chunk.data.usage?.promptTokens ?? 0
+      completionTokens = chunk.data.usage?.completionTokens ?? 0
       result.push(content as string)
       yield chunk
     }
@@ -312,10 +185,7 @@ export function embeddingsCreate (
     const originalContext = this
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     // Determine the service provider
-    let serviceProvider: string = Vendors.OPENAI
-    if (originalContext?._client?.baseURL?.includes('azure') === true) {
-      serviceProvider = 'azure'
-    }
+    const serviceProvider: string = Vendors.MISTRAL
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'gen_ai.operation.name': 'embed',
@@ -324,7 +194,7 @@ export function embeddingsCreate (
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
       'url.full': originalContext?._client?.baseURL,
-      'url.path': APIS.openai.EMBEDDINGS_CREATE.ENDPOINT,
+      'url.path': APIS.mistral.EMBEDDINGS_CREATE.ENDPOINT,
       'gen_ai.request.model': args[0]?.model,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
@@ -334,7 +204,7 @@ export function embeddingsCreate (
       'gen_ai.user': args[0]?.user,
       ...customAttributes
     }
-    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.openai.EMBEDDINGS_CREATE.METHOD
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.mistral.EMBEDDINGS_CREATE.METHOD
     const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
     const f = await context.with(
       trace.setSpan(context.active(), span),

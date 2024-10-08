@@ -1,5 +1,16 @@
 # @langtrase/typescript-sdk
 
+## 6.0.0
+
+### Major Changes
+
+- Change ingestion endpoint to app.langtrace.ai as API domain is moved to the subdomain now
+
+## 5.4.0
+
+### Minor Changes
+
+- Support OTEL_EXPORTER_OTLP_ENDPOINT and OTEL_EXPORTER_OTLP_HEADERS env vars
 
 ## 5.3.2
 

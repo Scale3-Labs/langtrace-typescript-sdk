@@ -73,6 +73,10 @@ import * as Langtrace from '@langtrase/typescript-sdk' // Must precede any llm m
 Langtrace.init({ custom_remote_exporter: <your_exporter>, batch:<true or false>})
 ```
 
+### Error Reporting to Langtrace
+
+By default all sdk errors are reported to langtrace via Sentry. This can be disabled by setting the following enviroment variable to `False` like so `LANGTRACE_ERROR_REPORTING=False`
+
 ## Additional Customization
 
 - [withLangTraceRootSpan](https://docs.langtrace.ai/features/grouptraces) - this function is designed to organize and relate different spans, in a hierarchical manner. When you're performing multiple operations that you want to monitor together as a unit, this function helps by establishing a "parent" (`LangtraceRootSpan` or whatever is passed to `name`) span. Then, any calls to the LLM APIs made within the given function (fn) will be considered "children" of this parent span. This setup is especially useful for tracking the performance or behavior of a group of operations collectively, rather than individually. See [example](https://docs.langtrace.ai/features/grouptraces)
@@ -150,7 +154,7 @@ Langtrace automatically captures traces from the following vendors:
 | Groq         | LLM             | :x:                | :white_check_mark:              |
 | Perplexity   | LLM             | :white_check_mark: | :white_check_mark:              |
 | Gemini       | LLM             | :white_check_mark: | :white_check_mark:              |
-| Mistral      | LLM             | :x:                | :white_check_mark:              |
+| Mistral      | LLM             | :white_check_mark: | :white_check_mark:              |
 | Langchain    | Framework       | :x:                | :white_check_mark:              |
 | LlamaIndex   | Framework       | :white_check_mark: | :white_check_mark:              |
 | Langgraph    | Framework       | :x:                | :white_check_mark:              |

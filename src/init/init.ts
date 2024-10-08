@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /*
  * Copyright (c) 2024 Scale3 Labs
  *
@@ -41,6 +42,11 @@ import { Vendor } from '@langtrase/trace-attributes'
 import { vercelAIInstrumentation } from '@langtrace-instrumentation/vercel/instrumentation'
 import { DropAttributesProcessor } from '@langtrace-extensions/spanprocessors/DropAttributesProcessor'
 import { vertexAIInstrumentation } from '@langtrace-instrumentation/vertexai/instrumentation'
+import * as Sentry from '@sentry/node'
+import { SENTRY_DSN } from '@langtrace-constants/common'
+import { nodeProfilingIntegration } from '@sentry/profiling-node'
+import { mistralInstrumentation } from '@langtrace-instrumentation/mistral/instrumentation'
+import { LangtraceSdkError } from 'errors/sdk_error'
 
 /**
  * Initializes the LangTrace sdk with custom options.
@@ -94,8 +100,15 @@ export const init: LangTraceInit = ({
     resource: new Resource({ 'service.name': process.env.OTEL_SERVICE_NAME ?? service_name ?? __filename ?? 'unknown' })
   }
   )
-  const host = (process.env.LANGTRACE_API_HOST ?? api_host ?? LANGTRACE_REMOTE_URL)
-  const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', host)
+  const host = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? process.env.LANGTRACE_API_HOST ?? api_host ?? LANGTRACE_REMOTE_URL
+  const otelHttpHeaders = process.env.OTEL_EXPORTER_OTLP_HEADERS?.split(',')
+    .reduce((acc, header) => {
+      const [key, value] = header.split('=')
+      acc[key] = value
+      return acc
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    }, {} as Record<string, string>)
+  const remoteWriteExporter = new LangTraceExporter(api_key ?? process.env.LANGTRACE_API_KEY ?? '', host, otelHttpHeaders)
   const consoleExporter = new ConsoleSpanExporter()
   const batchProcessorRemote = new BatchSpanProcessor(remoteWriteExporter)
   const simpleProcessorRemote = new SimpleSpanProcessor(remoteWriteExporter)
@@ -155,6 +168,7 @@ export const init: LangTraceInit = ({
     cohere: cohereInstrumentation,
     anthropic: anthropicInstrumentation,
     gemini: geminiInstrumentation,
+    mistral: mistralInstrumentation,
     groq: groqInstrumentation,
     pinecone: pineconeInstrumentation,
     llamaindex: llamaIndexInstrumentation,
@@ -194,13 +208,56 @@ export const init: LangTraceInit = ({
     registerInstrumentations({ tracerProvider: provider })
     disableInstrumentations(disable_instrumentations, allInstrumentations, instrumentations)
   }
+  const enableErrorReporting = process.env.LANGTRACE_ERROR_REPORTING ?? 'True'
+  if (enableErrorReporting === 'True') {
+    Sentry.init({
+      dsn: SENTRY_DSN,
+      tracesSampleRate: 1.0,
+      profilesSampleRate: 1.0,
+      skipOpenTelemetrySetup: true,
+      integrations: [nodeProfilingIntegration()],
+      beforeSend: (event, hint) => {
+        let result: Sentry.ErrorEvent | null = null
+        const original: any = hint?.originalException
+        if (original instanceof Promise) {
+          original.catch((error: any) => {
+            // Check if it's a LangTraceSdkError and capture it
+            if (error.name === 'LangTraceSdkError') {
+              result = event // Send this event
+            }
+          })
+        }
+        // Handle regular errors (non-Promise exceptions)
+        if (original.name === 'LangtraceSdkError') {
+          result = event
+        }
+
+        return result
+      }
+    })
+    const context = Object.entries(initOptions).reduce<Record<string, string>>((acc, [key, value]) => {
+      acc[key] = JSON.stringify(value)
+      return acc
+    }, {})
+    Sentry.setContext('sdk_init_options', context)
+  }
+  // Global handler for unhandled promise rejections
+  process.on('unhandledRejection', (reason, promise) => {
+    // console.error('Unhandled Rejection at:', promise, 'reason:', reason)
+    Sentry.captureException(reason) // Capture unhandled promise rejections
+  })
+  process.on('uncaughtException', (error) => {
+    Sentry.captureException(error) // Capture uncaught
+  })
   global.langtrace_initalized = true
   global.langtrace_options = initOptions
+
+  diag.info('⭐ Leave our github a star to stay on top of our updates - https://github.com/Scale3-Labs/langtrace')
 }
 
 const disableInstrumentations = (disable_instrumentations: { all_except?: string[], only?: string[] }, allInstrumentations: Record<Vendor, any>, modules?: { [key in Vendor]?: any }): InstrumentationBase[] => {
   if (disable_instrumentations.only !== undefined && disable_instrumentations.all_except !== undefined) {
-    throw new Error('Cannot specify both only and all_except in disable_instrumentations')
+    throw new LangtraceSdkError('Cannot specify both only and all_except in disable_instrumentations')
   }
   const instrumentations = Object.fromEntries(Object.entries(allInstrumentations)
     .filter(([key, instrumentation]) => {
