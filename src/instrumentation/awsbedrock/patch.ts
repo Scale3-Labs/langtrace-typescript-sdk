@@ -45,7 +45,7 @@ export function sendCommand (
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'gen_ai.operation.name': 'chat',
       'langtrace.service.name': serviceProvider,
-      'langtrace.service.type': 'llm',
+      'langtrace.service.type': 'framework',
       'langtrace.service.version': version,
       'langtrace.version': langtraceVersion,
       'gen_ai.request.model': args[0]?.input.modelId,
