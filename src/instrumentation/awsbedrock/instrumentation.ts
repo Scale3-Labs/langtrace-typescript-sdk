@@ -65,21 +65,6 @@ class AWSBedrockInstrumentation extends InstrumentationBase<any> {
         return sendCommand(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion)
       }
     )
-
-    // this._wrap(
-    //   awsbedrock.BedrockRuntimeClient.prototype,
-    //   'stream',
-    //   (originalMethod: (...args: any[]) => any) => {
-    //     return chatComplete(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion, true)
-    //   }
-    // )
-
-    // this._wrap(
-    //   awsbedrock.Mistral.prototype.embeddings,
-    //   'create',
-    //   (originalMethod: (...args: any[]) => any) =>
-    //     embeddingsCreate(originalMethod, this.tracer, this.instrumentationVersion, moduleVersion)
-    // )
   }
 
   private _unpatch (awsbedrock: any): void {
