@@ -46,6 +46,7 @@ import * as Sentry from '@sentry/node'
 import { SENTRY_DSN } from '@langtrace-constants/common'
 import { nodeProfilingIntegration } from '@sentry/profiling-node'
 import { mistralInstrumentation } from '@langtrace-instrumentation/mistral/instrumentation'
+import { awsbedrockInstrumentation } from '@langtrace-instrumentation/awsbedrock/instrumentation'
 import { LangtraceSdkError } from 'errors/sdk_error'
 
 /**
@@ -169,6 +170,7 @@ export const init: LangTraceInit = ({
     anthropic: anthropicInstrumentation,
     gemini: geminiInstrumentation,
     mistral: mistralInstrumentation,
+    awsbedrock: awsbedrockInstrumentation,
     groq: groqInstrumentation,
     pinecone: pineconeInstrumentation,
     llamaindex: llamaIndexInstrumentation,
