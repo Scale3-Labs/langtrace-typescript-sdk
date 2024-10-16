@@ -1,5 +1,5 @@
+import { openai } from '@ai-sdk/openai'
 import { init } from '@langtrace-init/init'
-import { openai } from '@ai-sdk/openai' // Ensure OPENAI_API_KEY environment variable is set
 import ai from '@langtrace-module-wrappers/ai'
 import { withAdditionalAttributes } from '@langtrace-utils/instrumentation'
 
@@ -9,7 +9,7 @@ init({
 })
 export async function basic (): Promise<void> {
   await withAdditionalAttributes(async () => {
-    const resp = await ai.generateText({
+    await ai.generateText({
       model: openai('gpt-4-turbo', { user: 'abc' }),
       system: 'You are a friendly assistant!',
       // prompt: 'Why is the sky blue?',
@@ -39,11 +39,11 @@ export async function basicStream (): Promise<void> {
 }
 
 export const basicEmbed = async (): Promise<void> => {
-  const resp = await ai.embed({ model: openai.embedding('text-embedding-3-large', { user: 'abc', dimensions: 10, maxEmbeddingsPerCall: 2 }), value: 'hey there its a very nice day out today', maxRetries: 3 })
+  await ai.embed({ model: openai.embedding('text-embedding-3-large', { user: 'abc', dimensions: 10, maxEmbeddingsPerCall: 2 }), value: 'hey there its a very nice day out today', maxRetries: 3 })
   // console.info(resp)
 }
 
 export const basicEmbedMany = async (): Promise<void> => {
-  const resp = await ai.embedMany({ model: openai.embedding('text-embedding-3-large', { user: 'abc', dimensions: 10, maxEmbeddingsPerCall: 2 }), values: ['hey there its a very nice day out today'], maxRetries: 3 })
+  await ai.embedMany({ model: openai.embedding('text-embedding-3-large', { user: 'abc', dimensions: 10, maxEmbeddingsPerCall: 2 }), values: ['hey there its a very nice day out today'], maxRetries: 3 })
   // console.info(resp)
 }
