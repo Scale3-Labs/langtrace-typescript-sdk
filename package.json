@@ -21,6 +21,7 @@
   "author": "Scale3 Labs",
   "license": "Apache-2.0",
   "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.670.0",
     "@langtrase/trace-attributes": "7.5.0",
     "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/instrumentation": "^0.49.1",
