@@ -155,6 +155,7 @@ Langtrace automatically captures traces from the following vendors:
 | Perplexity   | LLM             | :white_check_mark: | :white_check_mark:              |
 | Gemini       | LLM             | :white_check_mark: | :white_check_mark:              |
 | Mistral      | LLM             | :white_check_mark: | :white_check_mark:              |
+| xAI          | LLM             | :white_check_mark: | :white_check_mark:              |
 | Langchain    | Framework       | :x:                | :white_check_mark:              |
 | LlamaIndex   | Framework       | :white_check_mark: | :white_check_mark:              |
 | Langgraph    | Framework       | :x:                | :white_check_mark:              |
