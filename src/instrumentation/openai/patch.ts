@@ -17,15 +17,12 @@
 import { LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY } from '@langtrace-constants/common'
 import { calculatePromptTokens, estimateTokens } from '@langtrace-utils/llm'
 import { addSpanEvent, createStreamProxy } from '@langtrace-utils/misc'
-import { APIS, LLMSpanAttributes, Event, Vendors } from '@langtrase/trace-attributes'
+import { APIS, Event, LLMSpanAttributes, Vendors } from '@langtrase/trace-attributes'
 import {
-  Exception,
+  context, Exception,
   Span,
   SpanKind,
-  SpanStatusCode,
-  Tracer,
-  context,
-  trace
+  SpanStatusCode, trace, Tracer
 } from '@opentelemetry/api'
 import { LangtraceSdkError } from 'errors/sdk_error'
 
@@ -43,6 +40,10 @@ export function imageEdit (
     let serviceProvider: string = Vendors.OPENAI
     if (originalContext?._client?.baseURL?.includes('azure') === true) {
       serviceProvider = 'azure'
+    } else if (originalContext?._client?.baseURL?.includes('perplexity') === true) {
+      serviceProvider = 'perplexity'
+    } else if (originalContext?._client?.baseURL?.includes('x.ai') === true) {
+      serviceProvider = 'XAI'
     }
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
@@ -101,6 +102,10 @@ export function imagesGenerate (
     let serviceProvider: string = Vendors.OPENAI
     if (originalContext?._client?.baseURL?.includes('azure') === true) {
       serviceProvider = 'azure'
+    } else if (originalContext?._client?.baseURL?.includes('perplexity') === true) {
+      serviceProvider = 'perplexity'
+    } else if (originalContext?._client?.baseURL?.includes('x.ai') === true) {
+      serviceProvider = 'XAI'
     }
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
 
@@ -159,6 +164,8 @@ export function chatCompletionCreate (
       serviceProvider = 'azure'
     } else if (originalContext?._client?.baseURL?.includes('perplexity') === true) {
       serviceProvider = 'perplexity'
+    } else if (originalContext?._client?.baseURL?.includes('x.ai') === true) {
+      serviceProvider = 'XAI'
     }
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
@@ -315,6 +322,10 @@ export function embeddingsCreate (
     let serviceProvider: string = Vendors.OPENAI
     if (originalContext?._client?.baseURL?.includes('azure') === true) {
       serviceProvider = 'azure'
+    } else if (originalContext?._client?.baseURL?.includes('perplexity') === true) {
+      serviceProvider = 'perplexity'
+    } else if (originalContext?._client?.baseURL?.includes('x.ai') === true) {
+      serviceProvider = 'XAI'
     }
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
