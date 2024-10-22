@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 6.1.1
+
+### Patch Changes
+
+- Support for xAI
+
 ## 6.0.0
 
 ### Major Changes
