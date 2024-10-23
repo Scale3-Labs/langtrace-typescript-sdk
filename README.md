@@ -158,7 +158,7 @@ Langtrace automatically captures traces from the following vendors:
 | Langchain    | Framework       | :x:                | :white_check_mark:              |
 | LlamaIndex   | Framework       | :white_check_mark: | :white_check_mark:              |
 | Langgraph    | Framework       | :x:                | :white_check_mark:              |
-| AWS Bedrock  | Framework       | :white_check_mark: | :x:                             |
+| AWS Bedrock  | Framework       | :white_check_mark: | :white_check_mark:              |
 | DSPy         | Framework       | :x:                | :white_check_mark:              |
 | CrewAI       | Framework       | :x:                | :white_check_mark:              |
 | Ollama       | Framework       | :white_check_mark: | :white_check_mark:              |
