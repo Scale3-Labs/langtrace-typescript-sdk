@@ -69,11 +69,9 @@ export async function generateTextPatchAnthropic (
     try {
       const resp = await originalMethod.apply(this, args)
       const responses = JSON.stringify(resp?.responseMessages)
-      span.addEvent(Event.GEN_AI_PROMPT, {
-        'gen_ai.prompt': JSON.stringify([
-          { role: 'user', content: args[0]?.prompt }
-        ])
-      })
+      // set content to either prompt or messages
+      const content = args[0]?.prompt ?? JSON.stringify(args[0]?.messages)
+      span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': content })
       span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': responses })
       const responseAttributes: Partial<LLMSpanAttributes> = {
         'url.full': url,
@@ -146,7 +144,8 @@ export async function streamTextPatchAnthropic (
   return await context.with(trace.setSpan(context.active(), span), async () => {
     try {
       const resp: any = await originalMethod.apply(this, args)
-      addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(args[0]?.prompt) })
+      const content = args[0]?.prompt ?? JSON.stringify(args[0]?.messages)
+      addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': content })
       const responseAttributes: Partial<LLMSpanAttributes> = {
         'url.full': url,
         'url.path': APIS.anthropic.MESSAGES_CREATE.ENDPOINT
@@ -231,11 +230,8 @@ export async function generateObjectPatchAnthropic (
     try {
       const resp = await originalMethod.apply(this, args)
       const responses = JSON.stringify(resp?.object)
-      span.addEvent(Event.GEN_AI_PROMPT, {
-        'gen_ai.prompt': JSON.stringify([
-          { role: 'user', content: args[0]?.prompt }
-        ])
-      })
+      const content = args[0]?.prompt ?? JSON.stringify(args[0]?.messages)
+      span.addEvent(Event.GEN_AI_PROMPT, { 'gen_ai.prompt': content })
       span.addEvent(Event.GEN_AI_COMPLETION, { 'gen_ai.completion': responses })
       const responseAttributes: Partial<LLMSpanAttributes> = {
         'url.full': url,
@@ -308,7 +304,8 @@ export async function streamObjectPatchAnthropic (
   return await context.with(trace.setSpan(context.active(), span), async () => {
     try {
       const resp: any = await originalMethod.apply(this, args)
-      addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(args[0]?.prompt) })
+      const content = args[0]?.prompt ?? JSON.stringify(args[0]?.messages)
+      addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': content })
       const responseAttributes: Partial<LLMSpanAttributes> = {
         'url.full': url,
         'url.path': APIS.anthropic.MESSAGES_CREATE.ENDPOINT
