@@ -1,6 +1,6 @@
 {
   "name": "@langtrase/typescript-sdk",
-  "version": "6.2.0",
+  "version": "6.3.0",
   "description": "A typescript SDK for Langtrace",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -48,7 +48,7 @@
     "@qdrant/js-client-rest": "^1.9.0",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "ai": "^3.2.29",
-    "chromadb": "^1.8.1",
+    "chromadb": "^1.9.4",
     "cohere-ai": "^7.9.3",
     "dotenv": "^16.4.5",
     "eslint": "^8.34.0",
