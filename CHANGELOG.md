@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 6.3.0
+
+### Minor Changes
+
+- Fix for ChromaDb
+
 ## 6.1.1
 
 ### Patch Changes
