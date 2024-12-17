@@ -18,8 +18,8 @@ import { diag } from '@opentelemetry/api'
 import { InstrumentationBase, InstrumentationModuleDefinition, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
 // eslint-disable-next-line no-restricted-imports
 import { version, name } from '../../../package.json'
-import { ChatFn, ChatStreamFn, EmbedFn, EmbedJobsCreateFn, RerankFn } from '@langtrace-instrumentation/cohere/types'
-import { chatPatch, chatStreamPatch, embedJobsCreatePatch, embedPatch, rerankPatch } from '@langtrace-instrumentation/cohere/patch'
+import { ChatFn, ChatStreamFn, ChatV2Fn, ChatV2StreamFn, EmbedFn, EmbedJobsCreateFn, RerankFn } from '@langtrace-instrumentation/cohere/types'
+import { chatPatch, chatPatchV2, chatStreamPatch, chatStreamPatchV2, embedJobsCreatePatch, embedPatch, rerankPatch } from '@langtrace-instrumentation/cohere/patch'
 
 class CohereInstrumentation extends InstrumentationBase<any> {
   constructor () {
@@ -51,6 +51,8 @@ class CohereInstrumentation extends InstrumentationBase<any> {
   }
 
   private _patch (cohere: any, moduleVersion?: string): void {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const that = this
     if (isWrapped(cohere.CohereClient.prototype)) {
       this._unpatch(cohere)
     }
@@ -58,6 +60,30 @@ class CohereInstrumentation extends InstrumentationBase<any> {
       cohere.CohereClient.prototype,
       cohere.CohereClient.prototype.chat.name,
       (original: ChatFn) => chatPatch(original, this.tracer, this.instrumentationVersion, name, moduleVersion)
+    )
+    this._wrap(
+      cohere,
+      'CohereClientV2',
+      (OriginalClient: typeof cohere.CohereClientV2) => {
+        return function (this: any, ...args: any[]) {
+          const instance: any = new OriginalClient(...args)
+          const originalChat: ChatV2Fn = instance.chat
+          instance.chat = chatPatchV2(originalChat, that.tracer, that.instrumentationVersion, name, moduleVersion)
+          return instance
+        }
+      }
+    )
+    this._wrap(
+      cohere,
+      'CohereClientV2',
+      (OriginalClient: typeof cohere.CohereClientV2) => {
+        return function (this: any, ...args: any[]) {
+          const instance: any = new OriginalClient(...args)
+          const originalChat: ChatV2StreamFn = instance.chatStream
+          instance.chatStream = chatStreamPatchV2(originalChat, that.tracer, that.instrumentationVersion, name, moduleVersion)
+          return instance
+        }
+      }
     )
     this._wrap(cohere.CohereClient.prototype,
       cohere.CohereClient.prototype.chatStream.name,
@@ -67,9 +93,35 @@ class CohereInstrumentation extends InstrumentationBase<any> {
       cohere.CohereClient.prototype.embed.name,
       (original: EmbedFn) => embedPatch(original, this.tracer, this.instrumentationVersion, name, moduleVersion))
 
+    this._wrap(
+      cohere,
+      'CohereClientV2',
+      (OriginalClient: typeof cohere.CohereClientV2) => {
+        return function (this: any, ...args: any[]) {
+          const instance: any = new OriginalClient(...args)
+          const originalChat: EmbedFn = instance.embed
+          instance.embed = embedPatch(originalChat, that.tracer, that.instrumentationVersion, name, moduleVersion)
+          return instance
+        }
+      }
+    )
+
     this._wrap(cohere.CohereClient.prototype,
       cohere.CohereClient.prototype.rerank.name,
       (original: RerankFn) => rerankPatch(original, this.tracer, this.instrumentationVersion, name, moduleVersion))
+
+    this._wrap(
+      cohere,
+      'CohereClientV2',
+      (OriginalClient: typeof cohere.CohereClientV2) => {
+        return function (this: any, ...args: any[]) {
+          const instance: any = new OriginalClient(...args)
+          const originalChat: RerankFn = instance.rerank
+          instance.rerank = rerankPatch(originalChat, that.tracer, that.instrumentationVersion, name, moduleVersion)
+          return instance
+        }
+      }
+    )
 
     this._wrap(cohere.CohereClient.prototype.embedJobs,
       'create',
