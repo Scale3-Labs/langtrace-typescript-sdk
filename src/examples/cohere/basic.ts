@@ -3,9 +3,11 @@ import * as cohere from 'cohere-ai'
 import { Tool } from 'cohere-ai/api'
 import fs from 'fs'
 
-init({ disable_instrumentations: { all_except: ['cohere'] } })
+init({ disable_instrumentations: { all_except: ['cohere'] }, api_key: '<LANGTRACE_API_KEY>' })
 
-const c = new cohere.CohereClient()
+const c = new cohere.CohereClient({ token: '<COHERE_API_KEY>' })
+const c2 = new cohere.CohereClientV2({ token: '<COHERE_API_KEY>' })
+
 export const basicChat = async (): Promise<void> => {
   const prediction = await c.chat({
     chatHistory: [
@@ -77,6 +79,37 @@ Unless the user asks for a different style of answer, you should answer in full 
   )
 }
 
+export const basicChatV2 = async (): Promise<void> => {
+  const response = await c2.chat({
+    model: 'command-r-plus-08-2024',
+    messages: [
+      {
+        role: 'user',
+        content: 'hello world!'
+      }
+    ]
+  })
+
+  console.log(response)
+}
+
+export const basicChatStreamV2 = async (): Promise<void> => {
+  const stream = await c2.chatStream({
+    model: 'command-r-plus-08-2024',
+    messages: [
+      {
+        role: 'user',
+        content: 'hello world!'
+      }
+    ]
+  })
+  for await (const chatEvent of stream) {
+    if (chatEvent.type === 'content-delta') {
+      console.log(chatEvent.delta?.message)
+    }
+  }
+}
+
 export const basicStream = async (): Promise<void> => {
   const stream = await c.chatStream({
     model: 'command',
@@ -93,6 +126,18 @@ export const basicStream = async (): Promise<void> => {
 
 export const basicEmbed = async (): Promise<void> => {
   const embed = await c.embed({
+    texts: ['hello', 'goodbye'],
+    model: 'embed-english-v3.0',
+    inputType: 'classification',
+    embeddingTypes: ['float', 'int8']
+  })
+  console.info(embed)
+
+  console.info('Received embed', embed)
+}
+
+export const basicEmbedV2 = async (): Promise<void> => {
+  const embed = await c2.embed({
     texts: ['hello', 'goodbye'],
     model: 'embed-english-v3.0',
     inputType: 'classification',
