@@ -246,7 +246,7 @@ export const chatStreamPatchV2 = (original: ChatV2StreamFn, tracer: Tracer, lang
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
-      'url.path': '/v2/chat',
+      'url.path': APIS.cohere.CHAT_STREAM_V2.ENDPOINT,
       'gen_ai.request.stream': true,
       'gen_ai.request.model': request.model ?? 'command-r',
       'http.max.retries': requestOptions?.maxRetries,
@@ -272,7 +272,7 @@ export const chatStreamPatchV2 = (original: ChatV2StreamFn, tracer: Tracer, lang
   }
 }
 
-export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
+export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string, v2 = false) => {
   return async function (this: ICohereClient, request: IEmbedRequest, requestOptions?: IRequestOptions): Promise<IEmbedResponse> {
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const attributes: LLMSpanAttributes = {
@@ -283,7 +283,7 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
-      'url.path': APIS.cohere.EMBED.ENDPOINT,
+      'url.path': v2 ? APIS.cohere.EMBEDV2.ENDPOINT : APIS.cohere.EMBED.ENDPOINT,
       'gen_ai.request.model': request.model ?? 'embed-english-v2.0',
       'http.max.retries': requestOptions?.maxRetries,
       'gen_ai.request.embedding_input_type': request.inputType,
@@ -292,7 +292,7 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.cohere.EMBED.METHOD
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? v2 ? APIS.cohere.EMBEDV2.METHOD : APIS.cohere.EMBED.METHOD
     const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {
@@ -358,7 +358,7 @@ export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer
   }
 }
 
-export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
+export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string, v2 = false) => {
   return async function (this: ICohereClient, request: IRerankRequest, requestOptions?: IRequestOptions): Promise<IRerankResponse> {
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const attributes: LLMSpanAttributes = {
@@ -369,7 +369,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
-      'url.path': APIS.cohere.RERANK.ENDPOINT,
+      'url.path': v2 ? APIS.cohere.RERANKV2.ENDPOINT : APIS.cohere.RERANK.ENDPOINT,
       'gen_ai.request.model': request.model ?? '',
       'gen_ai.operation.name': 'rerank',
       'http.max.retries': requestOptions?.maxRetries,
@@ -378,7 +378,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.cohere.RERANK.METHOD
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? v2 ? APIS.cohere.RERANKV2.METHOD : APIS.cohere.RERANK.METHOD
     const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {

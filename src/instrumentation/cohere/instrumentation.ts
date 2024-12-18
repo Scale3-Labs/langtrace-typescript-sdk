@@ -100,7 +100,7 @@ class CohereInstrumentation extends InstrumentationBase<any> {
         return function (this: any, ...args: any[]) {
           const instance: any = new OriginalClient(...args)
           const originalChat: EmbedFn = instance.embed
-          instance.embed = embedPatch(originalChat, that.tracer, that.instrumentationVersion, name, moduleVersion)
+          instance.embed = embedPatch(originalChat, that.tracer, that.instrumentationVersion, name, moduleVersion, true)
           return instance
         }
       }
@@ -117,7 +117,7 @@ class CohereInstrumentation extends InstrumentationBase<any> {
         return function (this: any, ...args: any[]) {
           const instance: any = new OriginalClient(...args)
           const originalChat: RerankFn = instance.rerank
-          instance.rerank = rerankPatch(originalChat, that.tracer, that.instrumentationVersion, name, moduleVersion)
+          instance.rerank = rerankPatch(originalChat, that.tracer, that.instrumentationVersion, name, moduleVersion, true)
           return instance
         }
       }
