@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 6.3.1
+
+### Patch Changes
+
+- Add support for Cohere V2
+
 ## 6.3.0
 
 ### Minor Changes

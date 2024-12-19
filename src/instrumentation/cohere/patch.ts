@@ -26,14 +26,17 @@ import {
   trace
 } from '@opentelemetry/api'
 import {
-  ICohereClient, IChatRequest, IRequestOptions, ChatFn, INonStreamedChatResponse, ChatStreamFn, IEmbedRequest, IEmbedResponse,
+  ICohereClient, IChatRequest, IV2ChatRequest, IRequestOptions, ChatFn, INonStreamedChatResponse, ChatStreamFn, IEmbedRequest, IEmbedResponse,
   EmbedFn,
   RerankFn,
   IRerankResponse,
   IRerankRequest,
   EmbedJobsCreateFn,
   ICreateEmbedJobRequest,
-  ICreateEmbedJobResponse
+  ICreateEmbedJobResponse,
+  IV2ChatResponse,
+  ChatV2Fn,
+  ChatV2StreamFn
 } from '@langtrace-instrumentation/cohere/types'
 import { APIS, LLMSpanAttributes, Event } from '@langtrase/trace-attributes'
 import { addSpanEvent, createStreamProxy } from '@langtrace-utils/misc'
@@ -108,6 +111,83 @@ export const chatPatch = (original: ChatFn, tracer: Tracer, langtraceVersion: st
   }
 }
 
+export const chatPatchV2 = (
+  original: ChatV2Fn,
+  tracer: Tracer,
+  langtraceVersion: string,
+  sdkName: string,
+  moduleVersion?: string
+) => {
+  return async function (
+    this: ICohereClient,
+    request: IV2ChatRequest,
+    requestOptions?: IRequestOptions
+  ): Promise<IV2ChatResponse> {
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
+    const attributes: LLMSpanAttributes = {
+      'langtrace.sdk.name': sdkName,
+      'langtrace.service.name': this._options.clientName ?? 'cohere',
+      'langtrace.service.type': 'llm',
+      'gen_ai.operation.name': 'chat',
+      'langtrace.version': langtraceVersion,
+      'langtrace.service.version': moduleVersion,
+      'url.full': 'https://api.cohere.ai',
+      'url.path': APIS.cohere.CHATV2.ENDPOINT,
+      'gen_ai.request.model': request.model ?? 'command-r',
+      'http.max.retries': requestOptions?.maxRetries,
+      'gen_ai.request.temperature': request.temperature,
+      'gen_ai.request.frequency_penalty': request.frequencyPenalty,
+      'gen_ai.request.presence_penalty': request.presencePenalty,
+      'gen_ai.request.top_p': request.p,
+      'gen_ai.request.top_k': request.k,
+      'gen_ai.request.seed': request.seed?.toString(),
+      'gen_ai.request.max_tokens': request.maxTokens,
+      'gen_ai.request.documents': request.documents !== undefined ? JSON.stringify(request.documents) : undefined,
+      'gen_ai.request.tools': request.tools !== undefined ? JSON.stringify(request.tools) : undefined,
+      'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
+      ...customAttributes
+    }
+
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.cohere.CHAT.METHOD
+    const span = tracer.startSpan(spanName, { attributes, kind: SpanKind.CLIENT }, context.active())
+
+    try {
+      return await context.with(trace.setSpan(context.active(), span), async () => {
+        const prompts = [...request.messages]
+
+        const response = await original.apply(this, [request, requestOptions])
+
+        const responseAttributes: Partial<LLMSpanAttributes> = {
+          'gen_ai.usage.input_tokens': response.usage.billedUnits.inputTokens,
+          'gen_ai.usage.output_tokens': response.usage.billedUnits.outputTokens,
+          'gen_ai.usage.total_tokens': response.usage.billedUnits.inputTokens + response.usage.billedUnits.outputTokens,
+          'gen_ai.response_id': response.id
+        }
+
+        addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(prompts) })
+
+        const assistantMessage = {
+          role: response.message.role,
+          content: response.message.content[0]?.text ?? ''
+        }
+
+        addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify([assistantMessage]) })
+
+        span.setAttributes({ ...attributes, ...responseAttributes })
+        span.setStatus({ code: SpanStatusCode.OK })
+
+        return response
+      })
+    } catch (error: any) {
+      span.recordException(error as Exception)
+      span.setStatus({ code: SpanStatusCode.ERROR })
+      throw new LangtraceSdkError(error.message as string, error.stack as string)
+    } finally {
+      span.end()
+    }
+  }
+}
+
 export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
   return async function (this: ICohereClient, request: IChatRequest, requestOptions?: IRequestOptions): Promise<any> {
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
@@ -155,7 +235,44 @@ export const chatStreamPatch = (original: ChatStreamFn, tracer: Tracer, langtrac
   }
 }
 
-export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
+export const chatStreamPatchV2 = (original: ChatV2StreamFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
+  return async function (this: ICohereClient, request: IV2ChatRequest, requestOptions?: IRequestOptions): Promise<any> {
+    const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
+    const attributes: LLMSpanAttributes = {
+      'langtrace.sdk.name': sdkName,
+      'langtrace.service.name': this._options.clientName ?? 'cohere',
+      'langtrace.service.type': 'llm',
+      'gen_ai.operation.name': 'chat',
+      'langtrace.version': langtraceVersion,
+      'langtrace.service.version': moduleVersion,
+      'url.full': 'https://api.cohere.ai',
+      'url.path': APIS.cohere.CHAT_STREAM_V2.ENDPOINT,
+      'gen_ai.request.stream': true,
+      'gen_ai.request.model': request.model ?? 'command-r',
+      'http.max.retries': requestOptions?.maxRetries,
+      'gen_ai.request.temperature': request.temperature,
+      'gen_ai.request.frequency_penalty': request.frequencyPenalty,
+      'gen_ai.request.presence_penalty': request.presencePenalty,
+      'gen_ai.request.top_p': request.p,
+      'gen_ai.request.top_k': request.k,
+      'gen_ai.request.max_tokens': request.maxTokens,
+      'gen_ai.request.seed': request.seed?.toString(),
+      'gen_ai.request.documents': request.documents !== undefined ? JSON.stringify(request.documents) : undefined,
+      'gen_ai.request.tools': request.tools !== undefined ? JSON.stringify(request.tools) : undefined,
+      'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
+      ...customAttributes
+    }
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? 'cohere.chatStream'
+    const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
+    return await context.with(trace.setSpan(context.active(), span), async () => {
+      addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(request.messages) })
+      const response = await original.apply(this, [request, requestOptions])
+      return createStreamProxy(response, handleStreamV2(response, attributes, span))
+    })
+  }
+}
+
+export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string, v2 = false) => {
   return async function (this: ICohereClient, request: IEmbedRequest, requestOptions?: IRequestOptions): Promise<IEmbedResponse> {
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const attributes: LLMSpanAttributes = {
@@ -166,7 +283,7 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
-      'url.path': APIS.cohere.EMBED.ENDPOINT,
+      'url.path': v2 ? APIS.cohere.EMBEDV2.ENDPOINT : APIS.cohere.EMBED.ENDPOINT,
       'gen_ai.request.model': request.model ?? 'embed-english-v2.0',
       'http.max.retries': requestOptions?.maxRetries,
       'gen_ai.request.embedding_input_type': request.inputType,
@@ -175,7 +292,7 @@ export const embedPatch = (original: EmbedFn, tracer: Tracer, langtraceVersion: 
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.cohere.EMBED.METHOD
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? v2 ? APIS.cohere.EMBEDV2.METHOD : APIS.cohere.EMBED.METHOD
     const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {
@@ -241,7 +358,7 @@ export const embedJobsCreatePatch = (original: EmbedJobsCreateFn, tracer: Tracer
   }
 }
 
-export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string) => {
+export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion: string, sdkName: string, moduleVersion?: string, v2 = false) => {
   return async function (this: ICohereClient, request: IRerankRequest, requestOptions?: IRequestOptions): Promise<IRerankResponse> {
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
     const attributes: LLMSpanAttributes = {
@@ -252,7 +369,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
       'langtrace.version': langtraceVersion,
       'langtrace.service.version': moduleVersion,
       'url.full': 'https://api.cohere.ai',
-      'url.path': APIS.cohere.RERANK.ENDPOINT,
+      'url.path': v2 ? APIS.cohere.RERANKV2.ENDPOINT : APIS.cohere.RERANK.ENDPOINT,
       'gen_ai.request.model': request.model ?? '',
       'gen_ai.operation.name': 'rerank',
       'http.max.retries': requestOptions?.maxRetries,
@@ -261,7 +378,7 @@ export const rerankPatch = (original: RerankFn, tracer: Tracer, langtraceVersion
       'http.timeout': requestOptions?.timeoutInSeconds !== undefined ? requestOptions.timeoutInSeconds / 1000 : undefined,
       ...customAttributes
     }
-    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.cohere.RERANK.METHOD
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? v2 ? APIS.cohere.RERANKV2.METHOD : APIS.cohere.RERANK.METHOD
     const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
     try {
       return await context.with(trace.setSpan(context.active(), span), async () => {
@@ -308,6 +425,49 @@ async function * handleStream (stream: any, attributes: LLMSpanAttributes, span:
         attributes['gen_ai.response_id'] = chat.response.response_id
       }
       yield chat
+    }
+
+    span.setAttributes(attributes)
+    span.setStatus({ code: SpanStatusCode.OK })
+  } catch (error: any) {
+    span.recordException(error as Exception)
+    span.setStatus({ code: SpanStatusCode.ERROR })
+    throw new LangtraceSdkError(error.message as string, error.stack as string)
+  } finally {
+    span.end()
+  }
+}
+
+async function * handleStreamV2 (stream: any, attributes: LLMSpanAttributes, span: Span): AsyncGenerator {
+  let accumulatedText = ''
+
+  try {
+    addSpanEvent(span, Event.STREAM_START)
+
+    for await (const chunk of stream) {
+      if (chunk.type === 'message-start') {
+        attributes['gen_ai.response_id'] = chunk.id
+      } else if (chunk.type === 'content-delta') {
+        accumulatedText += chunk.delta?.message?.content?.text as string
+      } else if (chunk.type === 'message-end') {
+        addSpanEvent(span, Event.STREAM_END)
+
+        const response = {
+          role: 'assistant',
+          content: accumulatedText
+        }
+
+        addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify([response]) })
+
+        if (chunk.delta?.usage?.billedUnits !== undefined) {
+          const { inputTokens, outputTokens } = chunk.delta.usage.billedUnits
+          attributes['gen_ai.usage.input_tokens'] = inputTokens
+          attributes['gen_ai.usage.output_tokens'] = outputTokens
+          attributes['gen_ai.usage.total_tokens'] = Number(inputTokens ?? 0) + Number(outputTokens ?? 0)
+        }
+      }
+
+      yield chunk
     }
 
     span.setAttributes(attributes)

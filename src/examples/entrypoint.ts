@@ -1,3 +1,3 @@
-import { basic } from '@langtrace-examples/awsbedrock/converse-anthropic'
+import { basicEmbedV2 } from '@langtrace-examples/cohere/basic'
 
-void basic()
+void basicEmbedV2()
