@@ -1,4 +1,38 @@
 # @langtrase/typescript-sdk
+## 6.3.2
+### Patch Changes
+
+- Add Support for preview module inside VertexAI
+
+## 5.4.0
+
+### Minor Changes
+
+- Support OTEL_EXPORTER_OTLP_ENDPOINT and OTEL_EXPORTER_OTLP_HEADERS env vars
+
+## 5.3.2
+
+### Patch Changes
+
+- Add Vertex AI tools and funcition tracing support
+
+## 5.3.1
+
+### Patch Changes
+
+- Fix allowing manual patch for Gemini and Vertex AI.
+
+## 5.3.0
+
+### Minor Changes
+
+- Add support for Vertex AI tracing.
+
+## 5.2.0
+
+### Minor Changes
+
+- Add support for Gemini tracing.
 
 ## 6.3.0
 

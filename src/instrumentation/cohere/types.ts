@@ -1,6 +1,8 @@
 // Functions
 export type ChatFn = (request: IChatRequest, requestOptions?: IRequestOptions) => Promise<INonStreamedChatResponse>
+export type ChatV2Fn = (request: IV2ChatRequest, requestOptions?: IRequestOptions) => Promise<IV2ChatResponse>
 export type ChatStreamFn = (request: IChatRequest, requestOptions?: IRequestOptions) => Promise<any>
+export type ChatV2StreamFn = (request: IV2ChatRequest, requestOptions?: IRequestOptions) => Promise<any>
 export type EmbedFn = (request: IEmbedRequest, requestOptions?: IRequestOptions) => Promise<IEmbedResponse>
 export type EmbedJobsCreateFn = (request: ICreateEmbedJobRequest, requestOptions?: IRequestOptions) => Promise<ICreateEmbedJobResponse>
 export type RerankFn = (request: IRerankRequest, requestOptions?: IRequestOptions) => Promise<IRerankResponse>
@@ -101,6 +103,46 @@ interface IToolCall {
   name: string
   parameters: Record<string, unknown>
 
+}
+
+export interface IMessageContent {
+  type: string
+  text: string
+}
+
+export interface IAssistantMessage {
+  role: string
+  content: IMessageContent[]
+}
+
+export interface IV2ChatResponse {
+  id: string
+  message: IAssistantMessage
+  finishReason: string
+  usage: {
+    billedUnits: {
+      inputTokens: number
+      outputTokens: number
+    }
+    tokens: {
+      inputTokens: number
+      outputTokens: number
+    }
+  }
+}
+
+export interface IV2ChatRequest {
+  messages: Array<{ role: string, content: string }>
+  model?: string
+  temperature?: number
+  frequencyPenalty?: number
+  presencePenalty?: number
+  p?: number
+  k?: number
+  seed?: number
+  maxTokens?: number
+  documents?: any
+  tools?: any
 }
 
 export interface INonStreamedChatResponse {
