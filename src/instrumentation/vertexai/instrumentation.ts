@@ -55,6 +55,18 @@ class VertexAIInstrumentation extends InstrumentationBase<any> {
       this._unpatch(vertexai)
     }
 
+    this._wrap(vertexai.GenerativeModelPreview.prototype,
+      'generateContent',
+      (originalMethod: (...args: any[]) => any) =>
+        generateContentPatch(originalMethod, this.tracer, APIS.vertexai.GENERATE_CONTENT.METHOD, this.instrumentationVersion, name, moduleVersion)
+    )
+
+    this._wrap(vertexai.GenerativeModelPreview.prototype,
+      'generateContentStream',
+      (originalMethod: (...args: any[]) => any) =>
+        generateContentPatch(originalMethod, this.tracer, APIS.vertexai.GENERATE_CONTENT_STREAM.METHOD, this.instrumentationVersion, name, moduleVersion)
+    )
+
     this._wrap(vertexai.GenerativeModel.prototype,
       'generateContent',
       (originalMethod: (...args: any[]) => any) =>
