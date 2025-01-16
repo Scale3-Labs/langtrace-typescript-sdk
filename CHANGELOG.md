@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
-## 6.3.2
+
+## 6.4.0
+
+### Patch Changes
+
+- Add support for Arch
+
 ### Patch Changes
 
 - Add Support for preview module inside VertexAI
