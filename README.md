@@ -153,6 +153,7 @@ Langtrace automatically captures traces from the following vendors:
 | Cohere       | LLM             | :white_check_mark: | :white_check_mark:              |
 | Groq         | LLM             | :x:                | :white_check_mark:              |
 | Perplexity   | LLM             | :white_check_mark: | :white_check_mark:              |
+| Arch         | LLM             | :white_check_mark: | :white_check_mark:              |
 | Gemini       | LLM             | :white_check_mark: | :white_check_mark:              |
 | Mistral      | LLM             | :white_check_mark: | :white_check_mark:              |
 | xAI          | LLM             | :white_check_mark: | :white_check_mark:              |
