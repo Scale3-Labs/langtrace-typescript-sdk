@@ -6,6 +6,8 @@
 
 - Add support for Arch
 
+## 6.3.2
+
 ### Patch Changes
 
 - Add Support for preview module inside VertexAI
