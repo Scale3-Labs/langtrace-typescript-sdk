@@ -44,6 +44,8 @@ export function imageEdit (
       serviceProvider = 'perplexity'
     } else if (originalContext?._client?.baseURL?.includes('x.ai') === true) {
       serviceProvider = 'XAI'
+    } else if (originalContext?._client?.baseURL?.includes(':12000') === true || originalContext?._client?.baseURL?.includes(':10000') === true) {
+      serviceProvider = 'arch'
     }
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
@@ -106,6 +108,8 @@ export function imagesGenerate (
       serviceProvider = 'perplexity'
     } else if (originalContext?._client?.baseURL?.includes('x.ai') === true) {
       serviceProvider = 'XAI'
+    } else if (originalContext?._client?.baseURL?.includes(':12000') === true || originalContext?._client?.baseURL?.includes(':10000') === true) {
+      serviceProvider = 'arch'
     }
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
 
@@ -166,6 +170,8 @@ export function chatCompletionCreate (
       serviceProvider = 'perplexity'
     } else if (originalContext?._client?.baseURL?.includes('x.ai') === true) {
       serviceProvider = 'XAI'
+    } else if (originalContext?._client?.baseURL?.includes(':12000') === true || originalContext?._client?.baseURL?.includes(':10000') === true) {
+      serviceProvider = 'arch'
     }
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
@@ -326,6 +332,8 @@ export function embeddingsCreate (
       serviceProvider = 'perplexity'
     } else if (originalContext?._client?.baseURL?.includes('x.ai') === true) {
       serviceProvider = 'XAI'
+    } else if (originalContext?._client?.baseURL?.includes(':12000') === true || originalContext?._client?.baseURL?.includes(':10000') === true) {
+      serviceProvider = 'arch'
     }
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
