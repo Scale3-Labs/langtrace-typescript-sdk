@@ -1,4 +1,9 @@
 # @langtrase/typescript-sdk
+## 6.3.3
+### Patch Changes
+
+- Remove duplicate @google/generative-ai dependency from devDependencies
+
 ## 6.3.2
 ### Patch Changes
 
