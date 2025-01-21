@@ -5,6 +5,13 @@
 - Remove duplicate @google/generative-ai dependency from devDependencies
 
 ## 6.3.2
+
+## 6.4.0
+
+### Patch Changes
+
+- Add support for Arch
+
 ### Patch Changes
 
 - Add Support for preview module inside VertexAI
