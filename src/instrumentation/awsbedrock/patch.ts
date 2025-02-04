@@ -28,6 +28,131 @@ import {
 } from '@opentelemetry/api'
 import { LangtraceSdkError } from 'errors/sdk_error'
 
+interface MessageContent {
+  content: string
+  role: string
+}
+
+interface TokenUsage {
+  inputTokens?: number
+  outputTokens?: number
+  totalTokens?: number
+}
+
+function extractPromptFromAnthropic(args: any[]): MessageContent[] | undefined {
+  const message = args[0]?.input?.messages?.[0]
+  if (typeof message?.content !== 'undefined') {
+    return message.content.map((content: { text: string }) => ({
+      content: content.text,
+      role: String(message.role)
+    }))
+  }
+  return undefined
+}
+
+function extractPromptFromAmazon(body: ArrayBuffer): MessageContent[] | undefined {
+  const bodyText = Buffer.from(body).toString('utf-8')
+  const completion: { outputText?: string, completion?: string } = JSON.parse(bodyText)
+  const content = completion?.outputText ?? completion?.completion
+  if (typeof content === 'string') {
+    return [{
+      content: bodyText,
+      role: 'user'
+    }]
+  }
+  return undefined
+}
+
+function extractPromptFromCohere(body: ArrayBuffer): MessageContent[] | undefined {
+  const bodyText = Buffer.from(body).toString('utf-8')
+  const completion: { generations?: Array<{ text: string }> } = JSON.parse(bodyText)
+  if (Array.isArray(completion?.generations) && completion.generations.length > 0) {
+    const text = completion.generations[0]?.text
+    if (typeof text === 'string') {
+      return [{
+        role: 'assistant',
+        content: text
+      }]
+    }
+  }
+  return undefined
+}
+
+function extractCompletionFromAnthropic(resp: any): MessageContent[] | undefined {
+  const messageContent = resp?.output?.message?.content
+  if (Array.isArray(messageContent) && messageContent.length > 0) {
+    return messageContent.map((content: { text?: string, toolUse?: string, toolResult?: string }) => ({
+      role: String(resp?.output?.message?.role ?? 'assistant'),
+      content: String(content?.text ?? content?.toolUse ?? content?.toolResult ?? '')
+    }))
+  }
+  return undefined
+}
+
+function extractCompletionFromAmazon(body: ArrayBuffer): MessageContent[] | undefined {
+  const bodyText = Buffer.from(body).toString('utf-8')
+  const completion: { outputText?: string, completion?: string } = JSON.parse(bodyText)
+  const content = completion?.outputText ?? completion?.completion
+  if (typeof content === 'string') {
+    return [{
+      role: 'assistant',
+      content
+    }]
+  }
+  return undefined
+}
+
+function extractCompletionFromCohere(body: ArrayBuffer): MessageContent[] | undefined {
+  const bodyText = Buffer.from(body).toString('utf-8')
+  const completion: { generations?: Array<{ text: string }> } = JSON.parse(bodyText)
+  if (Array.isArray(completion?.generations) && completion.generations.length > 0) {
+    const text = completion.generations[0]?.text
+    if (typeof text === 'string') {
+      return [{
+        role: 'assistant',
+        content: text
+      }]
+    }
+  }
+  return undefined
+}
+
+function extractTokenUsageFromAnthropic(resp: any): TokenUsage | undefined {
+  const usage = resp?.usage
+  if (typeof usage?.inputTokens === 'number' && typeof usage?.outputTokens === 'number') {
+    return {
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      totalTokens: usage.totalTokens
+    }
+  }
+  return undefined
+}
+
+function extractTokenUsageFromAmazon(body: ArrayBuffer): TokenUsage | undefined {
+  const bodyText = Buffer.from(body).toString('utf-8')
+  const completion: { amazon_bedrock_invoke?: { input_tokens: number, output_tokens: number } } = JSON.parse(bodyText)
+  const tokens = completion?.amazon_bedrock_invoke
+  if (typeof tokens?.input_tokens === 'number' && typeof tokens?.output_tokens === 'number') {
+    return {
+      inputTokens: tokens.input_tokens,
+      outputTokens: tokens.output_tokens,
+      totalTokens: tokens.input_tokens + tokens.output_tokens
+    }
+  }
+  return undefined
+}
+
+function extractTokenUsageFromCohere(resp: any): TokenUsage | undefined {
+  const billedUnits = resp?.meta?.billedUnits
+  if (typeof billedUnits === 'number') {
+    return {
+      totalTokens: billedUnits
+    }
+  }
+  return undefined
+}
+
 export function sendCommand (
   originalMethod: (...args: any[]) => any,
   tracer: Tracer,
@@ -68,27 +193,62 @@ export function sendCommand (
       async () => {
         try {
           const resp = await originalMethod.apply(this, args)
-          const message = args[0]?.input?.messages[0]
-          const message_content = message?.content?.map((content: any) => ({ content: content.text, role: message.role }))
-          addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(message_content) })
+
+
+          // Extract prompt based on model type
+          const modelId = String(args[0]?.input?.modelId ?? '')
+          let message_content: MessageContent[] | undefined
+
+          try {
+            if (modelId.startsWith('anthropic.')) {
+              message_content = extractPromptFromAnthropic(args)
+            } else if (modelId.startsWith('amazon.')) {
+              message_content = extractPromptFromAmazon(resp.body as ArrayBuffer)
+            } else if (modelId.startsWith('cohere.')) {
+              message_content = extractPromptFromCohere(resp.body as ArrayBuffer)
+            }
+          } catch (e) {
+            // If extraction fails, skip adding prompt event
+          }
+
+          if (typeof message_content !== 'undefined') {
+            addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(message_content) })
+          }
+
           if (resp.stream === undefined) {
-            const responses = resp?.output?.message?.content?.map((content: any) => {
-              const result = {
-                role: resp?.output?.message?.role,
-                content: content?.text !== undefined && content?.text !== null
-                  ? content?.text
-                  : content?.toolUse !== undefined
-                    ? JSON.stringify(content?.toolUse)
-                    : JSON.stringify(content?.toolResult)
+            // Parse completion and token usage based on model type
+            let responses: MessageContent[] | undefined
+            let tokenUsage: TokenUsage | undefined
+
+            try {
+              if (modelId.startsWith('anthropic.')) {
+                responses = extractCompletionFromAnthropic(resp)
+                tokenUsage = extractTokenUsageFromAnthropic(resp)
+              } else if (modelId.startsWith('amazon.')) {
+                responses = extractCompletionFromAmazon(resp.body as ArrayBuffer)
+                tokenUsage = extractTokenUsageFromAmazon(resp.body as ArrayBuffer)
+              } else if (modelId.startsWith('cohere.')) {
+                responses = extractCompletionFromCohere(resp.body as ArrayBuffer)
+                tokenUsage = extractTokenUsageFromCohere(resp)
               }
-              return result
-            })
-            addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(responses) })
-            const responseAttributes: Partial<LLMSpanAttributes> = {
-              'gen_ai.response.model': args[0]?.input.modelId,
-              'gen_ai.usage.input_tokens': resp.usage.inputTokens,
-              'gen_ai.usage.output_tokens': resp.usage.outputTokens,
-              'gen_ai.usage.total_tokens': resp.usage.totalTokens
+            } catch (e) {
+              // If extraction fails, skip adding completion and token usage events
+            }
+
+            if (typeof responses !== 'undefined') {
+              addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(responses) })
+            }
+
+            // Add token usage to response attributes
+            const responseAttributes: Partial<LLMSpanAttributes> = { 'gen_ai.response.model': modelId }
+            if (tokenUsage?.inputTokens !== undefined) {
+              responseAttributes['gen_ai.usage.input_tokens'] = tokenUsage.inputTokens
+            }
+            if (tokenUsage?.outputTokens !== undefined) {
+              responseAttributes['gen_ai.usage.output_tokens'] = tokenUsage.outputTokens
+            }
+            if (tokenUsage?.totalTokens !== undefined) {
+              responseAttributes['gen_ai.usage.total_tokens'] = tokenUsage.totalTokens
             }
             span.setAttributes({ ...attributes, ...responseAttributes })
             span.setStatus({ code: SpanStatusCode.OK })

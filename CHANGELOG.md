@@ -11,6 +11,7 @@
 ### Patch Changes
 
 - Add support for Arch
+- Remove duplicate @google/generative-ai dependency from devDependencies
 
 ## 6.3.2
 
