@@ -1,3 +1,4 @@
-import { basicEmbedV2 } from '@langtrace-examples/cohere/basic'
+import { basicVertexAIStartChat } from '@langtrace-examples/vertexai/basic'
 
-void basicEmbedV2()
+void basicVertexAIStartChat()
+// void basicVertexAIChat()

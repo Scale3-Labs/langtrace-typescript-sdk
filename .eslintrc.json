@@ -1,110 +1,74 @@
 {
-   "env": {
-      "commonjs": true,
-      "es2021": true,
-      "browser": true,
-      "node": true
-   },
-   "parser": "@typescript-eslint/parser",
-   "ignorePatterns": [
-      "dist/"
-   ],
-   "extends": [
-      "eslint:recommended",
-      "standard-with-typescript",
-      "plugin:@typescript-eslint/recommended",
-      "plugin:@typescript-eslint/recommended-requiring-type-checking"
-   ],
-   "plugins": [
-      "unused-imports"
-   ],
-   "parserOptions": {
-      "ecmaVersion": "latest",
-      "tsconfigRootDir": ".",
-      "sourceType": "module",
-      "project": "./tsconfig.json"
-   },
-   "overrides": [
-      {
-         "files": [
-            "src/examples/**/*"
-         ],
-         "rules": {
-            "no-console": "off"
-         }
+  "env": {
+    "commonjs": true,
+    "es2021": true,
+    "browser": true,
+    "node": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "ignorePatterns": ["dist/"],
+  "extends": [
+    "eslint:recommended",
+    "standard-with-typescript",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "prettier"
+  ],
+  "plugins": ["unused-imports"],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "tsconfigRootDir": ".",
+    "sourceType": "module",
+    "project": "./tsconfig.json"
+  },
+  "overrides": [
+    {
+      "files": ["src/examples/**/*"],
+      "rules": {
+        "no-console": "off"
       }
-   ],
-   "rules": {
-      "object-curly-newline": [
-         "error",
-         {
-            "ObjectExpression": {
-               "multiline": true,
-               "minProperties": 8
-            },
-            "ObjectPattern": {
-               "multiline": true,
-               "minProperties": 8
-            },
-            "ImportDeclaration": {
-               "multiline": true,
-               "minProperties": 8
-            },
-            "ExportDeclaration": {
-               "multiline": true,
-               "minProperties": 8
-            }
-         }
-      ],
-      "no-restricted-imports": [
-         "error",
-         {
-            "patterns": [
-               ".*"
-            ]
-         }
-      ],
-      "@typescript-eslint/no-this-alias": "warn",
-      "@typescript-eslint/no-unsafe-return": "off",
-      "@typescript-eslint/naming-convention": [
-         "error",
-         {
-            "selector": "variable",
-            "modifiers": [
-               "destructured"
-            ],
-            "format": null
-         }
-      ],
-      "space-unary-ops": 2,
-      "@typescript-eslint/no-non-null-assertion": "off",
-      "@typescript-eslint/unbound-method": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/restrict-template-expressions": "off",
-      "@typescript-eslint/no-unsafe-call": "off",
-      "@typescript-eslint/no-unsafe-assignment": "off",
-      "@typescript-eslint/no-unsafe-member-access": "off",
-      "no-underscore-dangle": "off",
-      "@typescript-eslint/no-unused-vars": "warn",
-      "unused-imports/no-unused-imports": "error",
-      "prefer-promise-reject-errors": [
-         "error",
-         {
-            "allowEmptyReject": true
-         }
-      ],
-      "no-console": "error",
-      "max-len": [
-         "error",
-         {
-            "code": 250
-         }
-      ],
-      "@typescript-eslint/no-misused-promises": [
-         "error",
-         {
-            "checksVoidReturn": false
-         }
-      ]
-   }
+    }
+  ],
+  "rules": {
+    "space-unary-ops": "off", // Disables the rule that enforces consistent spacing around unary operators like '!' or '++'. Example: allows both '!foo' and '! foo'
+    "@typescript-eslint/no-this-alias": "warn",
+    "@typescript-eslint/no-unsafe-return": "off",
+    "@typescript-eslint/naming-convention": [
+      "error",
+      {
+        "selector": "variable",
+        "modifiers": ["destructured"],
+        "format": null
+      }
+    ],
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/unbound-method": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/restrict-template-expressions": "off",
+    "@typescript-eslint/no-unsafe-call": "off",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "no-underscore-dangle": "off",
+    "@typescript-eslint/no-unused-vars": "warn",
+    "unused-imports/no-unused-imports": "error",
+    "prefer-promise-reject-errors": [
+      "error",
+      {
+        "allowEmptyReject": true
+      }
+    ],
+    "no-console": "error",
+    "max-len": [
+      "error",
+      {
+        "code": 250
+      }
+    ],
+    "@typescript-eslint/no-misused-promises": [
+      "error",
+      {
+        "checksVoidReturn": false
+      }
+    ]
+  }
 }

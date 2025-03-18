@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { generateContentPatch } from '@langtrace-instrumentation/vertexai/patch'
+import { generateContentPatch, startChatPatch } from '@langtrace-instrumentation/vertexai/patch'
 import { APIS } from '@langtrase/trace-attributes'
 import { diag } from '@opentelemetry/api'
 import { InstrumentationBase, InstrumentationNodeModuleDefinition, isWrapped } from '@opentelemetry/instrumentation'
@@ -22,16 +22,16 @@ import { InstrumentationBase, InstrumentationNodeModuleDefinition, isWrapped } f
 import { name, version } from '../../../package.json'
 
 class VertexAIInstrumentation extends InstrumentationBase<any> {
-  constructor () {
+  constructor() {
     super(name, version)
   }
 
-  public manualPatch (vertexai: any): void {
+  public manualPatch(vertexai: any): void {
     diag.debug('Manually instrumenting Vertex AI SDK')
     this._patch(vertexai)
   }
 
-  init (): Array<InstrumentationNodeModuleDefinition<any>> {
+  init(): Array<InstrumentationNodeModuleDefinition<any>> {
     const module = new InstrumentationNodeModuleDefinition<any>(
       '@google-cloud/vertexai',
       ['>=1.5.0'],
@@ -45,54 +45,112 @@ class VertexAIInstrumentation extends InstrumentationBase<any> {
         if (moduleExports !== undefined) {
           this._unpatch(moduleExports)
         }
-      }
+      },
     )
     return [module]
   }
 
-  private _patch (vertexai: any, moduleVersion?: string): void {
+  private _patch(vertexai: any, moduleVersion?: string): void {
     if (isWrapped(vertexai.GenerativeModel.prototype)) {
       this._unpatch(vertexai)
     }
 
-    this._wrap(vertexai.GenerativeModelPreview.prototype,
+    this._wrap(vertexai.GenerativeModelPreview.prototype, 'startChat', (originalMethod: (...args: any[]) => any) =>
+      startChatPatch(
+        originalMethod,
+        this.tracer,
+        APIS.vertexai.START_CHAT.METHOD,
+        this.instrumentationVersion,
+        name,
+        moduleVersion,
+      ),
+    )
+
+    this._wrap(vertexai.GenerativeModel.prototype, 'startChat', (originalMethod: (...args: any[]) => any) =>
+      startChatPatch(
+        originalMethod,
+        this.tracer,
+        APIS.vertexai.START_CHAT.METHOD,
+        this.instrumentationVersion,
+        name,
+        moduleVersion,
+      ),
+    )
+
+    this._wrap(
+      vertexai.GenerativeModelPreview.prototype,
       'generateContent',
       (originalMethod: (...args: any[]) => any) =>
-        generateContentPatch(originalMethod, this.tracer, APIS.vertexai.GENERATE_CONTENT.METHOD, this.instrumentationVersion, name, moduleVersion)
+        generateContentPatch(
+          originalMethod,
+          this.tracer,
+          APIS.vertexai.GENERATE_CONTENT.METHOD,
+          this.instrumentationVersion,
+          name,
+          moduleVersion,
+        ),
     )
 
-    this._wrap(vertexai.GenerativeModelPreview.prototype,
+    this._wrap(
+      vertexai.GenerativeModelPreview.prototype,
       'generateContentStream',
       (originalMethod: (...args: any[]) => any) =>
-        generateContentPatch(originalMethod, this.tracer, APIS.vertexai.GENERATE_CONTENT_STREAM.METHOD, this.instrumentationVersion, name, moduleVersion)
+        generateContentPatch(
+          originalMethod,
+          this.tracer,
+          APIS.vertexai.GENERATE_CONTENT_STREAM.METHOD,
+          this.instrumentationVersion,
+          name,
+          moduleVersion,
+        ),
     )
 
-    this._wrap(vertexai.GenerativeModel.prototype,
-      'generateContent',
-      (originalMethod: (...args: any[]) => any) =>
-        generateContentPatch(originalMethod, this.tracer, APIS.vertexai.GENERATE_CONTENT.METHOD, this.instrumentationVersion, name, moduleVersion)
+    this._wrap(vertexai.GenerativeModel.prototype, 'generateContent', (originalMethod: (...args: any[]) => any) =>
+      generateContentPatch(
+        originalMethod,
+        this.tracer,
+        APIS.vertexai.GENERATE_CONTENT.METHOD,
+        this.instrumentationVersion,
+        name,
+        moduleVersion,
+      ),
     )
 
-    this._wrap(vertexai.GenerativeModel.prototype,
-      'generateContentStream',
-      (originalMethod: (...args: any[]) => any) =>
-        generateContentPatch(originalMethod, this.tracer, APIS.vertexai.GENERATE_CONTENT_STREAM.METHOD, this.instrumentationVersion, name, moduleVersion)
+    this._wrap(vertexai.GenerativeModel.prototype, 'generateContentStream', (originalMethod: (...args: any[]) => any) =>
+      generateContentPatch(
+        originalMethod,
+        this.tracer,
+        APIS.vertexai.GENERATE_CONTENT_STREAM.METHOD,
+        this.instrumentationVersion,
+        name,
+        moduleVersion,
+      ),
     )
 
-    this._wrap(vertexai.ChatSession.prototype,
-      'sendMessage',
-      (originalMethod: (...args: any[]) => any) =>
-        generateContentPatch(originalMethod, this.tracer, APIS.vertexai.SEND_MESSAGE.METHOD, this.instrumentationVersion, name, moduleVersion)
+    this._wrap(vertexai.ChatSession.prototype, 'sendMessage', (originalMethod: (...args: any[]) => any) =>
+      generateContentPatch(
+        originalMethod,
+        this.tracer,
+        APIS.vertexai.SEND_MESSAGE.METHOD,
+        this.instrumentationVersion,
+        name,
+        moduleVersion,
+      ),
     )
 
-    this._wrap(vertexai.ChatSession.prototype,
-      'sendMessageStream',
-      (originalMethod: (...args: any[]) => any) =>
-        generateContentPatch(originalMethod, this.tracer, APIS.vertexai.SEND_MESSAGE_STREAM.METHOD, this.instrumentationVersion, name, moduleVersion)
+    this._wrap(vertexai.ChatSession.prototype, 'sendMessageStream', (originalMethod: (...args: any[]) => any) =>
+      generateContentPatch(
+        originalMethod,
+        this.tracer,
+        APIS.vertexai.SEND_MESSAGE_STREAM.METHOD,
+        this.instrumentationVersion,
+        name,
+        moduleVersion,
+      ),
     )
   }
 
-  private _unpatch (vertexai: any): void {
+  private _unpatch(vertexai: any): void {
     this._unwrap(vertexai.GoogleGenerativeAI.GenerativeModel, 'generateContent')
     this._unwrap(vertexai.GoogleGenerativeAI.GenerativeModel, 'generateContentStream')
     this._unwrap(vertexai.GoogleGenerativeAI.GenerativeModel, 'sendMessage')

@@ -1,6 +1,10 @@
 # @langtrase/typescript-sdk
+
 ## 6.3.3
+
 ### Patch Changes
+
+- add support for chatSession vertexai
 
 - Remove duplicate @google/generative-ai dependency from devDependencies
 
