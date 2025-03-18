@@ -3,11 +3,11 @@ import dotenv from 'dotenv'
 import { VertexAI, FunctionDeclarationSchemaType } from '@google-cloud/vertexai'
 
 dotenv.config()
-init({ batch: false, write_spans_to_console: true })
+init({ batch: false, write_spans_to_console: false })
 
-const project = 'model-palace-429011-f5'
+const project = 'vertex-test-454100'
 const location = 'us-central1'
-const textModel = 'gemini-1.5-flash'
+const textModel = 'gemini-2.0-flash-lite-001'
 
 const vertexAI = new VertexAI({ project, location })
 
@@ -25,24 +25,23 @@ const functionDeclarations = [
             location: { type: FunctionDeclarationSchemaType.STRING },
             unit: {
               type: FunctionDeclarationSchemaType.STRING,
-              enum: ['celsius', 'fahrenheit']
-            }
+              enum: ['celsius', 'fahrenheit'],
+            },
           },
-          required: ['location']
-        }
-      }
-    ]
-  }
+          required: ['location'],
+        },
+      },
+    ],
+  },
 ]
 
 const functionResponseParts = [
   {
     functionResponse: {
       name: 'get_current_weather',
-      response:
-        { name: 'get_current_weather', content: { weather: 'super nice' } }
-    }
-  }
+      response: { name: 'get_current_weather', content: { weather: 'super nice' } },
+    },
+  },
 ]
 
 export const basicVertexAIChat = async (): Promise<void> => {
@@ -83,11 +82,15 @@ export const basicImageVertexAIChat = async (): Promise<void> => {
 }
 
 export const basicVertexAIStartChat = async (): Promise<void> => {
-  const chat = generativeModel.startChat()
-  const chatInput = 'How can I learn more about Node.js?'
-  const result = await chat.sendMessage(chatInput)
-  const response = result.response
-  console.log('response: ', JSON.stringify(response))
+  try {
+    const chat = generativeModel.startChat()
+    const chatInput = 'capital of France?'
+    const result = await chat.sendMessage(chatInput)
+    const response = result.response
+    console.log('response: ', JSON.stringify(response))
+  } catch (error) {
+    console.error('Error: ', error)
+  }
 }
 
 export const basicVertexAIStartChatStream = async (): Promise<void> => {
@@ -111,12 +114,11 @@ export const basicVertexAIStartChatWithToolRequest = async (): Promise<void> => 
     contents: [
       { role: 'user', parts: [{ text: 'What is the weather in Boston?' }] },
       { role: 'model', parts: [{ functionCall: { name: 'get_current_weather', args: { location: 'Boston' } } }] },
-      { role: 'user', parts: functionResponseParts }
+      { role: 'user', parts: functionResponseParts },
     ],
-    tools: functionDeclarations
+    tools: functionDeclarations,
   }
-  const streamingResult =
-    await generativeModel.generateContentStream(request)
+  const streamingResult = await generativeModel.generateContentStream(request)
   for await (const item of streamingResult.stream) {
     if (item?.candidates !== undefined) {
       console.log(item.candidates[0])
