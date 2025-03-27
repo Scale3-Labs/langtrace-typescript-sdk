@@ -59,7 +59,7 @@ class VertexAIInstrumentation extends InstrumentationBase<any> {
       startChatPatch(
         originalMethod,
         this.tracer,
-        APIS.vertexai.START_CHAT.METHOD,
+        APIS.vertexai.SEND_MESSAGE.METHOD,
         this.instrumentationVersion,
         name,
         moduleVersion,
@@ -70,7 +70,7 @@ class VertexAIInstrumentation extends InstrumentationBase<any> {
       startChatPatch(
         originalMethod,
         this.tracer,
-        APIS.vertexai.START_CHAT.METHOD,
+        APIS.vertexai.SEND_MESSAGE.METHOD,
         this.instrumentationVersion,
         name,
         moduleVersion,
