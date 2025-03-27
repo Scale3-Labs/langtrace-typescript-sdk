@@ -1,5 +1,10 @@
 # @langtrase/typescript-sdk
 
+## 6.3.4
+
+### Patch Changes
+- change startChat span name
+
 ## 6.3.3
 
 ### Patch Changes
