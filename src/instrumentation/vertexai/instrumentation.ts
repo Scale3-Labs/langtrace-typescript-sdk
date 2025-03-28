@@ -59,7 +59,7 @@ class VertexAIInstrumentation extends InstrumentationBase<any> {
       startChatPatch(
         originalMethod,
         this.tracer,
-        APIS.vertexai.SEND_MESSAGE.METHOD,
+        APIS.vertexai.START_CHAT.METHOD,
         this.instrumentationVersion,
         name,
         moduleVersion,
@@ -70,7 +70,7 @@ class VertexAIInstrumentation extends InstrumentationBase<any> {
       startChatPatch(
         originalMethod,
         this.tracer,
-        APIS.vertexai.SEND_MESSAGE.METHOD,
+        APIS.vertexai.START_CHAT.METHOD,
         this.instrumentationVersion,
         name,
         moduleVersion,
@@ -139,6 +139,28 @@ class VertexAIInstrumentation extends InstrumentationBase<any> {
     )
 
     this._wrap(vertexai.ChatSession.prototype, 'sendMessageStream', (originalMethod: (...args: any[]) => any) =>
+      generateContentPatch(
+        originalMethod,
+        this.tracer,
+        APIS.vertexai.SEND_MESSAGE_STREAM.METHOD,
+        this.instrumentationVersion,
+        name,
+        moduleVersion,
+      ),
+    )
+
+    this._wrap(vertexai.ChatSessionPreview.prototype, 'sendMessage', (originalMethod: (...args: any[]) => any) =>
+      generateContentPatch(
+        originalMethod,
+        this.tracer,
+        APIS.vertexai.SEND_MESSAGE.METHOD,
+        this.instrumentationVersion,
+        name,
+        moduleVersion,
+      ),
+    )
+
+    this._wrap(vertexai.ChatSessionPreview.prototype, 'sendMessageStream', (originalMethod: (...args: any[]) => any) =>
       generateContentPatch(
         originalMethod,
         this.tracer,

@@ -1,8 +1,15 @@
 # @langtrase/typescript-sdk
 
+## 6.3.5
+
+### Patch Changes
+
+- add support for `sendMessage` inside `PreviewGenerativeModel` vertexai
+
 ## 6.3.4
 
 ### Patch Changes
+
 - change startChat span name
 
 ## 6.3.3
