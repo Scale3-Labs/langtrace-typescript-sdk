@@ -3,7 +3,7 @@ import dotenv from 'dotenv'
 import { VertexAI, FunctionDeclarationSchemaType } from '@google-cloud/vertexai'
 
 dotenv.config()
-init({ batch: false, write_spans_to_console: false })
+init({ batch: false, write_spans_to_console: true })
 
 const project = 'vertex-test-454100'
 const location = 'us-central1'
@@ -12,6 +12,8 @@ const textModel = 'gemini-2.0-flash-lite-001'
 const vertexAI = new VertexAI({ project, location })
 
 const generativeModel = vertexAI.getGenerativeModel({ model: textModel })
+
+const previewGenerationModel = vertexAI.preview.getGenerativeModel({ model: textModel })
 
 const functionDeclarations = [
   {
@@ -83,7 +85,7 @@ export const basicImageVertexAIChat = async (): Promise<void> => {
 
 export const basicVertexAIStartChat = async (): Promise<void> => {
   try {
-    const chat = generativeModel.startChat()
+    const chat = previewGenerationModel.startChat()
     const chatInput = 'capital of France?'
     const result = await chat.sendMessage(chatInput)
     const response = result.response
