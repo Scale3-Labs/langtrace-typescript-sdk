@@ -39,8 +39,20 @@ export function sendCommand (
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const originalContext = this
     const customAttributes = context.active().getValue(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY) ?? {}
-    // Determine the service provider
     const serviceProvider: string = Vendors.AWSBEDROCK
+    let requestType = 'converse'
+    let message_content: any = []
+    let method = ''
+    if (args[0]?.input?.messages !== undefined) {
+      const message = args[0]?.input?.messages[0]
+      message_content = message?.content?.map((content: any) => ({ content: content.text, role: message.role }))
+      method = APIS.awsbedrock.CONVERSE.METHOD
+    } else if (args[0]?.input?.body !== undefined) {
+      const message = JSON.parse(args[0]?.input?.body as string)
+      message_content = [{ content: message.inputText, role: 'assistant' }]
+      requestType = 'invoke'
+      method = APIS.awsbedrock.INVOKE_MODEL.METHOD
+    }
     const attributes: LLMSpanAttributes = {
       'langtrace.sdk.name': '@langtrase/typescript-sdk',
       'gen_ai.operation.name': 'chat',
@@ -50,7 +62,7 @@ export function sendCommand (
       'langtrace.version': langtraceVersion,
       'gen_ai.request.model': args[0]?.input.modelId,
       'url.full': originalContext?._client?.baseURL,
-      'url.path': APIS.awsbedrock.CONVERSE.ENDPOINT,
+      'url.path': requestType === 'converse' ? APIS.awsbedrock.CONVERSE.ENDPOINT : APIS.awsbedrock.INVOKE_MODEL.ENDPOINT,
       'http.max.retries': originalContext?._client?.maxRetries,
       'http.timeout': originalContext?._client?.timeout,
       'gen_ai.request.temperature': args[0]?.input?.inferenceConfig?.temperature,
@@ -60,49 +72,82 @@ export function sendCommand (
       'gen_ai.request.tools': JSON.stringify(args[0]?.input?.toolConfig?.tools),
       ...customAttributes
     }
-    /* eslint-disable no-console */
-    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? APIS.awsbedrock.CONVERSE.METHOD
+    const spanName = customAttributes['langtrace.span.name' as keyof typeof customAttributes] ?? method
     const span = tracer.startSpan(spanName, { kind: SpanKind.CLIENT, attributes }, context.active())
     return await context.with(
       trace.setSpan(context.active(), span),
       async () => {
         try {
           const resp = await originalMethod.apply(this, args)
-          const message = args[0]?.input?.messages[0]
-          const message_content = message?.content?.map((content: any) => ({ content: content.text, role: message.role }))
           addSpanEvent(span, Event.GEN_AI_PROMPT, { 'gen_ai.prompt': JSON.stringify(message_content) })
           if (resp.stream === undefined) {
-            const responses = resp?.output?.message?.content?.map((content: any) => {
-              const result = {
-                role: resp?.output?.message?.role,
-                content: content?.text !== undefined && content?.text !== null
-                  ? content?.text
-                  : content?.toolUse !== undefined
-                    ? JSON.stringify(content?.toolUse)
-                    : JSON.stringify(content?.toolResult)
+            // Check the requestType to determine which API response format to handle
+            if (requestType === 'converse') {
+              // Handle converse API response
+              const responses = resp?.output?.message?.content?.map((content: any) => {
+                const result = {
+                  role: resp?.output?.message?.role,
+                  content: content?.text !== undefined && content?.text !== null
+                    ? content?.text
+                    : content?.toolUse !== undefined
+                      ? JSON.stringify(content?.toolUse)
+                      : JSON.stringify(content?.toolResult)
+                }
+                return result
+              })
+              addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(responses) })
+              const responseAttributes: Partial<LLMSpanAttributes> = {
+                'gen_ai.response.model': args[0]?.input.modelId,
+                'gen_ai.usage.input_tokens': resp.usage?.inputTokens,
+                'gen_ai.usage.output_tokens': resp.usage?.outputTokens,
+                'gen_ai.usage.total_tokens': resp.usage?.totalTokens
               }
-              return result
-            })
-            addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(responses) })
-            const responseAttributes: Partial<LLMSpanAttributes> = {
-              'gen_ai.response.model': args[0]?.input.modelId,
-              'gen_ai.usage.input_tokens': resp.usage.inputTokens,
-              'gen_ai.usage.output_tokens': resp.usage.outputTokens,
-              'gen_ai.usage.total_tokens': resp.usage.totalTokens
+              span.setAttributes({ ...attributes, ...responseAttributes })
+              span.setStatus({ code: SpanStatusCode.OK })
+              span.end()
+            } else if (requestType === 'invoke') {
+              const decodedResponseBody = new TextDecoder().decode(resp.body as Uint8Array)
+              const responseBody = JSON.parse(decodedResponseBody)
+              const inputTokenCount: number = responseBody.inputTextTokenCount ?? 0
+              const outputTokenCount: number = responseBody.results?.reduce((acc: number, result: any) => acc + (result.tokenCount as number ?? 0), 0) ?? 0
+
+              const responses = responseBody.results?.map((result: any) => {
+                const resultObj = {
+                  role: 'assistant',
+                  content: result?.outputText !== undefined && result?.outputText !== null
+                    ? result?.outputText.trim()
+                    : ''
+                }
+                return resultObj
+              })
+              addSpanEvent(span, Event.GEN_AI_COMPLETION, { 'gen_ai.completion': JSON.stringify(responses) })
+              const responseAttributes: Partial<LLMSpanAttributes> = {
+                'gen_ai.response.model': args[0]?.input.modelId,
+                'gen_ai.usage.input_tokens': inputTokenCount,
+                'gen_ai.usage.output_tokens': outputTokenCount,
+                'gen_ai.usage.total_tokens': inputTokenCount + outputTokenCount
+              }
+              span.setAttributes({ ...attributes, ...responseAttributes })
+              span.setStatus({ code: SpanStatusCode.OK })
+              span.end()
+            } else {
+              // Handle unexpected requestType
+              span.setStatus({
+                code: SpanStatusCode.ERROR,
+                message: 'Invalid request'
+              })
+              span.end()
             }
-            span.setAttributes({ ...attributes, ...responseAttributes })
-            span.setStatus({ code: SpanStatusCode.OK })
-            return resp
           } else {
             await processConverseStream(resp.stream, span, attributes)
-            return resp
           }
+
+          return resp
         } catch (error: any) {
           span.recordException(error as Exception)
           span.setStatus({ code: SpanStatusCode.ERROR })
-          throw new LangtraceSdkError(error.message as string, error.stack as string)
-        } finally {
           span.end()
+          throw new LangtraceSdkError(error.message as string, error.stack as string)
         }
       }
     )
