@@ -1,5 +1,11 @@
 # @langtrase/typescript-sdk
 
+## 6.3.7
+
+### Patch Changes
+
+- Remove `sentry` reporting
+
 ## 6.3.5
 
 ### Patch Changes
