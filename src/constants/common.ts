@@ -15,4 +15,3 @@
  */
 
 export const LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = Symbol('langtrace_additional_attributes')
-export const SENTRY_DSN = 'https://ab324a1e261bf0585dfebb7f8b902800@o1419498.ingest.us.sentry.io/4507929994395648'

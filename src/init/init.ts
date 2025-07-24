@@ -42,9 +42,6 @@ import { Vendor } from '@langtrase/trace-attributes'
 import { vercelAIInstrumentation } from '@langtrace-instrumentation/vercel/instrumentation'
 import { DropAttributesProcessor } from '@langtrace-extensions/spanprocessors/DropAttributesProcessor'
 import { vertexAIInstrumentation } from '@langtrace-instrumentation/vertexai/instrumentation'
-import * as Sentry from '@sentry/node'
-import { SENTRY_DSN } from '@langtrace-constants/common'
-import { nodeProfilingIntegration } from '@sentry/profiling-node'
 import { mistralInstrumentation } from '@langtrace-instrumentation/mistral/instrumentation'
 import { awsbedrockInstrumentation } from '@langtrace-instrumentation/awsbedrock/instrumentation'
 import { LangtraceSdkError } from 'errors/sdk_error'
@@ -210,47 +207,6 @@ export const init: LangTraceInit = ({
     registerInstrumentations({ tracerProvider: provider })
     disableInstrumentations(disable_instrumentations, allInstrumentations, instrumentations)
   }
-  const enableErrorReporting = process.env.LANGTRACE_ERROR_REPORTING ?? 'True'
-  if (enableErrorReporting === 'True') {
-    Sentry.init({
-      dsn: SENTRY_DSN,
-      tracesSampleRate: 1.0,
-      profilesSampleRate: 1.0,
-      skipOpenTelemetrySetup: true,
-      integrations: [nodeProfilingIntegration()],
-      beforeSend: (event, hint) => {
-        let result: Sentry.ErrorEvent | null = null
-        const original: any = hint?.originalException
-        if (original instanceof Promise) {
-          original.catch((error: any) => {
-            // Check if it's a LangTraceSdkError and capture it
-            if (error.name === 'LangTraceSdkError') {
-              result = event // Send this event
-            }
-          })
-        }
-        // Handle regular errors (non-Promise exceptions)
-        if (original.name === 'LangtraceSdkError') {
-          result = event
-        }
-
-        return result
-      }
-    })
-    const context = Object.entries(initOptions).reduce<Record<string, string>>((acc, [key, value]) => {
-      acc[key] = JSON.stringify(value)
-      return acc
-    }, {})
-    Sentry.setContext('sdk_init_options', context)
-  }
-  // Global handler for unhandled promise rejections
-  process.on('unhandledRejection', (reason, promise) => {
-    // console.error('Unhandled Rejection at:', promise, 'reason:', reason)
-    Sentry.captureException(reason) // Capture unhandled promise rejections
-  })
-  process.on('uncaughtException', (error) => {
-    Sentry.captureException(error) // Capture uncaught
-  })
   global.langtrace_initalized = true
   global.langtrace_options = initOptions
 
